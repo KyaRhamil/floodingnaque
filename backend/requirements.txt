@@ -1,0 +1,14 @@
+Flask==2.2.5
+flask-cors==4.0.0
+gunicorn==21.2.0
+requests==2.31.0
+pandas
+numpy
+scikit-learn
+joblib
+APScheduler==3.10.1
+python-dotenv==1.0.1
+SQLAlchemy==1.4.46
+matplotlib
+seaborn==0.12.2
+jupyter==1.0.0
