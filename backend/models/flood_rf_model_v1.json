@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "model_type": "RandomForestClassifier",
+  "model_path": "models\\flood_rf_model_v1.joblib",
+  "created_at": "2025-12-11T03:47:58.089195",
+  "training_data": {
+    "file": "data/synthetic_dataset.csv",
+    "shape": [
+      10,
+      5
+    ],
+    "features": [
+      "temperature",
+      "humidity",
+      "precipitation",
+      "wind_speed"
+    ],
+    "target_distribution": {
+      "0": 6,
+      "1": 4
+    }
+  },
+  "model_parameters": {
+    "n_estimators": 100,
+    "random_state": 42,
+    "max_depth": null,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1
+  },
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "precision_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "recall_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "f1_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ]
+  },
+  "feature_importance": {
+    "temperature": 0.21243602202785872,
+    "humidity": 0.18418205377389055,
+    "precipitation": 0.2880077745383868,
+    "wind_speed": 0.31537414965986404
+  }
+}

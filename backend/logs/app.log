@@ -1,0 +1,136 @@
+2025-12-11 02:52:02,737 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 02:52:02,737 - INFO - Scheduler started
+2025-12-11 02:53:38,066 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 02:53:38,067 - INFO - Scheduler started
+2025-12-11 02:53:38,067 - INFO - Scheduler started successfully
+2025-12-11 02:54:44,800 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 02:54:44,801 - INFO - Scheduler started
+2025-12-11 02:54:44,804 - INFO - Scheduler started successfully
+2025-12-11 03:04:57,384 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:04:57,385 - INFO - Scheduler started
+2025-12-11 03:04:57,385 - INFO - Scheduler started successfully
+2025-12-11 03:04:57,387 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-11 03:04:57,412 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-11 03:04:57,413 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-11 03:05:33,017 - INFO - 127.0.0.1 - - [11/Dec/2025 03:05:33] "[33mGET /statushttp://127.0.0.1:5000/status HTTP/1.1[0m" 404 -
+2025-12-11 03:05:33,207 - INFO - 127.0.0.1 - - [11/Dec/2025 03:05:33] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-11 03:05:43,439 - INFO - 127.0.0.1 - - [11/Dec/2025 03:05:43] "GET /health HTTP/1.1" 200 -
+2025-12-11 03:06:09,391 - INFO - 127.0.0.1 - - [11/Dec/2025 03:06:09] "GET /status HTTP/1.1" 200 -
+2025-12-11 03:07:24,608 - INFO - 127.0.0.1 - - [11/Dec/2025 03:07:24] "[31m[1mGET /ingest HTTP/1.1[0m" 405 -
+2025-12-11 03:09:08,555 - INFO - 127.0.0.1 - - [11/Dec/2025 03:09:08] "[31m[1mGET /ingest HTTP/1.1[0m" 405 -
+2025-12-11 03:10:59,090 - ERROR - Error in ingest endpoint: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-12-11 03:10:59,090 - INFO - 127.0.0.1 - - [11/Dec/2025 03:10:59] "[35m[1mPOST /ingest HTTP/1.1[0m" 500 -
+2025-12-11 03:11:42,183 - ERROR - Error in ingest endpoint: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-12-11 03:11:42,184 - INFO - 127.0.0.1 - - [11/Dec/2025 03:11:42] "[35m[1mPOST /ingest HTTP/1.1[0m" 500 -
+2025-12-11 03:14:03,513 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:14:03,514 - INFO - Scheduler started
+2025-12-11 03:14:03,515 - INFO - Scheduler started successfully
+2025-12-11 03:14:03,516 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-11 03:14:03,545 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-11 03:14:03,550 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-11 03:14:13,830 - ERROR - JSON decode error: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+2025-12-11 03:14:13,832 - INFO - 127.0.0.1 - - [11/Dec/2025 03:14:13] "[31m[1mPOST /ingest HTTP/1.1[0m" 400 -
+2025-12-11 03:14:25,318 - INFO - Successfully fetched data from OpenWeatherMap for lat=14.6, lon=120.98
+2025-12-11 03:14:27,788 - WARNING - Error fetching data from Meteostat (continuing without it): 401 Client Error: Unauthorized for url: https://api.meteostat.net/v2/stations/nearby?lat=14.6&lon=120.98&key=e3699b93bbbb4ee2ceea8dd9e0622a3a
+2025-12-11 03:14:27,796 - INFO - Successfully saved weather data to database
+2025-12-11 03:14:27,804 - INFO - 127.0.0.1 - - [11/Dec/2025 03:14:27] "POST /ingest HTTP/1.1" 200 -
+2025-12-11 03:16:04,835 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:16:04,835 - INFO - Scheduler started
+2025-12-11 03:16:04,836 - INFO - Scheduler started successfully
+2025-12-11 03:16:04,839 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-11 03:16:04,863 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-11 03:16:04,863 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-11 03:16:19,923 - INFO - Successfully fetched data from OpenWeatherMap for lat=14.6, lon=120.98
+2025-12-11 03:16:20,861 - WARNING - Error fetching data from Meteostat (continuing without it): 401 Client Error: Unauthorized for url: https://api.meteostat.net/v2/stations/nearby?lat=14.6&lon=120.98&key=e3699b93bbbb4ee2ceea8dd9e0622a3a
+2025-12-11 03:16:20,869 - INFO - Successfully saved weather data to database
+2025-12-11 03:16:20,874 - INFO - 127.0.0.1 - - [11/Dec/2025 03:16:20] "POST /ingest HTTP/1.1" 200 -
+2025-12-11 03:16:50,382 - INFO - 127.0.0.1 - - [11/Dec/2025 03:16:50] "[31m[1mGET /ingest HTTP/1.1[0m" 405 -
+2025-12-11 03:16:50,524 - INFO - 127.0.0.1 - - [11/Dec/2025 03:16:50] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-11 03:17:26,692 - INFO - 127.0.0.1 - - [11/Dec/2025 03:17:26] "[31m[1mGET /ingest HTTP/1.1[0m" 405 -
+2025-12-11 03:20:32,562 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:20:32,563 - INFO - Scheduler started
+2025-12-11 03:20:32,563 - INFO - Scheduler started successfully
+2025-12-11 03:20:45,169 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:20:45,169 - INFO - Scheduler started
+2025-12-11 03:20:45,170 - INFO - Scheduler started successfully
+2025-12-11 03:25:15,671 - INFO - 127.0.0.1 - - [11/Dec/2025 03:25:15] "[31m[1mGET /ingest HTTP/1.1[0m" 405 -
+2025-12-11 03:26:52,874 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:26:52,875 - INFO - Scheduler started
+2025-12-11 03:26:52,875 - INFO - Scheduler started successfully
+2025-12-11 03:27:23,052 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:27:23,053 - INFO - Scheduler started
+2025-12-11 03:27:23,054 - INFO - Scheduler started successfully
+2025-12-11 03:27:23,058 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-11 03:27:23,087 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-11 03:27:23,088 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-11 03:27:34,363 - INFO - Request 79577b05-27e8-476d-84e3-735fd3a0c0f6: GET /ingest
+2025-12-11 03:27:34,365 - INFO - 127.0.0.1 - - [11/Dec/2025 03:27:34] "GET /ingest HTTP/1.1" 200 -
+2025-12-11 03:35:52,870 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:35:52,870 - INFO - Scheduler started
+2025-12-11 03:35:52,870 - INFO - Scheduler started successfully
+2025-12-11 03:36:59,890 - INFO - Request 1f296ac4-fbfc-4571-b38c-32e521f4f2b8: GET /
+2025-12-11 03:36:59,891 - INFO - 127.0.0.1 - - [11/Dec/2025 03:36:59] "[33mGET / HTTP/1.1[0m" 404 -
+2025-12-11 03:37:00,152 - INFO - Request 0394674f-7877-429a-b7ff-fddceff7142a: GET /favicon.ico
+2025-12-11 03:37:00,153 - INFO - 127.0.0.1 - - [11/Dec/2025 03:37:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-11 03:37:05,252 - INFO - Request 21a29d4a-edcb-4968-af20-b0427e4b092f: GET /api/docs
+2025-12-11 03:37:05,259 - INFO - 127.0.0.1 - - [11/Dec/2025 03:37:05] "GET /api/docs HTTP/1.1" 200 -
+2025-12-11 03:37:29,976 - INFO - Request de289af7-75aa-4941-9808-5943f60555d8: GET /
+2025-12-11 03:37:29,977 - INFO - 127.0.0.1 - - [11/Dec/2025 03:37:29] "[33mGET / HTTP/1.1[0m" 404 -
+2025-12-11 03:41:43,112 - INFO - Request 4610612a-1017-4729-a478-de9f41612e45: GET /status
+2025-12-11 03:41:43,113 - INFO - 127.0.0.1 - - [11/Dec/2025 03:41:43] "GET /status HTTP/1.1" 200 -
+2025-12-11 03:48:49,835 - INFO - Request f7299db2-7d61-41d7-ba29-e65a1cbaeaea: GET /health
+2025-12-11 03:48:49,836 - INFO - 127.0.0.1 - - [11/Dec/2025 03:48:49] "GET /health HTTP/1.1" 200 -
+2025-12-11 03:49:00,672 - INFO - Request 43772c12-ba39-40b9-93f1-84db2dabe993: GET /api/models
+2025-12-11 03:49:00,674 - INFO - 127.0.0.1 - - [11/Dec/2025 03:49:00] "[33mGET /api/models HTTP/1.1[0m" 404 -
+2025-12-11 03:49:49,506 - INFO - Request 552d2d99-6619-45a9-9954-581b8d6e7ec6: POST /predict
+2025-12-11 03:49:49,507 - INFO - 127.0.0.1 - - [11/Dec/2025 03:49:49] "[31m[1mPOST /predict?return_proba=true HTTP/1.1[0m" 400 -
+2025-12-11 03:53:49,179 - INFO - Request ac3367d1-7979-40d3-a2fd-95d65425c105: POST /predict
+2025-12-11 03:53:50,399 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-11 03:53:50,431 - INFO - Prediction made: 0 (0=no flood, 1=flood)
+2025-12-11 03:53:50,432 - INFO - 127.0.0.1 - - [11/Dec/2025 03:53:50] "POST /predict?return_proba=true HTTP/1.1" 200 -
+2025-12-11 03:53:57,036 - INFO - Request d80b0c33-656f-4e3f-aeab-4952bacea58c: GET /api/models
+2025-12-11 03:53:57,037 - INFO - 127.0.0.1 - - [11/Dec/2025 03:53:57] "[33mGET /api/models HTTP/1.1[0m" 404 -
+2025-12-11 03:55:29,076 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:55:29,076 - INFO - Scheduler started
+2025-12-11 03:55:29,077 - INFO - Scheduler started successfully
+2025-12-11 03:56:05,348 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 03:56:05,348 - INFO - Scheduler started
+2025-12-11 03:56:05,349 - INFO - Scheduler started successfully
+2025-12-11 03:56:05,352 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-11 03:56:05,379 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-11 03:56:05,380 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-11 03:56:14,213 - INFO - Request 648857b1-9818-44ec-a405-316dfcd22aeb: GET /api/models
+2025-12-11 03:56:15,482 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-11 03:56:15,483 - INFO - Model version: 1
+2025-12-11 03:56:15,483 - INFO - 127.0.0.1 - - [11/Dec/2025 03:56:15] "GET /api/models HTTP/1.1" 200 -
+2025-12-11 04:03:46,701 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-11 04:03:46,702 - INFO - Scheduler started
+2025-12-11 04:03:46,702 - INFO - Scheduler started successfully
+2025-12-11 04:03:46,706 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-11 04:03:46,728 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-11 04:03:46,734 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-11 04:04:19,480 - INFO - Request a01967bb-730e-441c-8e4c-43968902f4a3: POST /predict
+2025-12-11 04:04:20,732 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-11 04:04:20,732 - INFO - Model version: 1
+2025-12-11 04:04:20,804 - INFO - Prediction: 0, Risk Level: Alert
+2025-12-11 04:04:20,806 - INFO - 127.0.0.1 - - [11/Dec/2025 04:04:20] "POST /predict HTTP/1.1" 200 -
+2025-12-11 04:12:04,929 - INFO - Request 5ecb5f84-8821-4313-9b91-efa387ce2b36: GET /predict
+2025-12-11 04:12:04,930 - INFO - 127.0.0.1 - - [11/Dec/2025 04:12:04] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
