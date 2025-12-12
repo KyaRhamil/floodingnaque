@@ -1,13 +1,13 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest
-from scheduler import scheduler
-from ingest import ingest_data
-from predict import predict_flood, get_current_model_info, list_available_models, get_latest_model_version
-from risk_classifier import RISK_LEVELS, get_risk_thresholds
-from config import load_env
-from db import init_db, WeatherData, get_db_session
-from utils import setup_logging, validate_coordinates
+from app.services.scheduler import scheduler
+from app.services.ingest import ingest_data
+from app.services.predict import predict_flood, get_current_model_info, list_available_models, get_latest_model_version
+from app.services.risk_classifier import RISK_LEVELS, get_risk_thresholds
+from app.core.config import load_env
+from app.models.db import init_db, WeatherData, get_db_session
+from app.utils.utils import setup_logging, validate_coordinates
 import logging
 import os
 import json
