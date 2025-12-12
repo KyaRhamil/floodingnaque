@@ -7,7 +7,7 @@ Aligned with research objectives for Parañaque City.
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
-from risk_classifier import format_alert_message, RISK_LEVELS
+from app.services.risk_classifier import format_alert_message, RISK_LEVELS
 
 logger = logging.getLogger(__name__)
 

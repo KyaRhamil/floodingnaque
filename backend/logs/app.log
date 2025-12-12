@@ -151,3 +151,36 @@
 2025-12-12 09:10:13,731 - INFO - Model loaded successfully from models\flood_rf_model.joblib
 2025-12-12 09:10:13,731 - INFO - Model version: 1
 2025-12-12 09:10:13,732 - INFO - 127.0.0.1 - - [12/Dec/2025 09:10:13] "GET /status HTTP/1.1" 200 -
+2025-12-12 12:36:37,879 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 12:36:37,880 - INFO - Scheduler started
+2025-12-12 12:36:37,880 - INFO - Scheduler started successfully
+2025-12-12 12:36:37,929 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-12 12:36:37,929 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-12 12:37:54,892 - INFO - Request 3c8b12b9-dc5c-45b5-80b0-337e98767318: GET /status
+2025-12-12 12:38:03,291 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-12 12:38:03,291 - INFO - Model version: 1
+2025-12-12 12:38:03,292 - INFO - 127.0.0.1 - - [12/Dec/2025 12:38:03] "GET /status HTTP/1.1" 200 -
+2025-12-12 12:38:03,776 - INFO - Request 7290d707-f122-4355-aec8-2c433d350595: GET /favicon.ico
+2025-12-12 12:38:03,777 - INFO - 127.0.0.1 - - [12/Dec/2025 12:38:03] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-12 12:38:43,249 - INFO - Request 4536895c-15a5-4bef-accc-a8ac5d8b673e: GET /status
+2025-12-12 12:38:43,251 - INFO - 127.0.0.1 - - [12/Dec/2025 12:38:43] "GET /status HTTP/1.1" 200 -
+2025-12-12 12:40:51,959 - INFO - Request ebf9ed28-d1b6-42b7-a69b-87a63323d2bd: GET /status
+2025-12-12 12:40:51,959 - INFO - 127.0.0.1 - - [12/Dec/2025 12:40:51] "GET /status HTTP/1.1" 200 -
+2025-12-12 12:53:05,716 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 12:53:05,717 - INFO - Scheduler started
+2025-12-12 12:53:05,718 - INFO - Scheduler started successfully
+2025-12-12 12:53:05,743 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-12 12:53:05,744 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-12 12:53:13,136 - INFO - Request 71caf250-f66e-4cc2-a073-fb6bdc123841: GET /status
+2025-12-12 12:53:14,644 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-12 12:53:14,644 - INFO - Model version: 1
+2025-12-12 12:53:14,646 - INFO - 127.0.0.1 - - [12/Dec/2025 12:53:14] "GET /status HTTP/1.1" 200 -
+2025-12-12 13:06:29,217 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 13:06:29,218 - INFO - Scheduler started
+2025-12-12 13:06:29,218 - INFO - Scheduler started successfully

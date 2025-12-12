@@ -5,7 +5,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
-from risk_classifier import classify_risk_level, RISK_LEVELS
+from app.services.risk_classifier import classify_risk_level, RISK_LEVELS
 
 logger = logging.getLogger(__name__)
 
