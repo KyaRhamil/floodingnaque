@@ -184,3 +184,15 @@
 2025-12-12 13:06:29,217 - INFO - Added job "scheduled_ingest" to job store "default"
 2025-12-12 13:06:29,218 - INFO - Scheduler started
 2025-12-12 13:06:29,218 - INFO - Scheduler started successfully
+2025-12-12 13:18:44,882 - INFO - Request 96692708-58b2-46a7-83ff-f955d985b0a0: GET /health
+2025-12-12 13:18:44,883 - INFO - 127.0.0.1 - - [12/Dec/2025 13:18:44] "GET /health HTTP/1.1" 200 -
+2025-12-12 13:19:52,215 - INFO - Request a16c6478-0003-4212-9775-ebda99c3e0e5: GET /ingest
+2025-12-12 13:19:52,216 - INFO - 127.0.0.1 - - [12/Dec/2025 13:19:52] "GET /ingest HTTP/1.1" 200 -
+2025-12-12 13:21:01,215 - INFO - Request 8ce5f6af-85fc-432a-8a83-9ea3a47f12dd: GET /data
+2025-12-12 13:21:01,224 - INFO - 127.0.0.1 - - [12/Dec/2025 13:21:01] "GET /data HTTP/1.1" 200 -
+2025-12-12 13:21:24,210 - INFO - Request ff315518-e893-4bb7-9390-464c74e04c1d: GET /predict
+2025-12-12 13:21:24,213 - INFO - 127.0.0.1 - - [12/Dec/2025 13:21:24] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
+2025-12-12 13:21:33,862 - INFO - Request 19e611ac-6c12-4512-af0d-3fe3bee6b5f3: GET /api/docs
+2025-12-12 13:21:33,863 - INFO - 127.0.0.1 - - [12/Dec/2025 13:21:33] "GET /api/docs HTTP/1.1" 200 -
+2025-12-12 13:21:49,909 - INFO - Request 7a54f281-1901-4715-974d-345e3ac51503: GET /api/version
+2025-12-12 13:21:49,915 - INFO - 127.0.0.1 - - [12/Dec/2025 13:21:49] "GET /api/version HTTP/1.1" 200 -
