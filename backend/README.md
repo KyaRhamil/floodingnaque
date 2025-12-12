@@ -26,19 +26,19 @@ FLASK_DEBUG=False
 ### 3. Train the Model (First Time Only)
 
 ```bash
-python train.py
+python scripts/train.py
 ```
 
 ### 4. Start the Server
 
 **Development:**
 ```bash
-python app.py
+python main.py
 ```
 
 **Production:**
 ```bash
-gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 app:app
+gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 main:app
 ```
 
 ## API Endpoints
@@ -110,23 +110,31 @@ The API is CORS-enabled and ready for frontend integration. All endpoints return
 ## Documentation
 
 - Full API documentation: `http://localhost:5000/api/docs`
-- Database setup: See `DATABASE_SETUP.md`
-- Complete guide: See `BACKEND_COMPLETE.md`
+- Database setup: See `docs/DATABASE_SETUP.md`
+- Complete guide: See `docs/BACKEND_COMPLETE.md`
 
 ## Project Structure
 
 ```
 backend/
-├── app.py              # Main Flask application
-├── db.py               # Database models and sessions
-├── ingest.py           # Weather data ingestion
-├── predict.py          # ML model prediction
-├── scheduler.py        # Background task scheduler
-├── train.py            # Model training script
-├── utils.py            # Utility functions
-├── config.py           # Configuration management
+├── main.py             # Application entry point
+├── app/                # Main application code
+│   ├── __init__.py
+│   ├── api/            # API routes and schemas
+│   ├── core/           # Core functionality (config, logging)
+│   ├── services/       # Business logic (weather, prediction, alerts)
+│   ├── models/         # Data models
+│   └── utils/          # Utilities
+├── scripts/            # Utility scripts (training, validation, etc.)
+├── tests/              # Test files
+├── docs/               # Documentation
+├── data/               # Data files
+├── models/             # ML models
+├── logs/               # Log files
+├── evaluation_results/  # Evaluation outputs
 ├── requirements.txt    # Python dependencies
-└── Procfile           # Production deployment config
+├── Procfile           # Production deployment config
+└── Dockerfile         # Docker configuration
 ```
 
 ## Features

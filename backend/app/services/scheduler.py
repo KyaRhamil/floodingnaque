@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from ingest import ingest_data
+from app.services.ingest import ingest_data
 import logging
 
 scheduler = BackgroundScheduler()

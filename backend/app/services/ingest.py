@@ -1,7 +1,7 @@
 import requests
 import os
 from datetime import datetime
-from db import WeatherData, get_db_session
+from app.models.db import WeatherData, get_db_session
 import logging
 
 logger = logging.getLogger(__name__)
