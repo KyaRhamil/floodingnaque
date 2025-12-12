@@ -134,3 +134,20 @@
 2025-12-11 04:04:20,806 - INFO - 127.0.0.1 - - [11/Dec/2025 04:04:20] "POST /predict HTTP/1.1" 200 -
 2025-12-11 04:12:04,929 - INFO - Request 5ecb5f84-8821-4313-9b91-efa387ce2b36: GET /predict
 2025-12-11 04:12:04,930 - INFO - 127.0.0.1 - - [11/Dec/2025 04:12:04] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
+2025-12-12 09:09:49,652 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 09:09:49,652 - INFO - Scheduler started
+2025-12-12 09:09:49,653 - INFO - Scheduler started successfully
+2025-12-12 09:09:49,656 - INFO - Starting Flask app on 0.0.0.0:5000 (debug=False)
+2025-12-12 09:09:49,708 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-12 09:09:49,708 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-12 09:10:01,103 - INFO - Request 09a4f445-e8b6-4b54-86a8-b1314be02083: GET /predict
+2025-12-12 09:10:01,104 - INFO - 127.0.0.1 - - [12/Dec/2025 09:10:01] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
+2025-12-12 09:10:01,368 - INFO - Request 74b60913-cbf2-4fe4-9ee3-b99427d1c4c4: GET /favicon.ico
+2025-12-12 09:10:01,370 - INFO - 127.0.0.1 - - [12/Dec/2025 09:10:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-12 09:10:05,680 - INFO - Request 22fe56e4-d711-48af-ba5a-8708da16b213: GET /status
+2025-12-12 09:10:13,731 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-12 09:10:13,731 - INFO - Model version: 1
+2025-12-12 09:10:13,732 - INFO - 127.0.0.1 - - [12/Dec/2025 09:10:13] "GET /status HTTP/1.1" 200 -
