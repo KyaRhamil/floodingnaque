@@ -403,3 +403,92 @@
 [parameters: (269.84, 51.0, 0.0, None, None, None, None, 'OWM', '2025-12-12 18:49:42.295587', '2025-12-12 10:49:42.315824', '2025-12-12 10:49:42.315859')]
 (Background on this error at: https://sqlalche.me/e/14/e3q8)
 2025-12-12 18:49:42,341 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 19:49:39 +08)" executed successfully
+2025-12-15 13:20:06,418 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 13:20:06,419 - INFO - Scheduler started
+2025-12-15 13:20:06,420 - INFO - Scheduler started successfully
+2025-12-15 13:20:06,481 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000
+2025-12-15 13:20:06,481 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-15 13:20:06,484 - INFO -  * Restarting with stat
+2025-12-15 13:20:12,983 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 13:20:12,983 - INFO - Scheduler started
+2025-12-15 13:20:12,985 - INFO - Scheduler started successfully
+2025-12-15 13:20:13,010 - WARNING -  * Debugger is active!
+2025-12-15 13:20:13,015 - INFO -  * Debugger PIN: 235-558-840
+2025-12-15 13:20:13,045 - INFO - Request e63a45f6-8074-4c98-9447-cf5da7d2eeb7: GET /
+2025-12-15 13:20:13,046 - INFO - 127.0.0.1 - - [15/Dec/2025 13:20:13] "GET / HTTP/1.1" 200 -
+2025-12-15 13:20:13,160 - INFO - Request 12026204-e0db-4206-9949-2e0b11aeff50: GET /favicon.ico
+2025-12-15 13:20:13,163 - INFO - 127.0.0.1 - - [15/Dec/2025 13:20:13] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-15 13:20:24,687 - INFO - Request 3d0fa670-48e0-4dd1-a675-ac44e6cc5ebb: GET /
+2025-12-15 13:20:24,688 - INFO - 127.0.0.1 - - [15/Dec/2025 13:20:24] "GET / HTTP/1.1" 200 -
+2025-12-15 13:25:46,564 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 13:25:46,564 - INFO - Scheduler started
+2025-12-15 13:25:46,565 - INFO - Scheduler started successfully
+2025-12-15 13:25:46,636 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000
+2025-12-15 13:25:46,636 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-15 13:25:46,640 - INFO -  * Restarting with stat
+2025-12-15 13:25:52,026 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 13:25:52,027 - INFO - Scheduler started
+2025-12-15 13:25:52,028 - INFO - Scheduler started successfully
+2025-12-15 13:25:52,052 - WARNING -  * Debugger is active!
+2025-12-15 13:25:52,061 - INFO -  * Debugger PIN: 235-558-840
+2025-12-15 13:32:01,399 - INFO - Request ad71ebc1-ac94-48f8-870b-bf6a38e4a7d2: GET /api/docs
+2025-12-15 13:32:01,400 - INFO - 127.0.0.1 - - [15/Dec/2025 13:32:01] "GET /api/docs HTTP/1.1" 200 -
+2025-12-15 14:25:44,100 - INFO - Running job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-15 14:25:44 +08)" (scheduled at 2025-12-15 14:25:44.088869+08:00)
+2025-12-15 14:25:44,551 - INFO - Successfully fetched data from OpenWeatherMap for lat=40.7128, lon=-74.006
+2025-12-15 14:25:45,621 - INFO - Got precipitation from Weatherstack: 0.0 mm
+2025-12-15 14:25:45,631 - ERROR - Error saving data to database: (sqlite3.OperationalError) table weather_data has no column named created_at
+[SQL: INSERT INTO weather_data (temperature, humidity, precipitation, wind_speed, pressure, location_lat, location_lon, source, timestamp, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (266.57, 64.0, 0.0, None, None, None, None, 'OWM', '2025-12-15 14:25:45.622252', '2025-12-15 06:25:45.629611', '2025-12-15 06:25:45.629619')]
+(Background on this error at: https://sqlalche.me/e/14/e3q8)
+2025-12-15 14:25:45,631 - ERROR - Error in scheduled ingestion: (sqlite3.OperationalError) table weather_data has no column named created_at
+[SQL: INSERT INTO weather_data (temperature, humidity, precipitation, wind_speed, pressure, location_lat, location_lon, source, timestamp, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (266.57, 64.0, 0.0, None, None, None, None, 'OWM', '2025-12-15 14:25:45.622252', '2025-12-15 06:25:45.629611', '2025-12-15 06:25:45.629619')]
+(Background on this error at: https://sqlalche.me/e/14/e3q8)
+2025-12-15 14:25:45,632 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-15 15:25:44 +08)" executed successfully
+2025-12-15 14:25:48,083 - INFO - Running job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-15 15:25:48 +08)" (scheduled at 2025-12-15 14:25:48.078221+08:00)
+2025-12-15 14:25:48,491 - INFO - Successfully fetched data from OpenWeatherMap for lat=40.7128, lon=-74.006
+2025-12-15 14:25:49,148 - INFO - Got precipitation from Weatherstack: 0.0 mm
+2025-12-15 14:25:50,781 - INFO - Successfully saved weather data to database
+2025-12-15 14:25:50,784 - INFO - Scheduled data ingestion completed.
+2025-12-15 14:25:50,784 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-15 15:25:48 +08)" executed successfully
+2025-12-15 15:07:53,705 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\middleware\\auth.py', reloading
+2025-12-15 15:07:53,918 - INFO -  * Restarting with stat
+2025-12-15 15:08:00,138 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 15:08:00,139 - INFO - Scheduler started
+2025-12-15 15:08:00,140 - INFO - Scheduler started successfully
+2025-12-15 15:08:00,162 - WARNING -  * Debugger is active!
+2025-12-15 15:08:00,165 - INFO -  * Debugger PIN: 235-558-840
+2025-12-15 15:09:25,899 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\core\\config.py', reloading
+2025-12-15 15:09:26,346 - INFO -  * Restarting with stat
+2025-12-15 15:09:34,102 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 15:09:34,103 - INFO - Scheduler started
+2025-12-15 15:09:34,103 - INFO - Scheduler started successfully
+2025-12-15 15:09:34,122 - WARNING -  * Debugger is active!
+2025-12-15 15:09:34,126 - INFO -  * Debugger PIN: 235-558-840
+2025-12-15 15:10:41,718 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\services\\ingest.py', reloading
+2025-12-15 15:10:42,100 - INFO -  * Restarting with stat
+2025-12-15 15:10:47,144 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 15:10:47,145 - INFO - Scheduler started
+2025-12-15 15:10:47,146 - INFO - Scheduler started successfully
+2025-12-15 15:10:47,162 - WARNING -  * Debugger is active!
+2025-12-15 15:10:47,165 - INFO -  * Debugger PIN: 235-558-840
+2025-12-15 15:10:53,290 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\services\\ingest.py', reloading
+2025-12-15 15:10:53,629 - INFO -  * Restarting with stat
+2025-12-15 15:10:59,863 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 15:10:59,864 - INFO - Scheduler started
+2025-12-15 15:10:59,865 - INFO - Scheduler started successfully
+2025-12-15 15:10:59,889 - WARNING -  * Debugger is active!
+2025-12-15 15:10:59,898 - INFO -  * Debugger PIN: 235-558-840
+2025-12-15 15:11:58,469 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\app.py', reloading
+2025-12-15 15:11:58,832 - INFO -  * Restarting with stat
+2025-12-15 15:24:33,435 - INFO - Rate limiting enabled: 100 requests per 3600s
+2025-12-15 15:24:33,435 - INFO - Security headers middleware enabled
+2025-12-15 15:24:33,436 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 15:24:33,437 - INFO - Scheduler started
+2025-12-15 15:24:33,437 - INFO - Scheduler started successfully

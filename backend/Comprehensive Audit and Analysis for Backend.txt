@@ -1,0 +1,691 @@
+COMPREHENSIVE SECURITY AUDIT & ARCHITECTURE REVIEW
+Floodingnaque Flood Prediction API
+EXECUTIVE SUMMARY
+Category	Current Score	Target Score	Priority
+Authentication & Authorization	🔴 30/100	90/100	CRITICAL
+Input Validation	🟢 85/100	95/100	LOW
+Rate Limiting	🔴 20/100	90/100	HIGH
+Error Handling	🟡 70/100	90/100	MEDIUM
+Secrets Management	🟡 65/100	95/100	HIGH
+Logging & Monitoring	🟡 60/100	90/100	MEDIUM
+Architecture Modularity	🟡 65/100	90/100	MEDIUM
+Production Readiness	🟡 70/100	95/100	HIGH
+Overall Security Score: 58/100 (Needs Improvement)
+🚨 CRITICAL VULNERABILITIES
+1. No Authentication/Authorization System CRITICAL
+Location: app/api/app.py - All endpoints
+Risk: Anyone can access all endpoints including data ingestion and predictions
+python
+# CURRENT - NO AUTH
+@app.route('/predict', methods=['POST'])
+def predict():
+    # ❌ No authentication check
+    input_data = request.get_json()
+Impact:
+Unauthorized data manipulation
+API abuse and data exfiltration
+Potential DoS through uncontrolled ingestion
+2. Rate Limiting Not Implemented CRITICAL
+Location: app/api/app.py
+Risk: Flask-Limiter is in requirements but NOT used in code
+python
+# requirements.txt has Flask-Limiter==3.5.0
+# ❌ But NO limiter initialization in app.py
+Impact:
+DoS attacks possible
+API abuse
+External API quota exhaustion (OpenWeatherMap, Weatherstack)
+3. CORS Wildcard Configuration HIGH
+Location: app/api/app.py:73
+python
+CORS(app)  # ❌ Allows ALL origins
+Risk: Cross-origin attacks from any domain
+4. API Keys in .env.example HIGH
+Location: .env.example:12-17
+python
+OWM_API_KEY=REDACTED_OWM_KEY  # ❌ Real key exposed
+WEATHERSTACK_API_KEY=REDACTED_WEATHERSTACK_KEY  # ❌ Real key exposed
+Impact: Keys can be scraped from public repositories
+5. Insecure HTTP for External API MEDIUM
+Location: app/services/ingest.py:66
+python
+weatherstack_url = f'http://api.weatherstack.com/...'  # ❌ HTTP not HTTPS
+6. Missing Security Headers MEDIUM
+Location: app/api/app.py
+No security headers configured (CSP, X-Frame-Options, HSTS, etc.)
+7. Debug Mode Not Enforced MEDIUM
+Location: Multiple files
+Debug mode relies on env var but defaults could leak in production
+📊 DETAILED FINDINGS
+A. Input Validation ✅ (Good)
+Your app/utils/validation.py is well-implemented with:
+✅ Range validation for weather data
+✅ Bleach sanitization for XSS
+✅ SQL injection protection layer
+❌ BUT not consistently used in all endpoints
+B. Database Security ✅ (Good)
+✅ SQLAlchemy parameterized queries
+✅ RLS enabled on Supabase tables
+✅ Connection pooling with health checks
+❌ Missing encryption at rest configuration
+C. Error Handling 🟡 (Needs Work)
+python
+except Exception as e:
+    return jsonify({'error': str(e)})  # ❌ May leak internal details
+🏗️ ARCHITECTURE RECOMMENDATIONS
+Current Structure Analysis
+plaintext
+backend/
+├── app/
+│   ├── api/app.py          # ❌ 543 lines - TOO LARGE, mixed concerns
+│   ├── core/config.py      # ❌ 10 lines - Underutilized
+│   ├── models/db.py        # ✅ Good separation
+│   ├── services/           # ✅ Good separation
+│   └── utils/              # ✅ Good separation
+Recommended Modular Architecture
+plaintext
+backend/
+├── app/
+│   ├── __init__.py              # Flask app factory
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── routes/              # NEW: Split routes
+│   │   │   ├── __init__.py
+│   │   │   ├── health.py        # /status, /health
+│   │   │   ├── ingest.py        # /ingest
+│   │   │   ├── predict.py       # /predict
+│   │   │   ├── data.py          # /data
+│   │   │   └── models.py        # /api/models, /api/docs
+│   │   ├── middleware/          # NEW: Middleware layer
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py          # Authentication middleware
+│   │   │   ├── rate_limit.py    # Rate limiting
+│   │   │   ├── security.py      # Security headers
+│   │   │   └── logging.py       # Request logging
+│   │   └── schemas/             # NEW: Request/Response schemas
+│   │       ├── __init__.py
+│   │       ├── weather.py
+│   │       └── prediction.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py            # Enhanced configuration
+│   │   ├── security.py          # NEW: Security utilities
+│   │   ├── exceptions.py        # NEW: Custom exceptions
+│   │   └── constants.py         # NEW: Application constants
+│   ├── models/                  # (unchanged)
+│   ├── services/                # (unchanged)
+│   └── utils/                   # (unchanged)
+├── tests/
+│   ├── unit/                    # NEW: Unit tests
+│   ├── integration/             # NEW: Integration tests
+│   └── security/                # NEW: Security tests
+🔧 IMPLEMENTATION PRIORITIES
+Phase 1: CRITICAL Security Fixes (Week 1)
+1.1 Add API Key Authentication
+python
+# app/api/middleware/auth.py
+from functools import wraps
+from flask import request, jsonify
+import os
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+        valid_keys = os.getenv('VALID_API_KEYS', '').split(',')
+        
+        if not api_key or api_key not in valid_keys:
+            return jsonify({'error': 'Invalid or missing API key'}), 401
+        return f(*args, **kwargs)
+    return decorated
+1.2 Implement Rate Limiting
+python
+# app/api/middleware/rate_limit.py
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["100 per hour", "10 per minute"],
+    storage_uri="memory://",
+)
+
+# Apply to sensitive endpoints
+@limiter.limit("30 per minute")
+def predict():
+    ...
+
+@limiter.limit("10 per minute")  
+def ingest():
+    ...
+1.3 Fix CORS Configuration
+python
+# Restrict to allowed origins
+CORS(app, origins=[
+    os.getenv('CORS_ORIGINS', 'https://floodingnaque.vercel.app'),
+    'http://localhost:3000'  # Development only
+])
+1.4 Add Security Headers
+python
+# app/api/middleware/security.py
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000'
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    return response
+Phase 2: Architecture Refactoring (Week 2)
+2.1 Create Flask Application Factory
+python
+# app/__init__.py
+from flask import Flask
+from app.core.config import Config
+from app.api.middleware.rate_limit import limiter
+from app.api.middleware.security import setup_security
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    
+    # Initialize extensions
+    limiter.init_app(app)
+    setup_security(app)
+    
+    # Register blueprints
+    from app.api.routes import health, ingest, predict, data
+    app.register_blueprint(health.bp)
+    app.register_blueprint(ingest.bp)
+    app.register_blueprint(predict.bp)
+    app.register_blueprint(data.bp)
+    
+    return app
+2.2 Enhanced Configuration Management
+python
+# app/core/config.py
+import os
+from dataclasses import dataclass
+
+@dataclass
+class Config:
+    # Flask
+    SECRET_KEY: str = os.getenv('SECRET_KEY', 'change-me-in-production')
+    DEBUG: bool = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    # Database
+    DATABASE_URL: str = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
+    
+    # Security
+    RATE_LIMIT_ENABLED: bool = os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true'
+    CORS_ORIGINS: list = os.getenv('CORS_ORIGINS', '').split(',')
+    
+    # External APIs
+    OWM_API_KEY: str = os.getenv('OWM_API_KEY', '')
+    WEATHERSTACK_API_KEY: str = os.getenv('WEATHERSTACK_API_KEY', '')
+    
+    @classmethod
+    def validate(cls):
+        """Validate required configuration."""
+        if not cls.OWM_API_KEY:
+            raise ValueError("OWM_API_KEY is required")
+        if cls.SECRET_KEY == 'change-me-in-production' and not cls.DEBUG:
+            raise ValueError("SECRET_KEY must be set in production")
+2.3 Custom Exception Handling
+python
+# app/core/exceptions.py
+class AppException(Exception):
+    """Base application exception."""
+    def __init__(self, message, status_code=500, payload=None):
+        self.message = message
+        self.status_code = status_code
+        self.payload = payload
+
+class ValidationError(AppException):
+    def __init__(self, message, payload=None):
+        super().__init__(message, 400, payload)
+
+class AuthenticationError(AppException):
+    def __init__(self, message="Authentication required"):
+        super().__init__(message, 401)
+
+class RateLimitError(AppException):
+    def __init__(self, message="Rate limit exceeded"):
+        super().__init__(message, 429)
+Phase 3: Production Hardening (Week 3)
+3.1 Structured Logging
+python
+# app/core/logging.py
+import logging
+from pythonjsonlogger import jsonlogger
+
+def setup_logging(app):
+    handler = logging.StreamHandler()
+    formatter = jsonlogger.JsonFormatter(
+        '%(timestamp)s %(level)s %(name)s %(message)s'
+    )
+    handler.setFormatter(formatter)
+    
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
+3.2 Health Check Enhancement
+python
+# Include dependency checks
+@bp.route('/health', methods=['GET'])
+def health():
+    checks = {
+        'database': check_database(),
+        'model': check_model(),
+        'external_apis': check_external_apis(),
+        'disk_space': check_disk_space(),
+    }
+    
+    status = 'healthy' if all(checks.values()) else 'degraded'
+    return jsonify({'status': status, 'checks': checks})
+📋 SECURITY CHECKLIST
+Immediate Actions (Do Now)
+ Remove real API keys from .env.example
+ Implement rate limiting on all endpoints
+ Add API key authentication for sensitive endpoints
+ Fix CORS to restrict origins
+ Add security headers
+ Use HTTPS for Weatherstack API
+Short-term (Week 1-2)
+ Implement application factory pattern
+ Split routes into blueprints
+ Create middleware layer
+ Add custom exception handling
+ Implement structured JSON logging
+ Add request/response schemas (Pydantic or Marshmallow)
+Medium-term (Week 3-4)
+ Add JWT authentication for future user features
+ Implement API versioning (/api/v1/...)
+ Add OpenAPI/Swagger documentation generation
+ Create integration tests with security focus
+ Set up CI/CD security scanning
+ Add dependency vulnerability scanning (Safety, Snyk)
+Production Requirements
+ SSL/TLS certificates configured
+ WAF (Web Application Firewall) enabled
+ DDoS protection (Cloudflare/AWS Shield)
+ Secret rotation policy
+ Backup and disaster recovery plan
+ Incident response procedure
+📦 RECOMMENDED DEPENDENCIES TO ADD
+txt
+# requirements.txt additions
+
+# Security
+python-jose[cryptography]>=3.3.0  # JWT tokens
+argon2-cffi>=21.3.0               # Password hashing (if needed)
+secure>=0.3.0                     # Security headers
+
+# Validation & Schemas
+pydantic>=2.0.0                   # Request/response validation
+email-validator>=2.0.0            # Email validation
+
+# Monitoring
+sentry-sdk[flask]>=1.0.0          # Error tracking
+prometheus-flask-exporter>=0.22.0 # Metrics
+
+# Testing
+pytest-security>=0.1.0            # Security tests
+bandit>=1.7.0                     # Security linting
+safety>=2.0.0                     # Dependency vulnerability check
+🎯 PRIORITY ACTION ITEMS
+Priority	Task	Effort	Impact
+🔴 P0	Remove API keys from .env.example	5 min	High
+🔴 P0	Implement rate limiting	30 min	High
+🔴 P0	Add API key authentication	1 hour	High
+🟠 P1	Fix CORS configuration	15 min	Medium
+🟠 P1	Add security headers	20 min	Medium
+🟠 P1	Fix HTTP to HTTPS for Weatherstack	5 min	Medium
+🟡 P2	Refactor to application factory	2 hours	Medium
+🟡 P2	Split routes into blueprints	2 hours	Medium
+🟢 P3	Add Pydantic schemas	3 hours	Low
+🟢 P3	Add OpenAPI documentation	2 hours	LowCOMPREHENSIVE SECURITY AUDIT & ARCHITECTURE REVIEW
+Floodingnaque Flood Prediction API
+EXECUTIVE SUMMARY
+Category	Current Score	Target Score	Priority
+Authentication & Authorization	🔴 30/100	90/100	CRITICAL
+Input Validation	🟢 85/100	95/100	LOW
+Rate Limiting	🔴 20/100	90/100	HIGH
+Error Handling	🟡 70/100	90/100	MEDIUM
+Secrets Management	🟡 65/100	95/100	HIGH
+Logging & Monitoring	🟡 60/100	90/100	MEDIUM
+Architecture Modularity	🟡 65/100	90/100	MEDIUM
+Production Readiness	🟡 70/100	95/100	HIGH
+Overall Security Score: 58/100 (Needs Improvement)
+🚨 CRITICAL VULNERABILITIES
+1. No Authentication/Authorization System CRITICAL
+Location: app/api/app.py - All endpoints
+Risk: Anyone can access all endpoints including data ingestion and predictions
+python
+# CURRENT - NO AUTH
+@app.route('/predict', methods=['POST'])
+def predict():
+    # ❌ No authentication check
+    input_data = request.get_json()
+Impact:
+Unauthorized data manipulation
+API abuse and data exfiltration
+Potential DoS through uncontrolled ingestion
+2. Rate Limiting Not Implemented CRITICAL
+Location: app/api/app.py
+Risk: Flask-Limiter is in requirements but NOT used in code
+python
+# requirements.txt has Flask-Limiter==3.5.0
+# ❌ But NO limiter initialization in app.py
+Impact:
+DoS attacks possible
+API abuse
+External API quota exhaustion (OpenWeatherMap, Weatherstack)
+3. CORS Wildcard Configuration HIGH
+Location: app/api/app.py:73
+python
+CORS(app)  # ❌ Allows ALL origins
+Risk: Cross-origin attacks from any domain
+4. API Keys in .env.example HIGH
+Location: .env.example:12-17
+python
+OWM_API_KEY=REDACTED_OWM_KEY  # ❌ Real key exposed
+WEATHERSTACK_API_KEY=REDACTED_WEATHERSTACK_KEY  # ❌ Real key exposed
+Impact: Keys can be scraped from public repositories
+5. Insecure HTTP for External API MEDIUM
+Location: app/services/ingest.py:66
+python
+weatherstack_url = f'http://api.weatherstack.com/...'  # ❌ HTTP not HTTPS
+6. Missing Security Headers MEDIUM
+Location: app/api/app.py
+No security headers configured (CSP, X-Frame-Options, HSTS, etc.)
+7. Debug Mode Not Enforced MEDIUM
+Location: Multiple files
+Debug mode relies on env var but defaults could leak in production
+📊 DETAILED FINDINGS
+A. Input Validation ✅ (Good)
+Your app/utils/validation.py is well-implemented with:
+✅ Range validation for weather data
+✅ Bleach sanitization for XSS
+✅ SQL injection protection layer
+❌ BUT not consistently used in all endpoints
+B. Database Security ✅ (Good)
+✅ SQLAlchemy parameterized queries
+✅ RLS enabled on Supabase tables
+✅ Connection pooling with health checks
+❌ Missing encryption at rest configuration
+C. Error Handling 🟡 (Needs Work)
+python
+except Exception as e:
+    return jsonify({'error': str(e)})  # ❌ May leak internal details
+🏗️ ARCHITECTURE RECOMMENDATIONS
+Current Structure Analysis
+plaintext
+backend/
+├── app/
+│   ├── api/app.py          # ❌ 543 lines - TOO LARGE, mixed concerns
+│   ├── core/config.py      # ❌ 10 lines - Underutilized
+│   ├── models/db.py        # ✅ Good separation
+│   ├── services/           # ✅ Good separation
+│   └── utils/              # ✅ Good separation
+Recommended Modular Architecture
+plaintext
+backend/
+├── app/
+│   ├── __init__.py              # Flask app factory
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── routes/              # NEW: Split routes
+│   │   │   ├── __init__.py
+│   │   │   ├── health.py        # /status, /health
+│   │   │   ├── ingest.py        # /ingest
+│   │   │   ├── predict.py       # /predict
+│   │   │   ├── data.py          # /data
+│   │   │   └── models.py        # /api/models, /api/docs
+│   │   ├── middleware/          # NEW: Middleware layer
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py          # Authentication middleware
+│   │   │   ├── rate_limit.py    # Rate limiting
+│   │   │   ├── security.py      # Security headers
+│   │   │   └── logging.py       # Request logging
+│   │   └── schemas/             # NEW: Request/Response schemas
+│   │       ├── __init__.py
+│   │       ├── weather.py
+│   │       └── prediction.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py            # Enhanced configuration
+│   │   ├── security.py          # NEW: Security utilities
+│   │   ├── exceptions.py        # NEW: Custom exceptions
+│   │   └── constants.py         # NEW: Application constants
+│   ├── models/                  # (unchanged)
+│   ├── services/                # (unchanged)
+│   └── utils/                   # (unchanged)
+├── tests/
+│   ├── unit/                    # NEW: Unit tests
+│   ├── integration/             # NEW: Integration tests
+│   └── security/                # NEW: Security tests
+🔧 IMPLEMENTATION PRIORITIES
+Phase 1: CRITICAL Security Fixes (Week 1)
+1.1 Add API Key Authentication
+python
+# app/api/middleware/auth.py
+from functools import wraps
+from flask import request, jsonify
+import os
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+        valid_keys = os.getenv('VALID_API_KEYS', '').split(',')
+        
+        if not api_key or api_key not in valid_keys:
+            return jsonify({'error': 'Invalid or missing API key'}), 401
+        return f(*args, **kwargs)
+    return decorated
+1.2 Implement Rate Limiting
+python
+# app/api/middleware/rate_limit.py
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["100 per hour", "10 per minute"],
+    storage_uri="memory://",
+)
+
+# Apply to sensitive endpoints
+@limiter.limit("30 per minute")
+def predict():
+    ...
+
+@limiter.limit("10 per minute")  
+def ingest():
+    ...
+1.3 Fix CORS Configuration
+python
+# Restrict to allowed origins
+CORS(app, origins=[
+    os.getenv('CORS_ORIGINS', 'https://floodingnaque.vercel.app'),
+    'http://localhost:3000'  # Development only
+])
+1.4 Add Security Headers
+python
+# app/api/middleware/security.py
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000'
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    return response
+Phase 2: Architecture Refactoring (Week 2)
+2.1 Create Flask Application Factory
+python
+# app/__init__.py
+from flask import Flask
+from app.core.config import Config
+from app.api.middleware.rate_limit import limiter
+from app.api.middleware.security import setup_security
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    
+    # Initialize extensions
+    limiter.init_app(app)
+    setup_security(app)
+    
+    # Register blueprints
+    from app.api.routes import health, ingest, predict, data
+    app.register_blueprint(health.bp)
+    app.register_blueprint(ingest.bp)
+    app.register_blueprint(predict.bp)
+    app.register_blueprint(data.bp)
+    
+    return app
+2.2 Enhanced Configuration Management
+python
+# app/core/config.py
+import os
+from dataclasses import dataclass
+
+@dataclass
+class Config:
+    # Flask
+    SECRET_KEY: str = os.getenv('SECRET_KEY', 'change-me-in-production')
+    DEBUG: bool = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    # Database
+    DATABASE_URL: str = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
+    
+    # Security
+    RATE_LIMIT_ENABLED: bool = os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true'
+    CORS_ORIGINS: list = os.getenv('CORS_ORIGINS', '').split(',')
+    
+    # External APIs
+    OWM_API_KEY: str = os.getenv('OWM_API_KEY', '')
+    WEATHERSTACK_API_KEY: str = os.getenv('WEATHERSTACK_API_KEY', '')
+    
+    @classmethod
+    def validate(cls):
+        """Validate required configuration."""
+        if not cls.OWM_API_KEY:
+            raise ValueError("OWM_API_KEY is required")
+        if cls.SECRET_KEY == 'change-me-in-production' and not cls.DEBUG:
+            raise ValueError("SECRET_KEY must be set in production")
+2.3 Custom Exception Handling
+python
+# app/core/exceptions.py
+class AppException(Exception):
+    """Base application exception."""
+    def __init__(self, message, status_code=500, payload=None):
+        self.message = message
+        self.status_code = status_code
+        self.payload = payload
+
+class ValidationError(AppException):
+    def __init__(self, message, payload=None):
+        super().__init__(message, 400, payload)
+
+class AuthenticationError(AppException):
+    def __init__(self, message="Authentication required"):
+        super().__init__(message, 401)
+
+class RateLimitError(AppException):
+    def __init__(self, message="Rate limit exceeded"):
+        super().__init__(message, 429)
+Phase 3: Production Hardening (Week 3)
+3.1 Structured Logging
+python
+# app/core/logging.py
+import logging
+from pythonjsonlogger import jsonlogger
+
+def setup_logging(app):
+    handler = logging.StreamHandler()
+    formatter = jsonlogger.JsonFormatter(
+        '%(timestamp)s %(level)s %(name)s %(message)s'
+    )
+    handler.setFormatter(formatter)
+    
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
+3.2 Health Check Enhancement
+python
+# Include dependency checks
+@bp.route('/health', methods=['GET'])
+def health():
+    checks = {
+        'database': check_database(),
+        'model': check_model(),
+        'external_apis': check_external_apis(),
+        'disk_space': check_disk_space(),
+    }
+    
+    status = 'healthy' if all(checks.values()) else 'degraded'
+    return jsonify({'status': status, 'checks': checks})
+📋 SECURITY CHECKLIST
+Immediate Actions (Do Now)
+ Remove real API keys from .env.example
+ Implement rate limiting on all endpoints
+ Add API key authentication for sensitive endpoints
+ Fix CORS to restrict origins
+ Add security headers
+ Use HTTPS for Weatherstack API
+Short-term (Week 1-2)
+ Implement application factory pattern
+ Split routes into blueprints
+ Create middleware layer
+ Add custom exception handling
+ Implement structured JSON logging
+ Add request/response schemas (Pydantic or Marshmallow)
+Medium-term (Week 3-4)
+ Add JWT authentication for future user features
+ Implement API versioning (/api/v1/...)
+ Add OpenAPI/Swagger documentation generation
+ Create integration tests with security focus
+ Set up CI/CD security scanning
+ Add dependency vulnerability scanning (Safety, Snyk)
+Production Requirements
+ SSL/TLS certificates configured
+ WAF (Web Application Firewall) enabled
+ DDoS protection (Cloudflare/AWS Shield)
+ Secret rotation policy
+ Backup and disaster recovery plan
+ Incident response procedure
+📦 RECOMMENDED DEPENDENCIES TO ADD
+txt
+# requirements.txt additions
+
+# Security
+python-jose[cryptography]>=3.3.0  # JWT tokens
+argon2-cffi>=21.3.0               # Password hashing (if needed)
+secure>=0.3.0                     # Security headers
+
+# Validation & Schemas
+pydantic>=2.0.0                   # Request/response validation
+email-validator>=2.0.0            # Email validation
+
+# Monitoring
+sentry-sdk[flask]>=1.0.0          # Error tracking
+prometheus-flask-exporter>=0.22.0 # Metrics
+
+# Testing
+pytest-security>=0.1.0            # Security tests
+bandit>=1.7.0                     # Security linting
+safety>=2.0.0                     # Dependency vulnerability check
+🎯 PRIORITY ACTION ITEMS
+Priority	Task	Effort	Impact
+🔴 P0	Remove API keys from .env.example	5 min	High
+🔴 P0	Implement rate limiting	30 min	High
+🔴 P0	Add API key authentication	1 hour	High
+🟠 P1	Fix CORS configuration	15 min	Medium
+🟠 P1	Add security headers	20 min	Medium
+🟠 P1	Fix HTTP to HTTPS for Weatherstack	5 min	Medium
+🟡 P2	Refactor to application factory	2 hours	Medium
+🟡 P2	Split routes into blueprints	2 hours	Medium
+🟢 P3	Add Pydantic schemas	3 hours	Low
+🟢 P3	Add OpenAPI documentation	2 hours	Low

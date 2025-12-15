@@ -63,7 +63,9 @@ def ingest_data(lat=None, lon=None):
     if weatherstack_api_key:
         try:
             # Weatherstack API endpoint for current weather
-            weatherstack_url = f'http://api.weatherstack.com/current?access_key={weatherstack_api_key}&query={lat},{lon}&units=m'
+            # Note: HTTPS requires paid plan, but we use it for security
+            # Free tier users should upgrade or the request will fail gracefully
+            weatherstack_url = f'https://api.weatherstack.com/current?access_key={weatherstack_api_key}&query={lat},{lon}&units=m'
             weatherstack_response = requests.get(weatherstack_url, timeout=10)
             weatherstack_response.raise_for_status()
             weatherstack_data = weatherstack_response.json()

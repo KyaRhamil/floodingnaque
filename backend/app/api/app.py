@@ -5,9 +5,13 @@ from app.services.scheduler import scheduler
 from app.services.ingest import ingest_data
 from app.services.predict import predict_flood, get_current_model_info, list_available_models, get_latest_model_version
 from app.services.risk_classifier import RISK_LEVELS, get_risk_thresholds
-from app.core.config import load_env
+from app.core.config import load_env, get_config
+from app.core.exceptions import AppException, ValidationError as AppValidationError
 from app.models.db import init_db, WeatherData, get_db_session
 from app.utils.utils import setup_logging, validate_coordinates
+from app.api.middleware.auth import require_api_key, optional_api_key
+from app.api.middleware.rate_limit import limiter, init_rate_limiter, get_endpoint_limit
+from app.api.middleware.security import setup_security_headers, get_cors_origins
 import logging
 import os
 import json
@@ -70,10 +74,26 @@ def parse_json_safely(data_bytes):
         return None
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend integration
 
-# Load environment variables
+# Load environment variables first
 load_env()
+
+# Get CORS origins from environment and configure CORS properly
+cors_origins = get_cors_origins()
+if cors_origins:
+    CORS(app, origins=cors_origins,
+         methods=['GET', 'POST', 'OPTIONS'],
+         allow_headers=['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
+         expose_headers=['X-Request-ID'],
+         supports_credentials=True,
+         max_age=600)
+else:
+    # Development fallback - allow localhost origins
+    if os.getenv('FLASK_DEBUG', 'False').lower() == 'true':
+        CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000'])
+    else:
+        # Production without CORS_ORIGINS set - restrict to same origin
+        CORS(app, origins=[])
 
 # Initialize database
 init_db()
@@ -81,6 +101,20 @@ init_db()
 # Setup logging
 setup_logging()
 logger = logging.getLogger(__name__)
+
+# Initialize rate limiter
+init_rate_limiter(app)
+
+# Setup security headers
+setup_security_headers(app)
+
+# Register custom exception handler
+@app.errorhandler(AppException)
+def handle_app_exception(error):
+    """Handle custom application exceptions."""
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 # Request ID tracking
 def add_request_id():
@@ -121,6 +155,7 @@ def root():
     }), 200
 
 @app.route('/status', methods=['GET'])
+@limiter.limit(get_endpoint_limit('status'))
 def status():
     """Health check endpoint."""
     model_info = get_current_model_info()
@@ -139,6 +174,8 @@ def status():
     return jsonify(response)
 
 @app.route('/ingest', methods=['GET', 'POST'])
+@limiter.limit(get_endpoint_limit('ingest'))
+@require_api_key
 def ingest():
     """Ingest weather data from external APIs."""
     # Handle GET requests - show usage information
@@ -222,6 +259,8 @@ def ingest():
         return jsonify({'error': str(e), 'request_id': request_id}), 500
 
 @app.route('/predict', methods=['POST'])
+@limiter.limit(get_endpoint_limit('predict'))
+@require_api_key
 def predict():
     """Predict flood risk based on weather data."""
     try:
@@ -304,6 +343,7 @@ def predict():
         return jsonify({'error': str(e), 'request_id': request_id}), 500
 
 @app.route('/health', methods=['GET'])
+@limiter.limit(get_endpoint_limit('status'))
 def health():
     """Detailed health check endpoint."""
     model_info = get_current_model_info()
@@ -339,6 +379,7 @@ def health():
     return jsonify(response)
 
 @app.route('/data', methods=['GET'])
+@limiter.limit(get_endpoint_limit('data'))
 def get_weather_data():
     """Retrieve historical weather data."""
     try:
@@ -452,6 +493,7 @@ def list_models():
         return jsonify({'error': str(e), 'request_id': request_id}), 500
 
 @app.route('/api/docs', methods=['GET'])
+@limiter.limit(get_endpoint_limit('docs'))
 def api_docs():
     """API documentation endpoint."""
     docs = {
