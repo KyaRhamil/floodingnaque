@@ -196,3 +196,9 @@
 2025-12-12 13:21:33,863 - INFO - 127.0.0.1 - - [12/Dec/2025 13:21:33] "GET /api/docs HTTP/1.1" 200 -
 2025-12-12 13:21:49,909 - INFO - Request 7a54f281-1901-4715-974d-345e3ac51503: GET /api/version
 2025-12-12 13:21:49,915 - INFO - 127.0.0.1 - - [12/Dec/2025 13:21:49] "GET /api/version HTTP/1.1" 200 -
+2025-12-12 13:53:05,146 - INFO - Running job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 14:53:05 +08)" (scheduled at 2025-12-12 13:53:05.132732+08:00)
+2025-12-12 13:53:05,848 - INFO - Successfully fetched data from OpenWeatherMap for lat=40.7128, lon=-74.006
+2025-12-12 13:53:08,289 - INFO - Got precipitation from Weatherstack: 0.0 mm
+2025-12-12 13:53:08,297 - INFO - Successfully saved weather data to database
+2025-12-12 13:53:08,299 - INFO - Scheduled data ingestion completed.
+2025-12-12 13:53:08,300 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 14:53:05 +08)" executed successfully
