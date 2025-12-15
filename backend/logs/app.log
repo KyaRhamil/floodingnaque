@@ -492,3 +492,15 @@
 2025-12-15 15:24:33,436 - INFO - Added job "scheduled_ingest" to job store "default"
 2025-12-15 15:24:33,437 - INFO - Scheduler started
 2025-12-15 15:24:33,437 - INFO - Scheduler started successfully
+2025-12-15 15:47:52,662 - INFO - Rate limiting enabled: 100 requests per 3600s
+2025-12-15 15:47:52,662 - INFO - Security headers middleware enabled
+2025-12-15 15:47:52,664 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-15 15:47:52,664 - INFO - Scheduler started
+2025-12-15 15:47:52,664 - INFO - Scheduler started successfully
+2025-12-15 15:47:52,701 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000
+2025-12-15 15:47:52,701 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-15 15:47:52,844 - INFO - Request c2458b94-5e92-471b-8abe-70e92bd2c5cb: GET /api/docs
+2025-12-15 15:47:52,846 - INFO - 127.0.0.1 - - [15/Dec/2025 15:47:52] "GET /api/docs HTTP/1.1" 200 -
