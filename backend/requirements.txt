@@ -1,14 +1,57 @@
-Flask==2.2.5
+# Web Framework
+Flask==3.0.0
 flask-cors==4.0.0
+Werkzeug==3.0.1
+
+# Production Server
 gunicorn==21.2.0
+
+# HTTP & API
 requests==2.31.0
-pandas
-numpy
-scikit-learn
-joblib
+
+# Data Processing & ML
+# Note: Using version ranges with pre-built wheels for Windows compatibility
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Scheduling
 APScheduler==3.10.1
+
+# Configuration
 python-dotenv==1.0.1
-SQLAlchemy==1.4.46
-matplotlib
-seaborn==0.12.2
+
+# Database
+SQLAlchemy==2.0.23
+alembic==1.13.1  # Database migrations
+pg8000>=1.30.0  # PostgreSQL adapter for Supabase (pure Python, Windows-friendly)
+
+# Visualization
+# Note: Using version ranges for better compatibility
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Security
+# Note: cryptography can be tricky on Windows, using flexible version
+cryptography>=41.0.0  # For secure data handling
+itsdangerous>=2.1.0  # Secure session handling
+
+# Input Validation
+validators==0.22.0  # Email, URL validation
+bleach==6.1.0  # HTML sanitization
+
+# Rate Limiting (optional)
+Flask-Limiter==3.5.0
+
+# Monitoring & Logging
+python-json-logger==2.0.7  # Structured logging
+
+# Development Tools (optional)
 jupyter==1.0.0
+ipython==8.18.1
+
+# Testing (optional)
+pytest==7.4.3
+pytest-cov==4.1.0
+faker==21.0.0  # Generate test data

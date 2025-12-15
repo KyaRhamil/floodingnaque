@@ -1,0 +1,40 @@
+# Minimal Requirements for Floodingnaque Backend
+# Use this if you encounter build issues on Windows
+# Install with: pip install -r requirements-minimal.txt
+
+# Web Framework (Required)
+Flask>=3.0.0
+flask-cors>=4.0.0
+Werkzeug>=3.0.0
+
+# Production Server
+gunicorn>=21.2.0
+
+# HTTP & API
+requests>=2.31.0
+
+# Data Processing & ML (Pre-built wheels available)
+pandas
+numpy
+scikit-learn
+joblib
+
+# Scheduling
+APScheduler>=3.10.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Database
+SQLAlchemy>=2.0.0
+
+# OPTIONAL - Install these separately if needed:
+# matplotlib
+# seaborn
+# cryptography
+# validators
+# bleach
+# Flask-Limiter
+# alembic
+# pytest
+# jupyter

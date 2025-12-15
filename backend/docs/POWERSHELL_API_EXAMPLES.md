@@ -1,6 +1,6 @@
 # PowerShell API Examples
 
-This guide provides PowerShell syntax for testing the Flooding Naque API.
+This guide provides PowerShell syntax for testing the Floodingnaque API.
 
 ## PowerShell vs Bash curl
 

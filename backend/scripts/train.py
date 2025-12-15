@@ -1,10 +1,10 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, classification_report, confusion_matrix,
     precision_score, recall_score, f1_score, roc_auc_score,
-    roc_curve, precision_recall_curve
+    roc_curve, precision_recall_curve, make_scorer
 )
 import joblib
 import os
@@ -13,6 +13,8 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+import numpy as np
+import glob
 
 # Setup logging
 logging.basicConfig(
@@ -120,26 +122,48 @@ def calculate_comprehensive_metrics(y_test, y_pred, y_pred_proba=None):
     return metrics
 
 
-def train_model(version=None, models_dir='models', data_file='data/synthetic_dataset.csv'):
+def train_model(version=None, models_dir='models', data_file='data/synthetic_dataset.csv', 
+                use_grid_search=False, n_folds=5, merge_datasets=False):
     """
     Train the flood prediction model with versioning and comprehensive metrics.
     
     Args:
         version: Model version number (auto-incremented if None)
         models_dir: Directory to save models
-        data_file: Path to training data CSV file
+        data_file: Path to training data CSV file (or pattern like 'data/*.csv' if merge_datasets=True)
+        use_grid_search: If True, perform hyperparameter tuning with GridSearchCV
+        n_folds: Number of cross-validation folds
+        merge_datasets: If True, merge multiple CSV files matching the data_file pattern
     
     Returns:
         tuple: (model, metrics, metadata)
     """
     try:
-        # Check if data file exists
-        if not os.path.exists(data_file):
-            logger.error(f"Data file not found: {data_file}")
-            sys.exit(1)
-        
-        logger.info(f"Loading data from {data_file}")
-        data = pd.read_csv(data_file)
+        # Load data (single file or merge multiple files)
+        if merge_datasets:
+            logger.info(f"Merging datasets matching pattern: {data_file}")
+            csv_files = glob.glob(data_file)
+            if not csv_files:
+                logger.error(f"No CSV files found matching pattern: {data_file}")
+                sys.exit(1)
+            logger.info(f"Found {len(csv_files)} CSV files to merge: {csv_files}")
+            data_frames = []
+            for file in csv_files:
+                df = pd.read_csv(file)
+                logger.info(f"  Loaded {file}: {df.shape[0]} rows")
+                data_frames.append(df)
+            data = pd.concat(data_frames, ignore_index=True)
+            logger.info(f"Merged dataset shape: {data.shape}")
+            # Update data_file reference for metadata
+            data_file = f"merged_{len(csv_files)}_files"
+        else:
+            # Check if data file exists
+            if not os.path.exists(data_file):
+                logger.error(f"Data file not found: {data_file}")
+                sys.exit(1)
+            
+            logger.info(f"Loading data from {data_file}")
+            data = pd.read_csv(data_file)
         
         # Validate data
         if data.empty:
@@ -177,15 +201,73 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
         logger.info(f"Training set size: {len(X_train)}")
         logger.info(f"Test set size: {len(X_test)}")
         
-        # Train model
-        logger.info("Training Random Forest model...")
-        model = RandomForestClassifier(
-            n_estimators=100,
-            random_state=42,
-            n_jobs=-1,
-            verbose=1
-        )
-        model.fit(X_train, y_train)
+        # Train model with optional hyperparameter tuning
+        if use_grid_search:
+            logger.info("Performing hyperparameter tuning with GridSearchCV...")
+            logger.info("This may take several minutes...")
+            
+            # Define parameter grid
+            param_grid = {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [None, 10, 20, 30],
+                'min_samples_split': [2, 5, 10],
+                'min_samples_leaf': [1, 2, 4],
+                'max_features': ['sqrt', 'log2']
+            }
+            
+            # Create base model
+            rf_base = RandomForestClassifier(random_state=42, n_jobs=-1)
+            
+            # Grid search with cross-validation
+            grid_search = GridSearchCV(
+                estimator=rf_base,
+                param_grid=param_grid,
+                cv=n_folds,
+                scoring='f1_weighted',
+                n_jobs=-1,
+                verbose=2,
+                return_train_score=True
+            )
+            
+            grid_search.fit(X_train, y_train)
+            
+            # Get best model
+            model = grid_search.best_estimator_
+            
+            logger.info(f"\nBest parameters found: {grid_search.best_params_}")
+            logger.info(f"Best cross-validation F1 score: {grid_search.best_score_:.4f}")
+            
+            # Store grid search results in data_info for metadata
+            data_info['grid_search'] = {
+                'best_params': grid_search.best_params_,
+                'best_cv_score': float(grid_search.best_score_),
+                'cv_folds': n_folds
+            }
+        else:
+            logger.info("Training Random Forest model with default parameters...")
+            model = RandomForestClassifier(
+                n_estimators=200,  # Increased from 100
+                max_depth=20,      # Added depth limit
+                min_samples_split=5,  # Added to prevent overfitting
+                random_state=42,
+                n_jobs=-1,
+                verbose=1
+            )
+            model.fit(X_train, y_train)
+            
+            # Perform cross-validation for robustness
+            logger.info(f"Performing {n_folds}-fold cross-validation...")
+            cv_scores = cross_val_score(model, X_train, y_train, cv=n_folds, 
+                                       scoring='f1_weighted', n_jobs=-1)
+            logger.info(f"Cross-validation F1 scores: {cv_scores}")
+            logger.info(f"Mean CV F1: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
+            
+            data_info['cross_validation'] = {
+                'cv_folds': n_folds,
+                'cv_scores': cv_scores.tolist(),
+                'cv_mean': float(cv_scores.mean()),
+                'cv_std': float(cv_scores.std())
+            }
         
         # Evaluate with comprehensive metrics
         logger.info("Evaluating model...")
@@ -276,11 +358,44 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
 if __name__ == '__main__':
     import argparse
     
-    parser = argparse.ArgumentParser(description='Train flood prediction model')
+    parser = argparse.ArgumentParser(
+        description='Train flood prediction model with Random Forest',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  Basic training:
+    python train.py
+  
+  Train with new dataset:
+    python train.py --data data/flood_data_2025.csv
+  
+  Hyperparameter tuning (recommended for thesis):
+    python train.py --grid-search --cv-folds 10
+  
+  Merge multiple datasets:
+    python train.py --data "data/*.csv" --merge-datasets
+  
+  Full optimization with merged data:
+    python train.py --data "data/*.csv" --merge-datasets --grid-search
+        """
+    )
     parser.add_argument('--version', type=int, help='Model version number (auto-incremented if not provided)')
-    parser.add_argument('--data', type=str, default='data/synthetic_dataset.csv', help='Path to training data CSV')
+    parser.add_argument('--data', type=str, default='data/synthetic_dataset.csv', 
+                       help='Path to training data CSV (use quotes for patterns like "data/*.csv")')
     parser.add_argument('--models-dir', type=str, default='models', help='Directory to save models')
+    parser.add_argument('--grid-search', action='store_true', 
+                       help='Perform hyperparameter tuning with GridSearchCV (slow but optimal)')
+    parser.add_argument('--cv-folds', type=int, default=5, 
+                       help='Number of cross-validation folds (default: 5)')
+    parser.add_argument('--merge-datasets', action='store_true',
+                       help='Merge multiple CSV files matching the data pattern')
     
     args = parser.parse_args()
     
-    train_model(version=args.version, models_dir=args.models_dir, data_file=args.data)
+    train_model(
+        version=args.version, 
+        models_dir=args.models_dir, 
+        data_file=args.data,
+        use_grid_search=args.grid_search,
+        n_folds=args.cv_folds,
+        merge_datasets=args.merge_datasets
+    )
