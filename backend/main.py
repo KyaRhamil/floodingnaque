@@ -20,5 +20,8 @@ if __name__ == '__main__':
     host = os.getenv('HOST', '0.0.0.0')
     debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
 
-    print(f"Starting Floodingnaque API on {host}:{port} (debug={debug})")
+    # Only print once (not on reloader subprocess)
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        print(f"Starting Floodingnaque API on {host}:{port} (debug={debug})")
+    
     app.run(host=host, port=port, debug=debug)

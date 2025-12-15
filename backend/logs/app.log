@@ -202,3 +202,204 @@
 2025-12-12 13:53:08,297 - INFO - Successfully saved weather data to database
 2025-12-12 13:53:08,299 - INFO - Scheduled data ingestion completed.
 2025-12-12 13:53:08,300 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 14:53:05 +08)" executed successfully
+2025-12-12 14:53:05,138 - INFO - Running job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 15:53:05 +08)" (scheduled at 2025-12-12 14:53:05.132732+08:00)
+2025-12-12 14:53:05,666 - INFO - Successfully fetched data from OpenWeatherMap for lat=40.7128, lon=-74.006
+2025-12-12 14:53:08,197 - INFO - Got precipitation from Weatherstack: 0.0 mm
+2025-12-12 14:53:08,202 - INFO - Successfully saved weather data to database
+2025-12-12 14:53:08,204 - INFO - Scheduled data ingestion completed.
+2025-12-12 14:53:08,204 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 15:53:05 +08)" executed successfully
+2025-12-12 16:35:24,305 - WARNING - Run time of job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 16:53:05 +08)" was missed by 0:42:19.172643
+2025-12-12 16:48:17,068 - INFO - Request 873a90a1-c609-4646-869b-8aa69eb7a25f: GET /status
+2025-12-12 16:48:17,069 - INFO - 127.0.0.1 - - [12/Dec/2025 16:48:17] "GET /status HTTP/1.1" 200 -
+2025-12-12 16:48:26,495 - INFO - Request b9727f31-52f8-4326-8459-943d2a6ac1be: GET /health
+2025-12-12 16:48:26,497 - INFO - 127.0.0.1 - - [12/Dec/2025 16:48:26] "GET /health HTTP/1.1" 200 -
+2025-12-12 16:50:57,561 - INFO - Request ff7ed022-1ef4-4639-aebd-f74ead1db091: GET /
+2025-12-12 16:50:57,562 - INFO - 127.0.0.1 - - [12/Dec/2025 16:50:57] "GET / HTTP/1.1" 200 -
+2025-12-12 16:53:05,133 - INFO - Running job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 17:53:05 +08)" (scheduled at 2025-12-12 16:53:05.132732+08:00)
+2025-12-12 16:53:06,867 - INFO - Successfully fetched data from OpenWeatherMap for lat=40.7128, lon=-74.006
+2025-12-12 16:53:09,239 - INFO - Got precipitation from Weatherstack: 0.0 mm
+2025-12-12 16:53:09,244 - INFO - Successfully saved weather data to database
+2025-12-12 16:53:09,247 - INFO - Scheduled data ingestion completed.
+2025-12-12 16:53:09,247 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 17:53:05 +08)" executed successfully
+2025-12-12 17:29:46,397 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:29:46,397 - INFO - Scheduler started
+2025-12-12 17:29:46,398 - INFO - Scheduler started successfully
+2025-12-12 17:29:46,491 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-12 17:29:46,492 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-12 17:29:46,494 - INFO -  * Restarting with stat
+2025-12-12 17:29:47,932 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:29:47,933 - INFO - Scheduler started
+2025-12-12 17:29:47,933 - INFO - Scheduler started successfully
+2025-12-12 17:29:47,965 - WARNING -  * Debugger is active!
+2025-12-12 17:29:47,969 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 17:38:09,907 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:38:09,908 - INFO - Scheduler started
+2025-12-12 17:38:09,909 - INFO - Scheduler started successfully
+2025-12-12 17:38:09,965 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-12 17:38:09,965 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-12 17:38:09,967 - INFO -  * Restarting with stat
+2025-12-12 17:38:11,439 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:38:11,439 - INFO - Scheduler started
+2025-12-12 17:38:11,440 - INFO - Scheduler started successfully
+2025-12-12 17:38:11,463 - WARNING -  * Debugger is active!
+2025-12-12 17:38:11,469 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 17:38:22,427 - INFO - Request a71514a4-1f57-4747-9e55-51160c0396cf: GET /
+2025-12-12 17:38:22,429 - INFO - 127.0.0.1 - - [12/Dec/2025 17:38:22] "GET / HTTP/1.1" 200 -
+2025-12-12 17:39:26,046 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\docs\\__init__.py', reloading
+2025-12-12 17:39:26,264 - INFO -  * Restarting with stat
+2025-12-12 17:39:28,120 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:39:28,120 - INFO - Scheduler started
+2025-12-12 17:39:28,121 - INFO - Scheduler started successfully
+2025-12-12 17:39:28,145 - WARNING -  * Debugger is active!
+2025-12-12 17:39:28,153 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 17:43:14,899 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\app.py', reloading
+2025-12-12 17:43:15,443 - INFO -  * Restarting with stat
+2025-12-12 17:49:40,520 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:49:40,521 - INFO - Scheduler started
+2025-12-12 17:49:40,522 - INFO - Scheduler started successfully
+2025-12-12 17:49:40,579 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.108:5000
+2025-12-12 17:49:40,580 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-12 17:49:40,581 - INFO -  * Restarting with stat
+2025-12-12 17:49:42,237 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 17:49:42,237 - INFO - Scheduler started
+2025-12-12 17:49:42,238 - INFO - Scheduler started successfully
+2025-12-12 17:49:42,271 - WARNING -  * Debugger is active!
+2025-12-12 17:49:42,275 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 17:49:49,342 - INFO - Request 73dfe36c-2095-42aa-862d-3727632c75e8: GET /
+2025-12-12 17:49:49,344 - INFO - 127.0.0.1 - - [12/Dec/2025 17:49:49] "GET / HTTP/1.1" 200 -
+2025-12-12 18:00:36,100 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-12 18:00:36,307 - INFO -  * Restarting with stat
+2025-12-12 18:00:38,944 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:00:38,945 - INFO - Scheduler started
+2025-12-12 18:00:38,945 - INFO - Scheduler started successfully
+2025-12-12 18:00:38,969 - WARNING -  * Debugger is active!
+2025-12-12 18:00:38,973 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:02:51,235 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-12 18:02:51,647 - INFO -  * Restarting with stat
+2025-12-12 18:02:54,021 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:02:54,022 - INFO - Scheduler started
+2025-12-12 18:02:54,023 - INFO - Scheduler started successfully
+2025-12-12 18:02:54,056 - WARNING -  * Debugger is active!
+2025-12-12 18:02:54,066 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:02:58,166 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-12 18:02:58,455 - INFO -  * Restarting with stat
+2025-12-12 18:03:00,615 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:03:00,616 - INFO - Scheduler started
+2025-12-12 18:03:00,616 - INFO - Scheduler started successfully
+2025-12-12 18:03:00,636 - WARNING -  * Debugger is active!
+2025-12-12 18:03:00,643 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:03:35,703 - INFO - Request 035e25cb-b9e4-4bb3-9b99-c5871511f34d: GET /
+2025-12-12 18:03:35,705 - INFO - 127.0.0.1 - - [12/Dec/2025 18:03:35] "GET / HTTP/1.1" 200 -
+2025-12-12 18:03:37,634 - INFO - Request 68adf482-bc75-4725-be5a-2939097ace86: GET /
+2025-12-12 18:03:37,635 - INFO - 127.0.0.1 - - [12/Dec/2025 18:03:37] "GET / HTTP/1.1" 200 -
+2025-12-12 18:03:38,595 - INFO - Request 1693a4af-812a-4998-b573-741d3dbb50cb: GET /
+2025-12-12 18:03:38,596 - INFO - 127.0.0.1 - - [12/Dec/2025 18:03:38] "GET / HTTP/1.1" 200 -
+2025-12-12 18:03:50,152 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\test_supabase_connection.py', reloading
+2025-12-12 18:03:50,649 - INFO -  * Restarting with stat
+2025-12-12 18:03:53,522 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:03:53,522 - INFO - Scheduler started
+2025-12-12 18:03:53,524 - INFO - Scheduler started successfully
+2025-12-12 18:03:53,550 - WARNING -  * Debugger is active!
+2025-12-12 18:03:53,560 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:14:09,825 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-12 18:14:10,085 - INFO -  * Restarting with stat
+2025-12-12 18:14:13,680 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:14:13,682 - INFO - Scheduler started
+2025-12-12 18:14:13,683 - INFO - Scheduler started successfully
+2025-12-12 18:14:13,712 - WARNING -  * Debugger is active!
+2025-12-12 18:14:13,719 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:15:42,544 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-12 18:15:42,883 - INFO -  * Restarting with stat
+2025-12-12 18:15:44,967 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:15:44,968 - INFO - Scheduler started
+2025-12-12 18:15:44,970 - INFO - Scheduler started successfully
+2025-12-12 18:15:44,991 - WARNING -  * Debugger is active!
+2025-12-12 18:15:44,996 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:15:48,052 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-12 18:15:48,407 - INFO -  * Restarting with stat
+2025-12-12 18:15:50,023 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:15:50,024 - INFO - Scheduler started
+2025-12-12 18:15:50,025 - INFO - Scheduler started successfully
+2025-12-12 18:15:50,044 - WARNING -  * Debugger is active!
+2025-12-12 18:15:50,048 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:23:43,434 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\test_supabase_connection.py', reloading
+2025-12-12 18:23:43,644 - INFO -  * Restarting with stat
+2025-12-12 18:23:46,257 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:23:46,257 - INFO - Scheduler started
+2025-12-12 18:23:46,258 - INFO - Scheduler started successfully
+2025-12-12 18:23:46,281 - WARNING -  * Debugger is active!
+2025-12-12 18:23:46,286 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:23:48,320 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\test_supabase_connection.py', reloading
+2025-12-12 18:23:48,518 - INFO -  * Restarting with stat
+2025-12-12 18:23:50,398 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:23:50,399 - INFO - Scheduler started
+2025-12-12 18:23:50,399 - INFO - Scheduler started successfully
+2025-12-12 18:23:50,418 - WARNING -  * Debugger is active!
+2025-12-12 18:23:50,422 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:27:17,333 - INFO - Request 2966b752-20b7-430d-a9f7-a7d36ca45f8f: GET /
+2025-12-12 18:27:17,335 - INFO - 127.0.0.1 - - [12/Dec/2025 18:27:17] "GET / HTTP/1.1" 200 -
+2025-12-12 18:34:35,883 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\apply_rls_migration.py', reloading
+2025-12-12 18:34:36,559 - INFO -  * Restarting with stat
+2025-12-12 18:34:42,304 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:34:42,305 - INFO - Scheduler started
+2025-12-12 18:34:42,307 - INFO - Scheduler started successfully
+2025-12-12 18:34:42,338 - WARNING -  * Debugger is active!
+2025-12-12 18:34:42,348 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:39:12,686 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\apply_rls_migration.py', reloading
+2025-12-12 18:39:12,884 - INFO -  * Restarting with stat
+2025-12-12 18:39:14,867 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:39:14,868 - INFO - Scheduler started
+2025-12-12 18:39:14,870 - INFO - Scheduler started successfully
+2025-12-12 18:39:14,888 - WARNING -  * Debugger is active!
+2025-12-12 18:39:14,892 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:39:38,063 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\apply_rls_migration.py', reloading
+2025-12-12 18:39:38,334 - INFO -  * Restarting with stat
+2025-12-12 18:39:39,985 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:39:39,985 - INFO - Scheduler started
+2025-12-12 18:39:39,986 - INFO - Scheduler started successfully
+2025-12-12 18:39:40,004 - WARNING -  * Debugger is active!
+2025-12-12 18:39:40,010 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:43:51,888 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\apply_rls_migration.py', reloading
+2025-12-12 18:43:52,194 - INFO -  * Restarting with stat
+2025-12-12 18:43:54,774 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:43:54,775 - INFO - Scheduler started
+2025-12-12 18:43:54,776 - INFO - Scheduler started successfully
+2025-12-12 18:43:54,806 - WARNING -  * Debugger is active!
+2025-12-12 18:43:54,813 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:43:57,934 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\apply_rls_migration.py', reloading
+2025-12-12 18:43:59,174 - INFO -  * Restarting with stat
+2025-12-12 18:44:02,707 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:44:02,708 - INFO - Scheduler started
+2025-12-12 18:44:02,708 - INFO - Scheduler started successfully
+2025-12-12 18:44:02,734 - WARNING -  * Debugger is active!
+2025-12-12 18:44:02,743 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:48:07,420 - INFO - Request 97c04f3d-f452-4801-bc27-439156cbdbcc: GET /
+2025-12-12 18:48:07,421 - INFO - 127.0.0.1 - - [12/Dec/2025 18:48:07] "GET / HTTP/1.1" 200 -
+2025-12-12 18:48:32,994 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\scripts\\verify_rls.py', reloading
+2025-12-12 18:48:33,481 - INFO -  * Restarting with stat
+2025-12-12 18:48:38,169 - INFO - Added job "scheduled_ingest" to job store "default"
+2025-12-12 18:48:38,173 - INFO - Scheduler started
+2025-12-12 18:48:38,204 - INFO - Scheduler started successfully
+2025-12-12 18:48:38,256 - WARNING -  * Debugger is active!
+2025-12-12 18:48:38,267 - INFO -  * Debugger PIN: 235-558-840
+2025-12-12 18:49:39,806 - INFO - Running job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 18:49:39 +08)" (scheduled at 2025-12-12 18:49:39.792192+08:00)
+2025-12-12 18:49:40,305 - INFO - Successfully fetched data from OpenWeatherMap for lat=40.7128, lon=-74.006
+2025-12-12 18:49:42,276 - INFO - Got precipitation from Weatherstack: 0.0 mm
+2025-12-12 18:49:42,316 - ERROR - Error saving data to database: (sqlite3.OperationalError) table weather_data has no column named created_at
+[SQL: INSERT INTO weather_data (temperature, humidity, precipitation, wind_speed, pressure, location_lat, location_lon, source, timestamp, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (269.84, 51.0, 0.0, None, None, None, None, 'OWM', '2025-12-12 18:49:42.295587', '2025-12-12 10:49:42.315824', '2025-12-12 10:49:42.315859')]
+(Background on this error at: https://sqlalche.me/e/14/e3q8)
+2025-12-12 18:49:42,339 - ERROR - Error in scheduled ingestion: (sqlite3.OperationalError) table weather_data has no column named created_at
+[SQL: INSERT INTO weather_data (temperature, humidity, precipitation, wind_speed, pressure, location_lat, location_lon, source, timestamp, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (269.84, 51.0, 0.0, None, None, None, None, 'OWM', '2025-12-12 18:49:42.295587', '2025-12-12 10:49:42.315824', '2025-12-12 10:49:42.315859')]
+(Background on this error at: https://sqlalche.me/e/14/e3q8)
+2025-12-12 18:49:42,341 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-12 19:49:39 +08)" executed successfully

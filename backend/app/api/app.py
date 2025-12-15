@@ -106,7 +106,7 @@ except Exception as e:
 def root():
     """Root endpoint - API information."""
     return jsonify({
-        'name': 'Flooding Naque API',
+        'name': 'Floodingnaque API',
         'version': '1.0.0',
         'description': 'Flood prediction API with weather data ingestion',
         'endpoints': {
@@ -408,7 +408,7 @@ def api_version():
     """API version endpoint."""
     return jsonify({
         'version': '1.0.0',
-        'name': 'Flooding Naque API',
+        'name': 'Floodingnaque API',
         'base_url': request.url_root.rstrip('/')
     }), 200
 

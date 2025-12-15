@@ -1,1 +1,1 @@
-"""Documentation for the Flooding Naque backend."""
+"""Documentation for the Floodingnaque backend."""
