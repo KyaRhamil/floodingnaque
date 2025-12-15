@@ -2,11 +2,12 @@
 Rate Limiting Middleware.
 
 Provides rate limiting for API endpoints to prevent abuse and ensure fair usage.
-Uses Flask-Limiter with configurable storage backend.
+Supports multiple backends (memory, Redis) and API key-based limits.
 """
 
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask import request, g
 import os
 import logging
 
@@ -15,20 +16,50 @@ logger = logging.getLogger(__name__)
 # Check if rate limiting is enabled
 RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true'
 
-# Get storage URI from environment (default to memory for development)
+# Get storage URI from environment
+# Supports: memory://, redis://host:port, memcached://host:port
 RATE_LIMIT_STORAGE = os.getenv('RATE_LIMIT_STORAGE_URL', 'memory://')
 
 # Default limits from environment
 DEFAULT_LIMIT = os.getenv('RATE_LIMIT_DEFAULT', '100')
 WINDOW_SECONDS = os.getenv('RATE_LIMIT_WINDOW_SECONDS', '3600')
 
-# Create limiter instance
-# Note: Will be initialized with app in init_app()
+
+def get_rate_limit_key():
+    """
+    Get rate limit key - uses API key hash if authenticated, otherwise IP address.
+    
+    This provides:
+    - Per-API-key limits for authenticated users (more generous)
+    - Per-IP limits for anonymous users (more restrictive)
+    """
+    # Check if authenticated via API key
+    api_key_hash = getattr(g, 'api_key_hash', None)
+    if api_key_hash:
+        return f"api_key:{api_key_hash}"
+    
+    # Fall back to IP address for anonymous users
+    return get_remote_address()
+
+
+def get_rate_limit_key_ip_only():
+    """Get rate limit key based only on IP address."""
+    return get_remote_address()
+
+
+# Create limiter instance with flexible key function
 limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=get_rate_limit_key,
     default_limits=[f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds"],
     storage_uri=RATE_LIMIT_STORAGE,
-    enabled=RATE_LIMIT_ENABLED
+    enabled=RATE_LIMIT_ENABLED,
+    strategy='fixed-window',  # Options: fixed-window, fixed-window-elastic-expiry, moving-window
+    headers_enabled=True,  # Add X-RateLimit-* headers
+    header_name_mapping={
+        "LIMIT": "X-RateLimit-Limit",
+        "REMAINING": "X-RateLimit-Remaining",
+        "RESET": "X-RateLimit-Reset"
+    }
 )
 
 
@@ -46,8 +77,13 @@ def init_rate_limiter(app):
     """
     limiter.init_app(app)
     
+    storage_type = 'Redis' if 'redis' in RATE_LIMIT_STORAGE else 'Memory'
+    
     if RATE_LIMIT_ENABLED:
-        logger.info(f"Rate limiting enabled: {DEFAULT_LIMIT} requests per {WINDOW_SECONDS}s")
+        logger.info(
+            f"Rate limiting enabled: {DEFAULT_LIMIT} requests per {WINDOW_SECONDS}s "
+            f"(storage: {storage_type})"
+        )
     else:
         logger.info("Rate limiting is disabled")
     
@@ -55,6 +91,8 @@ def init_rate_limiter(app):
 
 
 # Predefined rate limit decorators for common use cases
+# These now support both IP and API key-based limiting
+
 def rate_limit_standard():
     """Standard rate limit for general endpoints: 100 per hour, 20 per minute."""
     return limiter.limit("100 per hour;20 per minute")
@@ -70,13 +108,37 @@ def rate_limit_relaxed():
     return limiter.limit("200 per hour;50 per minute")
 
 
+def rate_limit_by_ip_only(limit_string):
+    """Rate limit based on IP only, ignoring API key."""
+    return limiter.limit(limit_string, key_func=get_rate_limit_key_ip_only)
+
+
+def rate_limit_authenticated_only(limit_string):
+    """
+    Higher rate limit for authenticated users only.
+    
+    Unauthenticated users get the default stricter limit.
+    """
+    def dynamic_limit():
+        if getattr(g, 'authenticated', False):
+            return limit_string
+        # More restrictive for anonymous
+        return "30 per hour;5 per minute"
+    
+    return limiter.limit(dynamic_limit)
+
+
 # Specific limits for different endpoint types
+# Authenticated users get 2x the limit
 ENDPOINT_LIMITS = {
-    'predict': "60 per hour;10 per minute",    # ML predictions (resource intensive)
-    'ingest': "30 per hour;5 per minute",       # Data ingestion (rate limited due to external APIs)
-    'data': "120 per hour;30 per minute",       # Data retrieval
-    'status': "300 per hour;60 per minute",     # Health checks (relaxed)
-    'docs': "200 per hour;40 per minute"        # Documentation
+    'predict': "60 per hour;10 per minute",      # ML predictions (resource intensive)
+    'predict_auth': "120 per hour;20 per minute", # Authenticated prediction limit
+    'ingest': "30 per hour;5 per minute",         # Data ingestion (external APIs)
+    'ingest_auth': "60 per hour;10 per minute",   # Authenticated ingest limit
+    'data': "120 per hour;30 per minute",         # Data retrieval
+    'data_auth': "240 per hour;60 per minute",    # Authenticated data limit
+    'status': "300 per hour;60 per minute",       # Health checks (relaxed)
+    'docs': "200 per hour;40 per minute"          # Documentation
 }
 
 
@@ -84,10 +146,33 @@ def get_endpoint_limit(endpoint_name):
     """
     Get the rate limit string for a specific endpoint.
     
+    Returns higher limit for authenticated users if available.
+    
     Args:
         endpoint_name: Name of the endpoint
     
     Returns:
         str: Rate limit string for the endpoint
     """
+    # Check if authenticated and if auth-specific limit exists
+    if getattr(g, 'authenticated', False):
+        auth_key = f"{endpoint_name}_auth"
+        if auth_key in ENDPOINT_LIMITS:
+            return ENDPOINT_LIMITS[auth_key]
+    
     return ENDPOINT_LIMITS.get(endpoint_name, f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds")
+
+
+def get_current_rate_limit_info():
+    """
+    Get current rate limit information for the request.
+    
+    Returns:
+        dict: Rate limit information
+    """
+    return {
+        'key_type': 'api_key' if getattr(g, 'api_key_hash', None) else 'ip',
+        'authenticated': getattr(g, 'authenticated', False),
+        'storage': 'redis' if 'redis' in RATE_LIMIT_STORAGE else 'memory',
+        'enabled': RATE_LIMIT_ENABLED
+    }

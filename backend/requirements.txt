@@ -4,7 +4,8 @@ flask-cors==4.0.0
 Werkzeug==3.0.1
 
 # Production Server
-gunicorn==21.2.0
+gunicorn==21.2.0  # Linux/Docker only
+waitress>=3.0.0  # Windows-compatible alternative
 
 # HTTP & API
 requests==2.31.0
@@ -17,13 +18,13 @@ scikit-learn>=1.3.0
 joblib>=1.3.0
 
 # Scheduling
-APScheduler==3.10.1
+APScheduler>=3.11.0
 
 # Configuration
 python-dotenv==1.0.1
 
 # Database
-SQLAlchemy==2.0.23
+SQLAlchemy>=2.0.45
 alembic==1.13.1  # Database migrations
 pg8000>=1.30.0  # PostgreSQL adapter for Supabase (pure Python, Windows-friendly)
 
@@ -55,3 +56,7 @@ ipython==8.18.1
 pytest==7.4.3
 pytest-cov==4.1.0
 faker==21.0.0  # Generate test data
+
+# Enhanced Training (optional)
+tqdm>=4.65.0  # Progress bars
+shap>=0.42.0  # Model explainability

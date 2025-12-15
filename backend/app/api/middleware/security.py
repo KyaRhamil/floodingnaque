@@ -2,9 +2,10 @@
 Security Headers Middleware.
 
 Adds security headers to all responses to protect against common web vulnerabilities.
+Implements OWASP-recommended security headers for industry-standard protection.
 """
 
-from flask import Flask
+from flask import Flask, request
 import os
 import logging
 
@@ -13,16 +14,19 @@ logger = logging.getLogger(__name__)
 
 def add_security_headers(response):
     """
-    Add security headers to response.
+    Add comprehensive security headers to response.
     
-    Headers added:
+    Headers added (OWASP recommended):
     - X-Content-Type-Options: Prevents MIME type sniffing
     - X-Frame-Options: Prevents clickjacking
-    - X-XSS-Protection: Enables browser XSS filter
+    - X-XSS-Protection: Enables browser XSS filter (legacy browsers)
     - Strict-Transport-Security: Enforces HTTPS
     - Content-Security-Policy: Restricts resource loading
     - Referrer-Policy: Controls referrer information
     - Permissions-Policy: Controls browser features
+    - Cross-Origin-Embedder-Policy: Protects against Spectre-like attacks
+    - Cross-Origin-Opener-Policy: Isolates browsing context
+    - Cross-Origin-Resource-Policy: Controls cross-origin resource sharing
     
     Args:
         response: Flask response object
@@ -30,34 +34,94 @@ def add_security_headers(response):
     Returns:
         Modified response with security headers
     """
+    is_production = os.getenv('FLASK_DEBUG', 'False').lower() != 'true'
+    
+    # === Core Security Headers ===
+    
     # Prevent MIME type sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
     
     # Prevent clickjacking - deny all framing
     response.headers['X-Frame-Options'] = 'DENY'
     
-    # Enable browser XSS filter
+    # Enable browser XSS filter (for legacy browsers)
     response.headers['X-XSS-Protection'] = '1; mode=block'
-    
-    # Enforce HTTPS (1 year, include subdomains)
-    # Only add in production to avoid issues during development
-    if os.getenv('ENABLE_HTTPS', 'False').lower() == 'true':
-        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
-    
-    # Content Security Policy - adjust based on your needs
-    # This is a restrictive policy; you may need to relax it for your frontend
-    csp_policy = os.getenv('CSP_POLICY', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'")
-    response.headers['Content-Security-Policy'] = csp_policy
     
     # Referrer Policy - send referrer only for same-origin requests
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     
     # Permissions Policy - disable unnecessary browser features
-    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    response.headers['Permissions-Policy'] = (
+        'accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), '
+        'cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), '
+        'execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), '
+        'geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), '
+        'navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), '
+        'screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()'
+    )
     
-    # Cache control for API responses
+    # === Cross-Origin Isolation Headers ===
+    
+    # Cross-Origin-Embedder-Policy - require explicit opt-in for cross-origin resources
+    # Use 'unsafe-none' for API that needs to be embedded, 'require-corp' for full isolation
+    coep_policy = os.getenv('COEP_POLICY', 'unsafe-none')
+    response.headers['Cross-Origin-Embedder-Policy'] = coep_policy
+    
+    # Cross-Origin-Opener-Policy - isolate browsing context
+    coop_policy = os.getenv('COOP_POLICY', 'same-origin-allow-popups')
+    response.headers['Cross-Origin-Opener-Policy'] = coop_policy
+    
+    # Cross-Origin-Resource-Policy - control cross-origin resource access
+    corp_policy = os.getenv('CORP_POLICY', 'cross-origin')  # API needs cross-origin access
+    response.headers['Cross-Origin-Resource-Policy'] = corp_policy
+    
+    # === HTTPS Enforcement ===
+    
+    # Enforce HTTPS (1 year, include subdomains)
+    # Only add in production to avoid issues during development
+    if os.getenv('ENABLE_HTTPS', 'False').lower() == 'true' or is_production:
+        hsts_max_age = int(os.getenv('HSTS_MAX_AGE', '31536000'))  # Default 1 year
+        hsts_include_subdomains = os.getenv('HSTS_INCLUDE_SUBDOMAINS', 'True').lower() == 'true'
+        hsts_preload = os.getenv('HSTS_PRELOAD', 'False').lower() == 'true'
+        
+        hsts_value = f'max-age={hsts_max_age}'
+        if hsts_include_subdomains:
+            hsts_value += '; includeSubDomains'
+        if hsts_preload:
+            hsts_value += '; preload'
+        
+        response.headers['Strict-Transport-Security'] = hsts_value
+    
+    # === Content Security Policy ===
+    
+    # CSP - adjust based on your needs
+    # This is a restrictive policy; you may need to relax it for your frontend
+    default_csp = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+    csp_policy = os.getenv('CSP_POLICY', default_csp)
+    response.headers['Content-Security-Policy'] = csp_policy
+    
+    # === Cache Control ===
+    
+    # Cache control for API responses - prevent caching of sensitive data
     if 'Cache-Control' not in response.headers:
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        # Check if this is a static/cacheable endpoint
+        cacheable_paths = ['/api/docs', '/health', '/status']
+        if any(request.path.startswith(path) for path in cacheable_paths):
+            response.headers['Cache-Control'] = 'public, max-age=60'
+        else:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
     
     return response
 

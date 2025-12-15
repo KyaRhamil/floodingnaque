@@ -1,14 +1,15 @@
 from sqlalchemy import create_engine, Column, Integer, Float, DateTime, String, Boolean, ForeignKey, Text, CheckConstraint, Index
-from sqlalchemy.orm import sessionmaker, scoped_session, relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, scoped_session, relationship, declarative_base
 from sqlalchemy.pool import StaticPool, QueuePool, NullPool
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
+
+# SQLAlchemy 1.4/2.0 compatible declarative base
 Base = declarative_base()
 
 # Enhanced database configuration with Supabase support
@@ -96,15 +97,15 @@ class WeatherData(Base):
         info={'description': 'Measurement timestamp'}
     )
     created_at = Column(
-        DateTime, 
-        default=datetime.utcnow,
+        DateTime(timezone=True), 
+        default=lambda: datetime.now(timezone.utc),
         nullable=False,
         info={'description': 'Record creation time'}
     )
     updated_at = Column(
-        DateTime, 
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        DateTime(timezone=True), 
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         info={'description': 'Last update time'}
     )
     
@@ -164,7 +165,7 @@ class Prediction(Base):
     model_name = Column(String(100), default='flood_rf_model')
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     
     # Relationships
     weather_data = relationship('WeatherData', back_populates='predictions')
@@ -203,7 +204,7 @@ class AlertHistory(Base):
     error_message = Column(Text, info={'description': 'Error details if delivery failed'})
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     delivered_at = Column(DateTime, info={'description': 'Actual delivery timestamp'})
     
     # Relationships
@@ -251,7 +252,7 @@ class ModelRegistry(Base):
     notes = Column(Text, info={'description': 'Additional notes about this version'})
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     created_by = Column(String(100), info={'description': 'User or system that created this'})
     
     __table_args__ = (

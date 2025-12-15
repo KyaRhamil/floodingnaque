@@ -1,11 +1,12 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, learning_curve
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, classification_report, confusion_matrix,
     precision_score, recall_score, f1_score, roc_auc_score,
     roc_curve, precision_recall_curve, make_scorer
 )
+from sklearn.feature_selection import SelectFromModel
 import joblib
 import os
 import sys
@@ -15,6 +16,29 @@ from datetime import datetime
 from pathlib import Path
 import numpy as np
 import glob
+import warnings
+
+# Optional imports with graceful fallback
+try:
+    from tqdm import tqdm
+    TQDM_AVAILABLE = True
+except ImportError:
+    TQDM_AVAILABLE = False
+    tqdm = None
+
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except ImportError:
+    SHAP_AVAILABLE = False
+    shap = None
+
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
 
 # Setup logging
 logging.basicConfig(
@@ -22,6 +46,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Suppress warnings for cleaner output
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 
 def get_next_version(models_dir='models'):
@@ -42,6 +69,207 @@ def get_next_version(models_dir='models'):
             continue
     
     return max(existing_versions) + 1 if existing_versions else 1
+
+
+def detect_outliers(df, columns, method='iqr', threshold=1.5):
+    """
+    Detect outliers using IQR method.
+    
+    Args:
+        df: DataFrame with data
+        columns: List of columns to check for outliers
+        method: 'iqr' or 'zscore'
+        threshold: IQR multiplier (1.5 for moderate, 3 for extreme) or z-score threshold
+    
+    Returns:
+        Boolean mask where True indicates an outlier
+    """
+    outlier_mask = pd.Series([False] * len(df))
+    
+    for col in columns:
+        if col not in df.columns:
+            continue
+        
+        if method == 'iqr':
+            Q1 = df[col].quantile(0.25)
+            Q3 = df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - threshold * IQR
+            upper_bound = Q3 + threshold * IQR
+            outlier_mask = outlier_mask | ((df[col] < lower_bound) | (df[col] > upper_bound))
+        elif method == 'zscore':
+            z_scores = np.abs((df[col] - df[col].mean()) / df[col].std())
+            outlier_mask = outlier_mask | (z_scores > threshold)
+    
+    return outlier_mask
+
+
+def generate_learning_curves(model, X, y, cv=5, output_dir='reports'):
+    """
+    Generate and save learning curves to visualize model performance.
+    
+    Args:
+        model: Trained model or base estimator
+        X: Features
+        y: Target
+        cv: Number of cross-validation folds
+        output_dir: Directory to save the plot
+    """
+    if not MATPLOTLIB_AVAILABLE:
+        logger.warning("matplotlib not available. Skipping learning curves.")
+        return None
+    
+    logger.info("Generating learning curves...")
+    
+    train_sizes = np.linspace(0.1, 1.0, 10)
+    
+    train_sizes_abs, train_scores, val_scores = learning_curve(
+        model, X, y, 
+        train_sizes=train_sizes,
+        cv=cv, 
+        scoring='f1_weighted',
+        n_jobs=-1,
+        random_state=42
+    )
+    
+    train_mean = np.mean(train_scores, axis=1)
+    train_std = np.std(train_scores, axis=1)
+    val_mean = np.mean(val_scores, axis=1)
+    val_std = np.std(val_scores, axis=1)
+    
+    # Create plot
+    plt.figure(figsize=(10, 6))
+    plt.plot(train_sizes_abs, train_mean, 'o-', color='blue', label='Training Score')
+    plt.fill_between(train_sizes_abs, train_mean - train_std, train_mean + train_std, alpha=0.1, color='blue')
+    plt.plot(train_sizes_abs, val_mean, 'o-', color='green', label='Validation Score')
+    plt.fill_between(train_sizes_abs, val_mean - val_std, val_mean + val_std, alpha=0.1, color='green')
+    
+    plt.xlabel('Training Set Size')
+    plt.ylabel('F1 Score (Weighted)')
+    plt.title('Learning Curves - Random Forest Flood Prediction')
+    plt.legend(loc='lower right')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    # Save plot
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True)
+    plot_path = output_path / 'learning_curves.png'
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    logger.info(f"Learning curves saved to {plot_path}")
+    
+    return {
+        'train_sizes': train_sizes_abs.tolist(),
+        'train_mean': train_mean.tolist(),
+        'train_std': train_std.tolist(),
+        'val_mean': val_mean.tolist(),
+        'val_std': val_std.tolist()
+    }
+
+
+def generate_shap_analysis(model, X, feature_names, output_dir='reports', max_samples=100):
+    """
+    Generate SHAP values for model explainability.
+    
+    Args:
+        model: Trained Random Forest model
+        X: Feature data (DataFrame or array)
+        feature_names: List of feature names
+        output_dir: Directory to save plots
+        max_samples: Maximum samples to use for SHAP (for performance)
+    
+    Returns:
+        Dictionary with SHAP summary
+    """
+    if not SHAP_AVAILABLE:
+        logger.warning("SHAP not installed. Run: pip install shap")
+        return None
+    
+    if not MATPLOTLIB_AVAILABLE:
+        logger.warning("matplotlib not available. Skipping SHAP plots.")
+        return None
+    
+    logger.info("Generating SHAP analysis for model explainability...")
+    
+    # Sample data if too large
+    if len(X) > max_samples:
+        indices = np.random.choice(len(X), max_samples, replace=False)
+        X_sample = X.iloc[indices] if hasattr(X, 'iloc') else X[indices]
+    else:
+        X_sample = X
+    
+    # Create SHAP explainer
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_sample)
+    
+    # For binary classification, shap_values is a list [class0, class1]
+    if isinstance(shap_values, list):
+        shap_values_flood = shap_values[1]  # Class 1 = Flood
+    else:
+        shap_values_flood = shap_values
+    
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True)
+    
+    # Summary plot (bar)
+    plt.figure(figsize=(10, 6))
+    shap.summary_plot(shap_values_flood, X_sample, feature_names=feature_names, 
+                      plot_type="bar", show=False)
+    plt.title('SHAP Feature Importance (Flood Prediction)')
+    plt.tight_layout()
+    plt.savefig(output_path / 'shap_importance_bar.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Summary plot (beeswarm)
+    plt.figure(figsize=(10, 6))
+    shap.summary_plot(shap_values_flood, X_sample, feature_names=feature_names, show=False)
+    plt.title('SHAP Summary (Impact on Flood Prediction)')
+    plt.tight_layout()
+    plt.savefig(output_path / 'shap_summary.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    logger.info(f"SHAP analysis saved to {output_path}")
+    
+    # Calculate mean absolute SHAP values
+    mean_shap = np.abs(shap_values_flood).mean(axis=0)
+    shap_importance = {name: float(val) for name, val in zip(feature_names, mean_shap)}
+    
+    return {
+        'mean_absolute_shap': shap_importance,
+        'samples_analyzed': len(X_sample)
+    }
+
+
+def select_important_features(model, X, y, threshold='median'):
+    """
+    Select important features based on model feature importance.
+    
+    Args:
+        model: Trained model with feature_importances_
+        X: Features DataFrame
+        y: Target
+        threshold: 'median', 'mean', or float value
+    
+    Returns:
+        Tuple of (selected_features, selector)
+    """
+    logger.info(f"Performing feature selection with threshold='{threshold}'...")
+    
+    selector = SelectFromModel(model, threshold=threshold, prefit=True)
+    X_selected = selector.transform(X)
+    
+    # Get selected feature names
+    if hasattr(X, 'columns'):
+        feature_mask = selector.get_support()
+        selected_features = X.columns[feature_mask].tolist()
+    else:
+        selected_features = [f"feature_{i}" for i in range(X_selected.shape[1])]
+    
+    logger.info(f"Selected {len(selected_features)}/{X.shape[1]} features: {selected_features}")
+    
+    return selected_features, selector
 
 
 def save_model_metadata(model, metrics, model_path, version, data_info, models_dir='models'):
@@ -123,7 +351,11 @@ def calculate_comprehensive_metrics(y_test, y_pred, y_pred_proba=None):
 
 
 def train_model(version=None, models_dir='models', data_file='data/synthetic_dataset.csv', 
-                use_grid_search=False, n_folds=5, merge_datasets=False):
+                use_grid_search=False, n_folds=5, merge_datasets=False,
+                class_weight='balanced', remove_outliers=False, outlier_threshold=1.5,
+                feature_selection=False, selection_threshold='median',
+                generate_learning_curve=False, generate_shap=False,
+                reports_dir='reports'):
     """
     Train the flood prediction model with versioning and comprehensive metrics.
     
@@ -134,6 +366,14 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
         use_grid_search: If True, perform hyperparameter tuning with GridSearchCV
         n_folds: Number of cross-validation folds
         merge_datasets: If True, merge multiple CSV files matching the data_file pattern
+        class_weight: 'balanced' to handle imbalanced data, None for equal weights
+        remove_outliers: If True, remove outliers before training
+        outlier_threshold: IQR threshold for outlier detection (default: 1.5)
+        feature_selection: If True, perform feature selection after initial training
+        selection_threshold: Threshold for feature selection ('median', 'mean', or float)
+        generate_learning_curve: If True, generate learning curves plot
+        generate_shap: If True, generate SHAP explainability analysis
+        reports_dir: Directory to save reports and plots
     
     Returns:
         tuple: (model, metrics, metadata)
@@ -177,6 +417,16 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
             logger.error(f"Missing required columns: {', '.join(missing_cols)}")
             sys.exit(1)
         
+        # Remove outliers if requested
+        if remove_outliers:
+            numeric_cols = [col for col in data.columns if col != 'flood' and data[col].dtype in ['float64', 'int64']]
+            outlier_mask = detect_outliers(data, numeric_cols, threshold=outlier_threshold)
+            n_outliers = outlier_mask.sum()
+            if n_outliers > 0:
+                logger.info(f"Removing {n_outliers} outliers ({n_outliers/len(data)*100:.1f}% of data)")
+                data = data[~outlier_mask].reset_index(drop=True)
+                logger.info(f"Data shape after outlier removal: {data.shape}")
+        
         # Prepare features and target
         X = data.drop('flood', axis=1)
         y = data['flood']
@@ -202,6 +452,8 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
         logger.info(f"Test set size: {len(X_test)}")
         
         # Train model with optional hyperparameter tuning
+        logger.info(f"Using class_weight='{class_weight}' for handling class imbalance")
+        
         if use_grid_search:
             logger.info("Performing hyperparameter tuning with GridSearchCV...")
             logger.info("This may take several minutes...")
@@ -215,8 +467,8 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
                 'max_features': ['sqrt', 'log2']
             }
             
-            # Create base model
-            rf_base = RandomForestClassifier(random_state=42, n_jobs=-1)
+            # Create base model with class_weight
+            rf_base = RandomForestClassifier(random_state=42, n_jobs=-1, class_weight=class_weight)
             
             # Grid search with cross-validation
             grid_search = GridSearchCV(
@@ -244,13 +496,14 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
                 'cv_folds': n_folds
             }
         else:
-            logger.info("Training Random Forest model with default parameters...")
+            logger.info("Training Random Forest model with enhanced parameters...")
             model = RandomForestClassifier(
                 n_estimators=200,  # Increased from 100
                 max_depth=20,      # Added depth limit
                 min_samples_split=5,  # Added to prevent overfitting
                 random_state=42,
                 n_jobs=-1,
+                class_weight=class_weight,  # Handle class imbalance
                 verbose=1
             )
             model.fit(X_train, y_train)
@@ -302,6 +555,49 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
         logger.info("\nConfusion Matrix:")
         logger.info(confusion_matrix(y_test, y_pred))
         logger.info("="*50)
+        
+        # Generate learning curves if requested
+        learning_curve_data = None
+        if generate_learning_curve:
+            try:
+                learning_curve_data = generate_learning_curves(
+                    RandomForestClassifier(
+                        n_estimators=100, max_depth=20, 
+                        class_weight=class_weight, random_state=42, n_jobs=-1
+                    ),
+                    X, y, cv=min(n_folds, 5), output_dir=reports_dir
+                )
+                if learning_curve_data:
+                    data_info['learning_curves'] = learning_curve_data
+            except Exception as e:
+                logger.warning(f"Failed to generate learning curves: {e}")
+        
+        # Generate SHAP analysis if requested
+        shap_data = None
+        if generate_shap:
+            try:
+                shap_data = generate_shap_analysis(
+                    model, X_test, list(X.columns), 
+                    output_dir=reports_dir, max_samples=min(100, len(X_test))
+                )
+                if shap_data:
+                    data_info['shap_analysis'] = shap_data
+            except Exception as e:
+                logger.warning(f"Failed to generate SHAP analysis: {e}")
+        
+        # Feature selection (informational - doesn't retrain)
+        if feature_selection:
+            try:
+                selected_features, _ = select_important_features(
+                    model, X, y, threshold=selection_threshold
+                )
+                data_info['feature_selection'] = {
+                    'threshold': str(selection_threshold),
+                    'selected_features': selected_features,
+                    'dropped_features': [f for f in X.columns if f not in selected_features]
+                }
+            except Exception as e:
+                logger.warning(f"Failed to perform feature selection: {e}")
         
         # Determine version
         if version is None:
@@ -374,14 +670,18 @@ if __name__ == '__main__':
   Merge multiple datasets:
     python train.py --data "data/*.csv" --merge-datasets
   
-  Full optimization with merged data:
-    python train.py --data "data/*.csv" --merge-datasets --grid-search
+  Full optimization with all enhancements:
+    python train.py --data "data/*.csv" --merge-datasets --grid-search --learning-curves --shap
+  
+  Remove outliers and handle class imbalance:
+    python train.py --remove-outliers --class-weight balanced
         """
     )
     parser.add_argument('--version', type=int, help='Model version number (auto-incremented if not provided)')
     parser.add_argument('--data', type=str, default='data/synthetic_dataset.csv', 
                        help='Path to training data CSV (use quotes for patterns like "data/*.csv")')
     parser.add_argument('--models-dir', type=str, default='models', help='Directory to save models')
+    parser.add_argument('--reports-dir', type=str, default='reports', help='Directory to save reports and plots')
     parser.add_argument('--grid-search', action='store_true', 
                        help='Perform hyperparameter tuning with GridSearchCV (slow but optimal)')
     parser.add_argument('--cv-folds', type=int, default=5, 
@@ -389,7 +689,33 @@ if __name__ == '__main__':
     parser.add_argument('--merge-datasets', action='store_true',
                        help='Merge multiple CSV files matching the data pattern')
     
+    # New enhancement options
+    parser.add_argument('--class-weight', type=str, default='balanced', choices=['balanced', 'none'],
+                       help='Class weight strategy: balanced (recommended) or none')
+    parser.add_argument('--remove-outliers', action='store_true',
+                       help='Remove outliers from training data using IQR method')
+    parser.add_argument('--outlier-threshold', type=float, default=1.5,
+                       help='IQR threshold for outlier detection (default: 1.5)')
+    parser.add_argument('--feature-selection', action='store_true',
+                       help='Perform feature selection analysis')
+    parser.add_argument('--selection-threshold', type=str, default='median',
+                       help='Feature selection threshold: median, mean, or float value')
+    parser.add_argument('--learning-curves', action='store_true',
+                       help='Generate learning curves plot')
+    parser.add_argument('--shap', action='store_true',
+                       help='Generate SHAP explainability analysis (requires shap package)')
+    
     args = parser.parse_args()
+    
+    # Convert class_weight argument
+    cw = None if args.class_weight == 'none' else args.class_weight
+    
+    # Convert selection_threshold to float if numeric
+    sel_threshold = args.selection_threshold
+    try:
+        sel_threshold = float(sel_threshold)
+    except ValueError:
+        pass  # Keep as string ('median' or 'mean')
     
     train_model(
         version=args.version, 
@@ -397,5 +723,13 @@ if __name__ == '__main__':
         data_file=args.data,
         use_grid_search=args.grid_search,
         n_folds=args.cv_folds,
-        merge_datasets=args.merge_datasets
+        merge_datasets=args.merge_datasets,
+        class_weight=cw,
+        remove_outliers=args.remove_outliers,
+        outlier_threshold=args.outlier_threshold,
+        feature_selection=args.feature_selection,
+        selection_threshold=sel_threshold,
+        generate_learning_curve=args.learning_curves,
+        generate_shap=args.shap,
+        reports_dir=args.reports_dir
     )

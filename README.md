@@ -1,4 +1,4 @@
-# 🌊 Flooding Naque - Flood Prediction System for Parañaque City
+# 🌊 Floodingnaque - Flood Prediction System for Parañaque City
 
 **Random Forest-Based Flood Detection and Alert System**
 
