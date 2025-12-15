@@ -1,580 +1,243 @@
-from flask import Flask, jsonify, request
+"""
+Floodingnaque API Application.
+
+Flask application factory with modular route blueprints.
+Industry-standard security hardening applied.
+"""
+
+from flask import Flask, jsonify, request, g
 from flask_cors import CORS
-from werkzeug.exceptions import BadRequest
+import uuid
 from app.services.scheduler import scheduler
-from app.services.ingest import ingest_data
-from app.services.predict import predict_flood, get_current_model_info, list_available_models, get_latest_model_version
-from app.services.risk_classifier import RISK_LEVELS, get_risk_thresholds
 from app.core.config import load_env, get_config
-from app.core.exceptions import AppException, ValidationError as AppValidationError
-from app.models.db import init_db, WeatherData, get_db_session
-from app.utils.utils import setup_logging, validate_coordinates
-from app.api.middleware.auth import require_api_key, optional_api_key
-from app.api.middleware.rate_limit import limiter, init_rate_limiter, get_endpoint_limit
-from app.api.middleware.security import setup_security_headers, get_cors_origins
+from app.core.exceptions import AppException
+from app.models.db import init_db
+from app.utils.utils import setup_logging
+from app.api.middleware import (
+    init_rate_limiter,
+    setup_security_headers,
+    setup_request_logging,
+    get_cors_origins
+)
+from app.api.routes import health_bp, ingest_bp, predict_bp, data_bp, models_bp
 import logging
 import os
-import json
-import codecs
-from datetime import datetime, timedelta
-from functools import wraps
-import uuid
 
-def parse_json_safely(data_bytes):
-    """
-    Safely parse JSON from request data, handling double-escaped strings from PowerShell curl.
-    
-    Args:
-        data_bytes: Raw bytes from request.data
-    
-    Returns:
-        dict: Parsed JSON data or None if parsing fails
-    """
-    if not data_bytes:
-        return {}
-    
-    try:
-        # Decode bytes to string
-        raw_str = data_bytes.decode('utf-8')
-        
-        # Try direct JSON parse first
-        try:
-            return json.loads(raw_str)
-        except json.JSONDecodeError:
-            pass
-        
-        # Handle double-escaped JSON (common with PowerShell curl)
-        # Check if string contains escaped quotes like: {\"lat\": 14.6}
-        if '\\"' in raw_str or '\\\\' in raw_str:
-            # Try unescaping: replace \\\" with \"
-            unescaped = raw_str.replace('\\"', '"').replace('\\\\', '\\')
-            try:
-                return json.loads(unescaped)
-            except json.JSONDecodeError:
-                pass
-        
-        # Try using codecs to decode escaped sequences
-        try:
-            decoded = codecs.decode(raw_str, 'unicode_escape')
-            return json.loads(decoded)
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            pass
-        
-        # Last resort: try removing all backslashes before quotes (aggressive fix)
-        if raw_str.count('\\') > raw_str.count('"'):
-            cleaned = raw_str.replace('\\"', '"').replace('\\n', '\n').replace('\\r', '\r').replace('\\t', '\t')
-            try:
-                return json.loads(cleaned)
-            except json.JSONDecodeError:
-                pass
-        
-        return None
-    except Exception as e:
-        # Logging will be handled by the calling function
-        return None
-
-app = Flask(__name__)
-
-# Load environment variables first
-load_env()
-
-# Get CORS origins from environment and configure CORS properly
-cors_origins = get_cors_origins()
-if cors_origins:
-    CORS(app, origins=cors_origins,
-         methods=['GET', 'POST', 'OPTIONS'],
-         allow_headers=['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
-         expose_headers=['X-Request-ID'],
-         supports_credentials=True,
-         max_age=600)
-else:
-    # Development fallback - allow localhost origins
-    if os.getenv('FLASK_DEBUG', 'False').lower() == 'true':
-        CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000'])
-    else:
-        # Production without CORS_ORIGINS set - restrict to same origin
-        CORS(app, origins=[])
-
-# Initialize database
-init_db()
-
-# Setup logging
-setup_logging()
 logger = logging.getLogger(__name__)
 
-# Initialize rate limiter
-init_rate_limiter(app)
 
-# Setup security headers
-setup_security_headers(app)
-
-# Register custom exception handler
-@app.errorhandler(AppException)
-def handle_app_exception(error):
-    """Handle custom application exceptions."""
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
-
-# Request ID tracking
-def add_request_id():
-    """Add request ID to Flask request context."""
-    request_id = request.headers.get('X-Request-ID', str(uuid.uuid4()))
-    request.request_id = request_id
-    return request_id
-
-@app.before_request
-def before_request():
-    """Execute before each request."""
-    request_id = add_request_id()
-    logger.info(f"Request {request_id}: {request.method} {request.path}")
-
-# Start scheduler (with error handling)
-try:
-    scheduler.start()
-    logger.info("Scheduler started successfully")
-except Exception as e:
-    logger.error(f"Error starting scheduler: {str(e)}")
-
-@app.route('/', methods=['GET'])
-def root():
-    """Root endpoint - API information."""
-    return jsonify({
-        'name': 'Floodingnaque API',
-        'version': '1.0.0',
-        'description': 'Flood prediction API with weather data ingestion',
-        'endpoints': {
-            'status': '/status',
-            'health': '/health',
-            'ingest': '/ingest',
-            'data': '/data',
-            'predict': '/predict',
-            'docs': '/api/docs'
-        },
-        'documentation': f'{request.url_root}api/docs'
-    }), 200
-
-@app.route('/status', methods=['GET'])
-@limiter.limit(get_endpoint_limit('status'))
-def status():
-    """Health check endpoint."""
-    model_info = get_current_model_info()
-    model_status = 'loaded' if model_info else 'not found'
+def create_app(config_class=None):
+    """
+    Flask application factory.
     
-    response = {
-        'status': 'running',
-        'database': 'connected',
-        'model': model_status
-    }
+    Args:
+        config_class: Optional configuration class to use
     
-    if model_info and model_info.get('metadata'):
-        response['model_version'] = model_info['metadata'].get('version')
-        response['model_accuracy'] = model_info['metadata'].get('metrics', {}).get('accuracy')
+    Returns:
+        Flask: Configured Flask application instance
+    """
+    # Create Flask app
+    app = Flask(__name__)
     
-    return jsonify(response)
+    # Load environment variables
+    load_env()
+    
+    # Get configuration
+    config = get_config()
+    
+    # Configure app from config
+    app.config['SECRET_KEY'] = config.SECRET_KEY
+    app.config['DEBUG'] = config.DEBUG
+    
+    # Security: Limit request body size (1MB default, configurable)
+    max_content_mb = int(os.getenv('MAX_CONTENT_LENGTH_MB', '1'))
+    app.config['MAX_CONTENT_LENGTH'] = max_content_mb * 1024 * 1024
+    
+    # Security: Limit JSON depth to prevent DoS
+    app.config['JSON_SORT_KEYS'] = False
+    
+    # Setup request ID tracking
+    _setup_request_tracking(app)
+    
+    # Setup CORS
+    _setup_cors(app)
+    
+    # Initialize database
+    init_db()
+    
+    # Setup logging
+    setup_logging()
+    
+    # Initialize rate limiter
+    init_rate_limiter(app)
+    
+    # Setup security headers
+    setup_security_headers(app)
+    
+    # Setup request logging
+    setup_request_logging(app)
+    
+    # Register error handlers
+    _register_error_handlers(app)
+    
+    # Register blueprints
+    _register_blueprints(app)
+    
+    # Start scheduler
+    _start_scheduler()
+    
+    return app
 
-@app.route('/ingest', methods=['GET', 'POST'])
-@limiter.limit(get_endpoint_limit('ingest'))
-@require_api_key
-def ingest():
-    """Ingest weather data from external APIs."""
-    # Handle GET requests - show usage information
-    if request.method == 'GET':
-        return jsonify({
-            'endpoint': '/ingest',
-            'method': 'POST',
-            'description': 'Ingest weather data from external APIs (OpenWeatherMap and Weatherstack)',
-            'usage': {
-                'curl_example': 'curl -X POST http://127.0.0.1:5000/ingest -H "Content-Type: application/json" -d \'{"lat": 14.6, "lon": 120.98}\'',
-                'powershell_example': '$body = @{lat=14.6; lon=120.98} | ConvertTo-Json; Invoke-RestMethod -Uri http://127.0.0.1:5000/ingest -Method POST -ContentType "application/json" -Body $body',
-                'request_body': {
-                    'lat': 'float (optional, -90 to 90) - Latitude',
-                    'lon': 'float (optional, -180 to 180) - Longitude'
-                },
-                'note': 'If lat/lon are not provided, defaults to New York City (40.7128, -74.0060)'
-            },
-            'response_example': {
-                'message': 'Data ingested successfully',
-                'data': {
-                    'temperature': 298.15,
-                    'humidity': 65.0,
-                    'precipitation': 0.0,
-                    'timestamp': '2025-12-11T03:00:00'
-                },
-                'request_id': 'uuid-string'
-            },
-            'alternative_endpoints': {
-                'api_docs': '/api/docs - Full API documentation',
-                'status': '/status - Health check',
-                'health': '/health - Detailed health check'
-            }
-        }), 200
-    
-    # Handle POST requests - actual ingestion
-    try:
-        # Get location from request if provided
-        # Handle JSON parsing with better error handling
-        try:
-            request_data = request.get_json(force=True, silent=True)
-        except BadRequest as e:
-            logger.error(f"BadRequest parsing JSON: {str(e)}")
-            return jsonify({'error': 'Invalid JSON format. Please check your request body.'}), 400
-        
-        if request_data is None:
-            # Try to parse manually if get_json failed
-            if request.data:
-                request_data = parse_json_safely(request.data)
-                if request_data is None:
-                    logger.error(f"All JSON parsing attempts failed for data: {request.data.decode('utf-8', errors='replace')[:200]}")
-                    return jsonify({'error': 'Invalid JSON format. Please ensure your JSON is properly formatted.'}), 400
-            else:
-                request_data = {}
-        
-        lat = request_data.get('lat')
-        lon = request_data.get('lon')
-        
-        # Validate coordinates if provided
-        if lat is not None or lon is not None:
-            validate_coordinates(lat, lon)
-        
-        data = ingest_data(lat=lat, lon=lon)
-        
-        request_id = getattr(request, 'request_id', 'unknown')
-        return jsonify({
-            'message': 'Data ingested successfully',
-            'data': data,
-            'request_id': request_id
-        }), 200
-    except ValueError as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Validation error in ingest [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 400
-    except BadRequest as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"BadRequest error in ingest [{request_id}]: {str(e)}")
-        return jsonify({'error': f'Invalid request: {str(e)}', 'request_id': request_id}), 400
-    except Exception as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Error in ingest endpoint [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 500
 
-@app.route('/predict', methods=['POST'])
-@limiter.limit(get_endpoint_limit('predict'))
-@require_api_key
-def predict():
-    """Predict flood risk based on weather data."""
-    try:
-        # Handle JSON parsing with better error handling
-        try:
-            input_data = request.get_json(force=True, silent=True)
-        except BadRequest as e:
-            logger.error(f"BadRequest parsing JSON in predict: {str(e)}")
-            return jsonify({'error': 'Invalid JSON format. Please check your request body.'}), 400
-        
-        if input_data is None:
-            # Try to parse manually if get_json failed
-            if request.data:
-                input_data = parse_json_safely(request.data)
-                if input_data is None:
-                    logger.error(f"All JSON parsing attempts failed in predict")
-                    return jsonify({'error': 'Invalid JSON format. Please ensure your JSON is properly formatted.'}), 400
-            else:
-                return jsonify({'error': 'No input data provided'}), 400
-        
-        if not input_data:
-            return jsonify({'error': 'No input data provided'}), 400
-        
-        # Check if model version is specified (extract from input_data but don't pass to predict)
-        model_version = input_data.get('model_version') if isinstance(input_data, dict) else None
-        return_proba = request.args.get('return_proba', 'false').lower() == 'true'
-        return_risk_level = request.args.get('risk_level', 'true').lower() == 'true'  # Default to true for 3-level classification
-        
-        # Create a copy of input_data without model_version for prediction
-        prediction_data = input_data.copy() if isinstance(input_data, dict) else input_data
-        if isinstance(prediction_data, dict) and 'model_version' in prediction_data:
-            prediction_data = {k: v for k, v in prediction_data.items() if k != 'model_version'}
-        
-        prediction = predict_flood(
-            prediction_data, 
-            model_version=model_version, 
-            return_proba=return_proba or return_risk_level,  # Need proba for risk level
-            return_risk_level=return_risk_level
-        )
-        request_id = getattr(request, 'request_id', 'unknown')
-        
-        # Handle dict response (with probabilities and risk level) or int response
-        if isinstance(prediction, dict):
-            response = {
-                'prediction': prediction['prediction'],
-                'flood_risk': 'high' if prediction['prediction'] == 1 else 'low',  # Backward compatibility
-                'model_version': prediction.get('model_version'),
-                'request_id': request_id
-            }
-            # Add probability if available
-            if 'probability' in prediction:
-                response['probability'] = prediction['probability']
-            # Add risk level classification (3-level: Safe/Alert/Critical)
-            if 'risk_label' in prediction:
-                response['risk_level'] = prediction.get('risk_level')
-                response['risk_label'] = prediction.get('risk_label')
-                response['risk_color'] = prediction.get('risk_color')
-                response['risk_description'] = prediction.get('risk_description')
-                response['confidence'] = prediction.get('confidence')
-        else:
-            # Simple int response - convert to dict with basic info
-            response = {
-                'prediction': prediction,
-                'flood_risk': 'high' if prediction == 1 else 'low',
-                'request_id': request_id
-            }
-        
-        return jsonify(response), 200
-    except ValueError as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Validation error in predict [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 400
-    except FileNotFoundError as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Model not found [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 404
-    except Exception as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Error in predict endpoint [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 500
+def _setup_request_tracking(app: Flask):
+    """Setup request ID tracking for correlation."""
+    @app.before_request
+    def assign_request_id():
+        # Use provided request ID or generate new one
+        request_id = request.headers.get('X-Request-ID')
+        if not request_id:
+            request_id = str(uuid.uuid4())
+        g.request_id = request_id
+        request.request_id = request_id  # Backward compatibility
+    
+    @app.after_request
+    def add_request_id_header(response):
+        request_id = getattr(g, 'request_id', None)
+        if request_id:
+            response.headers['X-Request-ID'] = request_id
+        return response
 
-@app.route('/health', methods=['GET'])
-@limiter.limit(get_endpoint_limit('status'))
-def health():
-    """Detailed health check endpoint."""
-    model_info = get_current_model_info()
-    model_available = model_info is not None
+
+def _setup_cors(app: Flask):
+    """Configure CORS for the application."""
+    cors_origins = get_cors_origins()
     
-    response = {
-        'status': 'healthy',
-        'database': 'connected',
-        'model_available': model_available,
-        'scheduler_running': scheduler.running if hasattr(scheduler, 'running') else False
-    }
-    
-    if model_info:
-        response['model'] = {
-            'loaded': True,
-            'type': model_info.get('model_type'),
-            'path': model_info.get('model_path'),
-            'features': model_info.get('features', [])
-        }
-        if model_info.get('metadata'):
-            metadata = model_info['metadata']
-            response['model']['version'] = metadata.get('version')
-            response['model']['created_at'] = metadata.get('created_at')
-            response['model']['metrics'] = {
-                'accuracy': metadata.get('metrics', {}).get('accuracy'),
-                'precision': metadata.get('metrics', {}).get('precision'),
-                'recall': metadata.get('metrics', {}).get('recall'),
-                'f1_score': metadata.get('metrics', {}).get('f1_score')
-            }
+    if cors_origins:
+        CORS(app, origins=cors_origins,
+             methods=['GET', 'POST', 'OPTIONS'],
+             allow_headers=['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
+             expose_headers=['X-Request-ID'],
+             supports_credentials=True,
+             max_age=600)
     else:
-        response['model'] = {'loaded': False}
+        # Development fallback - allow localhost origins
+        if os.getenv('FLASK_DEBUG', 'False').lower() == 'true':
+            CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000'])
+        else:
+            # Production without CORS_ORIGINS set - restrict to same origin
+            CORS(app, origins=[])
+
+
+def _register_error_handlers(app: Flask):
+    """Register custom error handlers with production-safe messages."""
+    is_debug = app.config.get('DEBUG', False)
     
-    return jsonify(response)
-
-@app.route('/data', methods=['GET'])
-@limiter.limit(get_endpoint_limit('data'))
-def get_weather_data():
-    """Retrieve historical weather data."""
-    try:
-        # Get query parameters
-        limit = request.args.get('limit', default=100, type=int)
-        offset = request.args.get('offset', default=0, type=int)
-        start_date = request.args.get('start_date', type=str)
-        end_date = request.args.get('end_date', type=str)
-        
-        # Validate limit
-        if limit < 1 or limit > 1000:
-            return jsonify({'error': 'Limit must be between 1 and 1000'}), 400
-        
-        with get_db_session() as session:
-            query = session.query(WeatherData)
-            
-            # Filter by date range if provided
-            if start_date:
-                try:
-                    start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-                    query = query.filter(WeatherData.timestamp >= start_dt)
-                except ValueError:
-                    return jsonify({'error': 'Invalid start_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
-            
-            if end_date:
-                try:
-                    end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-                    query = query.filter(WeatherData.timestamp <= end_dt)
-                except ValueError:
-                    return jsonify({'error': 'Invalid end_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
-            
-            # Get total count
-            total = query.count()
-            
-            # Apply pagination
-            query = query.order_by(WeatherData.timestamp.desc())
-            query = query.offset(offset).limit(limit)
-            
-            # Fetch results
-            results = query.all()
-            
-            # Convert to dict
-            data = [{
-                'id': r.id,
-                'temperature': r.temperature,
-                'humidity': r.humidity,
-                'precipitation': r.precipitation,
-                'timestamp': r.timestamp.isoformat() if r.timestamp else None
-            } for r in results]
-        
-        request_id = getattr(request, 'request_id', 'unknown')
+    @app.errorhandler(AppException)
+    def handle_app_exception(error):
+        """Handle custom application exceptions."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        response_data = error.to_dict()
+        response_data['request_id'] = request_id
+        response = jsonify(response_data)
+        response.status_code = error.status_code
+        return response
+    
+    @app.errorhandler(400)
+    def handle_bad_request(error):
+        """Handle 400 errors."""
+        request_id = getattr(g, 'request_id', 'unknown')
         return jsonify({
-            'data': data,
-            'total': total,
-            'limit': limit,
-            'offset': offset,
-            'count': len(data),
+            'error': 'Bad request',
+            'message': str(error.description) if is_debug else 'Invalid request',
             'request_id': request_id
-        }), 200
-    except Exception as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Error retrieving weather data [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 500
-
-@app.route('/api/version', methods=['GET'])
-def api_version():
-    """API version endpoint."""
-    return jsonify({
-        'version': '1.0.0',
-        'name': 'Floodingnaque API',
-        'base_url': request.url_root.rstrip('/')
-    }), 200
-
-@app.route('/api/models', methods=['GET'])
-def list_models():
-    """List all available model versions."""
-    try:
-        models = list_available_models()
-        current_info = get_current_model_info()
-        current_version = current_info.get('metadata', {}).get('version') if current_info else None
-        
-        # Format response
-        formatted_models = []
-        for model in models:
-            formatted_model = {
-                'version': model['version'],
-                'path': model['path'],
-                'is_current': model['version'] == current_version
-            }
-            if model.get('metadata'):
-                metadata = model['metadata']
-                formatted_model['created_at'] = metadata.get('created_at')
-                formatted_model['metrics'] = {
-                    'accuracy': metadata.get('metrics', {}).get('accuracy'),
-                    'precision': metadata.get('metrics', {}).get('precision'),
-                    'recall': metadata.get('metrics', {}).get('recall'),
-                    'f1_score': metadata.get('metrics', {}).get('f1_score')
-                }
-            formatted_models.append(formatted_model)
-        
-        request_id = getattr(request, 'request_id', 'unknown')
+        }), 400
+    
+    @app.errorhandler(404)
+    def handle_not_found(error):
+        """Handle 404 errors."""
+        request_id = getattr(g, 'request_id', 'unknown')
         return jsonify({
-            'models': formatted_models,
-            'current_version': current_version,
-            'total_versions': len(formatted_models),
+            'error': 'Not found',
+            'message': 'The requested resource was not found',
             'request_id': request_id
-        }), 200
-    except Exception as e:
-        request_id = getattr(request, 'request_id', 'unknown')
-        logger.error(f"Error listing models [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 500
+        }), 404
+    
+    @app.errorhandler(413)
+    def handle_request_too_large(error):
+        """Handle request entity too large."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        max_mb = int(os.getenv('MAX_CONTENT_LENGTH_MB', '1'))
+        return jsonify({
+            'error': 'Request too large',
+            'message': f'Request body exceeds maximum size of {max_mb}MB',
+            'request_id': request_id
+        }), 413
+    
+    @app.errorhandler(429)
+    def handle_rate_limit(error):
+        """Handle rate limit exceeded."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        return jsonify({
+            'error': 'Rate limit exceeded',
+            'message': 'Too many requests. Please try again later.',
+            'request_id': request_id
+        }), 429
+    
+    @app.errorhandler(500)
+    def handle_internal_error(error):
+        """Handle 500 errors - sanitize in production."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        # Log full error details
+        logger.error(f"Internal server error [{request_id}]: {str(error)}", exc_info=True)
+        
+        # Return sanitized message in production
+        if is_debug:
+            return jsonify({
+                'error': 'Internal server error',
+                'message': str(error),
+                'request_id': request_id
+            }), 500
+        else:
+            return jsonify({
+                'error': 'Internal server error',
+                'message': 'An unexpected error occurred. Please try again later.',
+                'request_id': request_id
+            }), 500
+    
+    @app.errorhandler(503)
+    def handle_service_unavailable(error):
+        """Handle service unavailable."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        return jsonify({
+            'error': 'Service unavailable',
+            'message': 'The service is temporarily unavailable. Please try again later.',
+            'request_id': request_id
+        }), 503
 
-@app.route('/api/docs', methods=['GET'])
-@limiter.limit(get_endpoint_limit('docs'))
-def api_docs():
-    """API documentation endpoint."""
-    docs = {
-        'endpoints': {
-            'GET /status': {
-                'description': 'Basic health check endpoint',
-                'response': {
-                    'status': 'running',
-                    'database': 'connected',
-                    'model': 'loaded | not found'
-                }
-            },
-            'GET /health': {
-                'description': 'Detailed health check endpoint',
-                'response': {
-                    'status': 'healthy',
-                    'database': 'connected',
-                    'model_available': 'boolean',
-                    'scheduler_running': 'boolean'
-                }
-            },
-            'POST /ingest': {
-                'description': 'Ingest weather data from external APIs',
-                'request_body': {
-                    'lat': 'float (optional, -90 to 90)',
-                    'lon': 'float (optional, -180 to 180)'
-                },
-                'response': {
-                    'message': 'Data ingested successfully',
-                    'data': {
-                        'temperature': 'float',
-                        'humidity': 'float',
-                        'precipitation': 'float',
-                        'timestamp': 'ISO datetime string'
-                    }
-                }
-            },
-            'GET /data': {
-                'description': 'Retrieve historical weather data',
-                'query_parameters': {
-                    'limit': 'int (1-1000, default: 100)',
-                    'offset': 'int (default: 0)',
-                    'start_date': 'ISO datetime string (optional)',
-                    'end_date': 'ISO datetime string (optional)'
-                },
-                'response': {
-                    'data': 'array of weather records',
-                    'total': 'int',
-                    'limit': 'int',
-                    'offset': 'int',
-                    'count': 'int'
-                }
-            },
-            'POST /predict': {
-                'description': 'Predict flood risk based on weather data with 3-level classification (Safe/Alert/Critical)',
-                'request_body': {
-                    'temperature': 'float (required)',
-                    'humidity': 'float (required)',
-                    'precipitation': 'float (required)',
-                    'model_version': 'int (optional) - Specific model version to use'
-                },
-                'query_parameters': {
-                    'return_proba': 'boolean (default: false) - Include prediction probabilities',
-                    'risk_level': 'boolean (default: true) - Include 3-level risk classification'
-                },
-                'response': {
-                    'prediction': '0 or 1 (binary)',
-                    'flood_risk': 'low | high (binary, backward compatible)',
-                    'risk_level': '0 (Safe) | 1 (Alert) | 2 (Critical)',
-                    'risk_label': 'Safe | Alert | Critical',
-                    'risk_color': 'Hex color code',
-                    'risk_description': 'Human-readable description',
-                    'confidence': 'float (0-1)',
-                    'probability': 'object with no_flood and flood probabilities (if return_proba=true)'
-                }
-            }
-        },
-        'version': '1.0.0',
-        'base_url': request.url_root.rstrip('/')
-    }
-    return jsonify(docs), 200
+
+def _register_blueprints(app: Flask):
+    """Register all route blueprints."""
+    app.register_blueprint(health_bp)
+    app.register_blueprint(ingest_bp)
+    app.register_blueprint(predict_bp)
+    app.register_blueprint(data_bp)
+    app.register_blueprint(models_bp)
+    
+    logger.info("Registered blueprints: health, ingest, predict, data, models")
+
+
+def _start_scheduler():
+    """Start the background scheduler."""
+    try:
+        scheduler.start()
+        logger.info("Scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {str(e)}")
+
+
+# Create default app instance for backwards compatibility
+app = create_app()
+
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))

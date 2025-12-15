@@ -2,6 +2,7 @@ import joblib
 import pandas as pd
 import os
 import json
+import hashlib
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 _model = None
 _model_path = os.path.join('models', 'flood_rf_model.joblib')
 _model_metadata = None
+_model_checksum = None  # Store checksum for integrity verification
 
 
 def get_model_metadata(model_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -28,6 +30,87 @@ def get_model_metadata(model_path: Optional[str] = None) -> Optional[Dict[str, A
         except Exception as e:
             logger.warning(f"Could not load metadata: {str(e)}")
     return None
+
+
+def compute_model_checksum(model_path: str) -> str:
+    """
+    Compute SHA-256 checksum of a model file for integrity verification.
+    
+    Args:
+        model_path: Path to the model file
+        
+    Returns:
+        str: Hex-encoded SHA-256 checksum
+    """
+    sha256_hash = hashlib.sha256()
+    with open(model_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+
+def verify_model_integrity(model_path: str, expected_checksum: Optional[str] = None) -> bool:
+    """
+    Verify model file integrity using checksum.
+    
+    Args:
+        model_path: Path to the model file
+        expected_checksum: Expected SHA-256 checksum (from metadata)
+        
+    Returns:
+        bool: True if checksum matches or no expected checksum provided
+    """
+    if not expected_checksum:
+        # Try to get from metadata
+        metadata = get_model_metadata(model_path)
+        if metadata:
+            expected_checksum = metadata.get('checksum')
+    
+    if not expected_checksum:
+        logger.warning(f"No checksum available for model: {model_path}")
+        return True  # Allow if no checksum to verify against
+    
+    actual_checksum = compute_model_checksum(model_path)
+    if actual_checksum != expected_checksum:
+        logger.error(
+            f"Model integrity check FAILED for {model_path}! "
+            f"Expected: {expected_checksum}, Got: {actual_checksum}"
+        )
+        return False
+    
+    logger.info(f"Model integrity verified: {model_path}")
+    return True
+
+
+def save_model_with_checksum(model, model_path: str, metadata: Dict[str, Any]) -> str:
+    """
+    Save a model with checksum in metadata for integrity verification.
+    
+    Args:
+        model: The model object to save
+        model_path: Path to save the model
+        metadata: Metadata dictionary
+        
+    Returns:
+        str: The computed checksum
+    """
+    # Save model first
+    joblib.dump(model, model_path)
+    
+    # Compute checksum
+    checksum = compute_model_checksum(model_path)
+    
+    # Update metadata with checksum
+    metadata['checksum'] = checksum
+    metadata['checksum_algorithm'] = 'SHA-256'
+    
+    # Save metadata
+    metadata_path = Path(model_path).with_suffix('.json')
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    
+    logger.info(f"Model saved with checksum: {checksum[:16]}...")
+    return checksum
 
 
 def list_available_models(models_dir: str = 'models') -> list:
@@ -71,9 +154,23 @@ def get_latest_model_version(models_dir: str = 'models') -> Optional[int]:
     return None
 
 
-def _load_model(model_path: Optional[str] = None, force_reload: bool = False):
-    """Load the trained model (lazy loading with versioning support)."""
-    global _model, _model_path, _model_metadata
+def _load_model(model_path: Optional[str] = None, force_reload: bool = False, verify_integrity: bool = True):
+    """
+    Load the trained model with optional integrity verification.
+    
+    Args:
+        model_path: Path to the model file
+        force_reload: Force reload even if already loaded
+        verify_integrity: Verify model checksum before loading
+        
+    Returns:
+        Loaded model object
+        
+    Raises:
+        FileNotFoundError: If model file doesn't exist
+        ValueError: If integrity check fails
+    """
+    global _model, _model_path, _model_metadata, _model_checksum
     
     # Use provided path or default
     if model_path is None:
@@ -88,12 +185,34 @@ def _load_model(model_path: Optional[str] = None, force_reload: bool = False):
                 f"Model file not found: {model_path}. "
                 f"Please train the model first using train.py"
             )
+        
+        # Verify integrity if enabled
+        if verify_integrity and os.getenv('VERIFY_MODEL_INTEGRITY', 'True').lower() == 'true':
+            metadata = get_model_metadata(model_path)
+            expected_checksum = metadata.get('checksum') if metadata else None
+            
+            if expected_checksum:
+                if not verify_model_integrity(model_path, expected_checksum):
+                    raise ValueError(
+                        f"Model integrity verification failed for {model_path}. "
+                        "The model file may have been tampered with."
+                    )
+            else:
+                logger.warning(
+                    f"No checksum in metadata for {model_path}. "
+                    "Consider re-training with checksum enabled."
+                )
+        
         try:
             _model = joblib.load(model_path)
             _model_metadata = get_model_metadata(model_path)
+            _model_checksum = compute_model_checksum(model_path)
+            
             logger.info(f"Model loaded successfully from {model_path}")
             if _model_metadata:
                 logger.info(f"Model version: {_model_metadata.get('version', 'unknown')}")
+            logger.info(f"Model checksum: {_model_checksum[:16]}...")
+            
         except Exception as e:
             logger.error(f"Error loading model: {str(e)}")
             raise
@@ -226,7 +345,9 @@ def get_current_model_info() -> Optional[Dict[str, Any]]:
     info = {
         'model_path': _model_path,
         'model_type': type(_model).__name__ if _model else None,
-        'metadata': _model_metadata
+        'metadata': _model_metadata,
+        'checksum': _model_checksum[:16] + '...' if _model_checksum else None,
+        'integrity_verified': bool(_model_checksum)
     }
     
     if _model and hasattr(_model, 'feature_names_in_'):

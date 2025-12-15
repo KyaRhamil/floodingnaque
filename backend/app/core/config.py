@@ -2,8 +2,53 @@
 
 from dotenv import load_dotenv
 import os
+import secrets
 from dataclasses import dataclass, field
 from typing import List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def _get_secret_key() -> str:
+    """
+    Get SECRET_KEY from environment with security validation.
+    
+    In production (FLASK_DEBUG=False), fails if not explicitly set.
+    In development, generates a temporary key with warning.
+    """
+    key = os.getenv('SECRET_KEY')
+    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    if not key or key in ('change-me-in-production', 'change_this_to_a_random_secret_key_in_production'):
+        if not is_debug:
+            raise ValueError(
+                "CRITICAL: SECRET_KEY must be set in production! "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        # Development mode - generate temporary key
+        key = secrets.token_hex(32)
+        logger.warning(
+            "SECRET_KEY not configured - using temporary key. "
+            "Set SECRET_KEY in .env for persistent sessions."
+        )
+    return key
+
+
+def _get_jwt_secret_key() -> str:
+    """Get JWT_SECRET_KEY with security validation."""
+    key = os.getenv('JWT_SECRET_KEY')
+    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    if not key or key in ('change_this_to_another_random_secret_key',):
+        if not is_debug:
+            raise ValueError(
+                "CRITICAL: JWT_SECRET_KEY must be set in production! "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        key = secrets.token_hex(32)
+        logger.warning("JWT_SECRET_KEY not configured - using temporary key.")
+    return key
 
 
 def load_env():
@@ -19,8 +64,9 @@ class Config:
     All values are loaded from environment variables with sensible defaults.
     """
     
-    # Flask Settings
-    SECRET_KEY: str = field(default_factory=lambda: os.getenv('SECRET_KEY', 'change-me-in-production'))
+    # Flask Settings - SECRET_KEY fails in production if not set
+    SECRET_KEY: str = field(default_factory=_get_secret_key)
+    JWT_SECRET_KEY: str = field(default_factory=_get_jwt_secret_key)
     DEBUG: bool = field(default_factory=lambda: os.getenv('FLASK_DEBUG', 'False').lower() == 'true')
     HOST: str = field(default_factory=lambda: os.getenv('HOST', '0.0.0.0'))
     PORT: int = field(default_factory=lambda: int(os.getenv('PORT', '5000')))
