@@ -43,22 +43,22 @@ bcrypt>=4.0.0  # Secure password/API key hashing (Argon2-like security)
 validators==0.22.0  # Email, URL validation
 bleach==6.1.0  # HTML sanitization
 
-# Rate Limiting (optional)
+# Rate Limiting 
 Flask-Limiter==3.5.0
 redis>=5.0.0  # Redis client for rate limiting storage
 
 # Monitoring & Logging
 python-json-logger==2.0.7  # Structured logging
 
-# Development Tools (optional)
+# Development Tools
 jupyter==1.0.0
 ipython==8.18.1
 
-# Testing (optional)
+# Testing 
 pytest==7.4.3
 pytest-cov==4.1.0
 faker==21.0.0  # Generate test data
 
-# Enhanced Training (optional)
+# Enhanced Training 
 tqdm>=4.65.0  # Progress bars
 shap>=0.42.0  # Model explainability

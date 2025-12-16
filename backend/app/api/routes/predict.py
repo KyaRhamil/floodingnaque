@@ -11,11 +11,9 @@ from app.services.predict import predict_flood
 from app.api.middleware.auth import require_api_key
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
 from app.api.schemas.weather import parse_json_safely
-from app.utils.validation import (
-    InputValidator, 
-    ValidationError as InputValidationError,
-    validate_request_size
-)
+from app.utils.validation import InputValidator, validate_request_size
+from app.core.exceptions import ValidationError, api_error
+from app.core.constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_NOT_FOUND, HTTP_INTERNAL_ERROR
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,11 +35,7 @@ def predict():
             input_data = request.get_json(force=True, silent=True)
         except BadRequest as e:
             logger.error(f"BadRequest parsing JSON in predict [{request_id}]: {str(e)}")
-            return jsonify({
-                'error': 'Invalid JSON format',
-                'message': 'Please check your request body.',
-                'request_id': request_id
-            }), 400
+            return api_error('InvalidJSON', 'Please check your request body.', HTTP_BAD_REQUEST, request_id)
         
         if input_data is None:
             # Try to parse manually if get_json failed
@@ -49,35 +43,19 @@ def predict():
                 input_data = parse_json_safely(request.data)
                 if input_data is None:
                     logger.error(f"All JSON parsing attempts failed in predict [{request_id}]")
-                    return jsonify({
-                        'error': 'Invalid JSON format',
-                        'message': 'Please ensure your JSON is properly formatted.',
-                        'request_id': request_id
-                    }), 400
+                    return api_error('InvalidJSON', 'Please ensure your JSON is properly formatted.', HTTP_BAD_REQUEST, request_id)
             else:
-                return jsonify({
-                    'error': 'No input data',
-                    'message': 'No input data provided',
-                    'request_id': request_id
-                }), 400
+                return api_error('NoInput', 'No input data provided', HTTP_BAD_REQUEST, request_id)
         
         if not input_data:
-            return jsonify({
-                'error': 'No input data',
-                'message': 'No input data provided',
-                'request_id': request_id
-            }), 400
+            return api_error('NoInput', 'No input data provided', HTTP_BAD_REQUEST, request_id)
         
         # Validate and sanitize input using InputValidator
         try:
             validated_data = InputValidator.validate_prediction_input(input_data)
-        except InputValidationError as e:
+        except ValidationError as e:
             logger.warning(f"Input validation failed [{request_id}]: {str(e)}")
-            return jsonify({
-                'error': 'Validation error',
-                'message': str(e),
-                'request_id': request_id
-            }), 400
+            return api_error('ValidationError', str(e), HTTP_BAD_REQUEST, request_id)
         
         # Extract model version (validated separately)
         model_version = validated_data.pop('model_version', None)
@@ -117,33 +95,17 @@ def predict():
                 'request_id': request_id
             }
         
-        return jsonify(response), 200
+        return jsonify(response), HTTP_OK
         
-    except InputValidationError as e:
+    except ValidationError as e:
         logger.error(f"Validation error in predict [{request_id}]: {str(e)}")
-        return jsonify({
-            'error': 'Validation error',
-            'message': str(e),
-            'request_id': request_id
-        }), 400
+        return api_error('ValidationError', str(e), HTTP_BAD_REQUEST, request_id)
     except ValueError as e:
         logger.error(f"Validation error in predict [{request_id}]: {str(e)}")
-        return jsonify({
-            'error': 'Validation error',
-            'message': str(e),
-            'request_id': request_id
-        }), 400
+        return api_error('ValidationError', str(e), HTTP_BAD_REQUEST, request_id)
     except FileNotFoundError as e:
         logger.error(f"Model not found [{request_id}]: {str(e)}")
-        return jsonify({
-            'error': 'Model not found',
-            'message': str(e),
-            'request_id': request_id
-        }), 404
+        return api_error('ModelNotFound', str(e), HTTP_NOT_FOUND, request_id)
     except Exception as e:
         logger.error(f"Error in predict endpoint [{request_id}]: {str(e)}", exc_info=True)
-        return jsonify({
-            'error': 'Prediction failed',
-            'message': 'An error occurred during prediction',
-            'request_id': request_id
-        }), 500
+        return api_error('PredictionFailed', 'An error occurred during prediction', HTTP_INTERNAL_ERROR, request_id)
