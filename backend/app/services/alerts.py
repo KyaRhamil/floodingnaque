@@ -2,12 +2,16 @@
 Alert System Module for Flood Detection and Early Warning
 Supports SMS, email, and web dashboard notifications
 Aligned with research objectives for Parañaque City.
+
+Alerts are persisted to database to prevent data loss on restart.
 """
 
+import json
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from app.services.risk_classifier import format_alert_message, RISK_LEVELS
+from app.models.db import AlertHistory, get_db_session
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +45,8 @@ class AlertSystem:
         """
         self.sms_enabled = sms_enabled
         self.email_enabled = email_enabled
-        self.alert_history: List[Dict[str, Any]] = []
+        # In-memory cache for recent alerts (performance optimization)
+        self._alert_cache: List[Dict[str, Any]] = []
     
     @classmethod
     def get_instance(
@@ -125,10 +130,63 @@ class AlertSystem:
             alert_record['delivery_status']['email'] = email_status
             logger.info(f"Email alert sent: {risk_label} for {location}")
         
-        # Store in history
-        self.alert_history.append(alert_record)
+        # Store in history (persist to database)
+        self._persist_alert(alert_record)
         
         return alert_record
+    
+    def _persist_alert(
+        self,
+        alert_record: Dict[str, Any],
+        prediction_id: Optional[int] = None
+    ) -> None:
+        """
+        Persist alert to database for durability.
+        
+        Args:
+            alert_record: Alert data to persist
+            prediction_id: Optional ID of related prediction
+        """
+        try:
+            with get_db_session() as session:
+                db_alert = AlertHistory(
+                    prediction_id=prediction_id,
+                    risk_level=alert_record.get('risk_level', 0),
+                    risk_label=alert_record.get('risk_label', 'Unknown'),
+                    location=alert_record.get('location'),
+                    recipients=json.dumps(alert_record.get('recipients', [])),
+                    message=alert_record.get('message'),
+                    delivery_status=self._get_primary_status(alert_record.get('delivery_status', {})),
+                    delivery_channel=self._get_delivery_channels(alert_record.get('delivery_status', {})),
+                    delivered_at=datetime.now() if alert_record.get('delivery_status') else None
+                )
+                session.add(db_alert)
+            
+            # Update in-memory cache
+            self._alert_cache.append(alert_record)
+            # Keep cache size limited
+            if len(self._alert_cache) > 100:
+                self._alert_cache = self._alert_cache[-100:]
+            
+            logger.debug(f"Alert persisted to database: {alert_record.get('risk_label')}")
+        except Exception as e:
+            logger.error(f"Failed to persist alert to database: {str(e)}")
+            # Still keep in memory cache as fallback
+            self._alert_cache.append(alert_record)
+    
+    def _get_primary_status(self, delivery_status: Dict[str, str]) -> str:
+        """Get primary delivery status from all channels."""
+        if not delivery_status:
+            return 'pending'
+        if 'delivered' in delivery_status.values():
+            return 'delivered'
+        if 'failed' in delivery_status.values():
+            return 'failed'
+        return 'pending'
+    
+    def _get_delivery_channels(self, delivery_status: Dict[str, str]) -> str:
+        """Get comma-separated list of delivery channels used."""
+        return ','.join(delivery_status.keys()) if delivery_status else ''
     
     def _send_sms(self, recipients: List[str], message: str) -> str:
         """
@@ -164,12 +222,58 @@ class AlertSystem:
         return 'not_implemented'
     
     def get_alert_history(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Get recent alert history."""
-        return self.alert_history[-limit:]
+        """Get recent alert history from database."""
+        try:
+            with get_db_session() as session:
+                alerts = session.query(AlertHistory)\
+                    .order_by(AlertHistory.created_at.desc())\
+                    .limit(limit)\
+                    .all()
+                
+                return [
+                    {
+                        'id': alert.id,
+                        'timestamp': alert.created_at.isoformat() if alert.created_at else None,
+                        'location': alert.location,
+                        'risk_level': alert.risk_level,
+                        'risk_label': alert.risk_label,
+                        'message': alert.message,
+                        'delivery_status': alert.delivery_status,
+                        'delivery_channel': alert.delivery_channel
+                    }
+                    for alert in alerts
+                ]
+        except Exception as e:
+            logger.error(f"Failed to fetch alert history from database: {str(e)}")
+            # Fallback to in-memory cache
+            return self._alert_cache[-limit:]
     
     def get_alerts_by_risk_level(self, risk_level: int) -> List[Dict[str, Any]]:
-        """Get alerts filtered by risk level."""
-        return [alert for alert in self.alert_history if alert['risk_level'] == risk_level]
+        """Get alerts filtered by risk level from database."""
+        try:
+            with get_db_session() as session:
+                alerts = session.query(AlertHistory)\
+                    .filter(AlertHistory.risk_level == risk_level)\
+                    .order_by(AlertHistory.created_at.desc())\
+                    .limit(100)\
+                    .all()
+                
+                return [
+                    {
+                        'id': alert.id,
+                        'timestamp': alert.created_at.isoformat() if alert.created_at else None,
+                        'location': alert.location,
+                        'risk_level': alert.risk_level,
+                        'risk_label': alert.risk_label,
+                        'message': alert.message,
+                        'delivery_status': alert.delivery_status
+                    }
+                    for alert in alerts
+                ]
+        except Exception as e:
+            logger.error(f"Failed to fetch alerts by risk level: {str(e)}")
+            # Fallback to in-memory cache
+            return [alert for alert in self._alert_cache if alert.get('risk_level') == risk_level]
 
 
 def get_alert_system(

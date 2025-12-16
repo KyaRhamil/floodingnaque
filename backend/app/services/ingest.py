@@ -3,6 +3,12 @@ import os
 import re
 from datetime import datetime
 from app.models.db import WeatherData, get_db_session
+from app.utils.circuit_breaker import (
+    openweathermap_breaker,
+    weatherstack_breaker,
+    retry_with_backoff,
+    CircuitOpenError
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,13 +63,18 @@ def ingest_data(lat=None, lon=None):
     data = {}
     
     try:
-        # Fetch from OpenWeatherMap
+        # Fetch from OpenWeatherMap with circuit breaker protection
         # Note: OWM requires appid in query string, but we redact in logs
         owm_url = f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={owm_api_key}'
         logger.debug(f"Fetching weather data from: {_safe_log_url(owm_url)}")
-        owm_response = requests.get(owm_url, timeout=10)
-        owm_response.raise_for_status()
-        owm_data = owm_response.json()
+        
+        @retry_with_backoff(max_retries=2, base_delay=1.0, exceptions=(requests.exceptions.RequestException,))
+        def fetch_owm():
+            response = requests.get(owm_url, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        
+        owm_data = openweathermap_breaker.call(fetch_owm)
         
         if 'main' not in owm_data:
             raise ValueError("Invalid response from OpenWeatherMap API")
@@ -72,6 +83,9 @@ def ingest_data(lat=None, lon=None):
         data['humidity'] = owm_data['main'].get('humidity', 0)
         
         logger.info(f"Successfully fetched data from OpenWeatherMap for lat={lat}, lon={lon}")
+    except CircuitOpenError as e:
+        logger.error(f"OpenWeatherMap circuit breaker is open: {str(e)}")
+        raise
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching data from OpenWeatherMap: {str(e)}")
         raise
@@ -83,27 +97,38 @@ def ingest_data(lat=None, lon=None):
     # Priority: Weatherstack API > OpenWeatherMap rain data
     precipitation = 0
     
-    # Try Weatherstack API first if API key is provided
+    # Try Weatherstack API first if API key is provided (with circuit breaker)
     if weatherstack_api_key:
         try:
-            # Weatherstack API endpoint for current weather
-            # Note: HTTPS requires paid plan, but we use it for security
-            # Free tier users should upgrade or the request will fail gracefully
-            weatherstack_url = f'https://api.weatherstack.com/current?access_key={weatherstack_api_key}&query={lat},{lon}&units=m'
-            logger.debug(f"Fetching precipitation from: {_safe_log_url(weatherstack_url)}")
-            weatherstack_response = requests.get(weatherstack_url, timeout=10)
-            weatherstack_response.raise_for_status()
-            weatherstack_data = weatherstack_response.json()
-            
-            # Check for errors in Weatherstack response
-            if 'error' in weatherstack_data:
-                logger.warning(f"Weatherstack API error: {weatherstack_data.get('error', {}).get('info', 'Unknown error')}")
-            elif 'current' in weatherstack_data:
-                # Weatherstack provides precipitation in 'precip' field (mm)
-                precip_value = weatherstack_data['current'].get('precip', 0)
-                if precip_value is not None:
-                    precipitation = float(precip_value)
-                    logger.info(f"Got precipitation from Weatherstack: {precipitation} mm")
+            # Check if circuit breaker is open before attempting
+            if weatherstack_breaker.is_open:
+                logger.warning("Weatherstack circuit breaker is open, skipping to fallback")
+            else:
+                # Weatherstack API endpoint for current weather
+                # Note: HTTPS requires paid plan, but we use it for security
+                # Free tier users should upgrade or the request will fail gracefully
+                weatherstack_url = f'https://api.weatherstack.com/current?access_key={weatherstack_api_key}&query={lat},{lon}&units=m'
+                logger.debug(f"Fetching precipitation from: {_safe_log_url(weatherstack_url)}")
+                
+                @retry_with_backoff(max_retries=2, base_delay=1.0, exceptions=(requests.exceptions.RequestException,))
+                def fetch_weatherstack():
+                    response = requests.get(weatherstack_url, timeout=10)
+                    response.raise_for_status()
+                    return response.json()
+                
+                weatherstack_data = weatherstack_breaker.call(fetch_weatherstack)
+                
+                # Check for errors in Weatherstack response
+                if 'error' in weatherstack_data:
+                    logger.warning(f"Weatherstack API error: {weatherstack_data.get('error', {}).get('info', 'Unknown error')}")
+                elif 'current' in weatherstack_data:
+                    # Weatherstack provides precipitation in 'precip' field (mm)
+                    precip_value = weatherstack_data['current'].get('precip', 0)
+                    if precip_value is not None:
+                        precipitation = float(precip_value)
+                        logger.info(f"Got precipitation from Weatherstack: {precipitation} mm")
+        except CircuitOpenError as e:
+            logger.warning(f"Weatherstack circuit breaker open (using fallback): {str(e)}")
         except requests.exceptions.RequestException as e:
             logger.warning(f"Error fetching data from Weatherstack API (continuing with OpenWeatherMap): {str(e)}")
         except (KeyError, ValueError, TypeError) as e:

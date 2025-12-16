@@ -43,6 +43,7 @@ else:
         pool_size=5 if not is_supabase else 1,  # Smaller pool for Supabase free tier
         max_overflow=10 if not is_supabase else 2,
         pool_recycle=300 if is_supabase else 3600,  # Shorter recycle for cloud
+        pool_timeout=30,  # Connection timeout to prevent leaks
         pool_pre_ping=True,  # Check connection health
         poolclass=QueuePool,
     )
