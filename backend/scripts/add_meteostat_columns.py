@@ -1,10 +1,30 @@
 """Add station_id column to weather_data table for Meteostat integration."""
 from sqlalchemy import create_engine, text
 import os
+import sys
+
+# Load environment from .env.production if APP_ENV is production
+if os.getenv('APP_ENV') == 'production':
+    from dotenv import load_dotenv
+    from pathlib import Path
+    env_file = Path(__file__).parent.parent / '.env.production'
+    if env_file.exists():
+        load_dotenv(env_file, override=True)
+        print(f"Loaded environment from: {env_file.name}")
 
 def migrate():
     """Run migration to add station_id column."""
     db_url = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
+    
+    print(f"Connecting to database...")
+    
+    # Detect database type
+    is_postgres = 'postgresql' in db_url or 'postgres' in db_url
+    
+    if is_postgres:
+        print("Database type: PostgreSQL (Supabase)")
+    else:
+        print(f"Database type: SQLite ({db_url})")
     
     # Handle postgres URL format
     if db_url.startswith('postgres://'):
