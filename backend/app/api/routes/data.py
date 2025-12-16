@@ -4,10 +4,12 @@ Weather Data Routes.
 Provides endpoints for retrieving historical weather data.
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from datetime import datetime
 from app.models.db import WeatherData, get_db_session
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
+from app.core.exceptions import api_error
+from app.core.constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,8 @@ data_bp = Blueprint('data', __name__)
 @limiter.limit(get_endpoint_limit('data'))
 def get_weather_data():
     """Retrieve historical weather data."""
+    request_id = getattr(g, 'request_id', 'unknown')
+    
     try:
         # Get query parameters
         limit = request.args.get('limit', default=100, type=int)
@@ -28,7 +32,7 @@ def get_weather_data():
         
         # Validate limit
         if limit < 1 or limit > 1000:
-            return jsonify({'error': 'Limit must be between 1 and 1000'}), 400
+            return api_error('ValidationError', 'Limit must be between 1 and 1000', HTTP_BAD_REQUEST, request_id)
         
         with get_db_session() as session:
             query = session.query(WeatherData)
@@ -39,14 +43,14 @@ def get_weather_data():
                     start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
                     query = query.filter(WeatherData.timestamp >= start_dt)
                 except ValueError:
-                    return jsonify({'error': 'Invalid start_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
+                    return api_error('ValidationError', 'Invalid start_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)', HTTP_BAD_REQUEST, request_id)
             
             if end_date:
                 try:
                     end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
                     query = query.filter(WeatherData.timestamp <= end_dt)
                 except ValueError:
-                    return jsonify({'error': 'Invalid end_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
+                    return api_error('ValidationError', 'Invalid end_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)', HTTP_BAD_REQUEST, request_id)
             
             # Get total count
             total = query.count()
@@ -67,7 +71,6 @@ def get_weather_data():
                 'timestamp': r.timestamp.isoformat() if r.timestamp else None
             } for r in results]
         
-        request_id = getattr(request, 'request_id', 'unknown')
         return jsonify({
             'data': data,
             'total': total,
@@ -75,8 +78,7 @@ def get_weather_data():
             'offset': offset,
             'count': len(data),
             'request_id': request_id
-        }), 200
+        }), HTTP_OK
     except Exception as e:
-        request_id = getattr(request, 'request_id', 'unknown')
         logger.error(f"Error retrieving weather data [{request_id}]: {str(e)}")
-        return jsonify({'error': str(e), 'request_id': request_id}), 500
+        return api_error('DataRetrievalFailed', 'An error occurred while retrieving weather data', HTTP_INTERNAL_ERROR, request_id)

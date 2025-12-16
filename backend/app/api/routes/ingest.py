@@ -8,11 +8,9 @@ Includes input validation and security measures.
 from flask import Blueprint, jsonify, request, g
 from werkzeug.exceptions import BadRequest
 from app.services.ingest import ingest_data
-from app.utils.validation import (
-    InputValidator, 
-    ValidationError as InputValidationError,
-    validate_request_size
-)
+from app.utils.validation import InputValidator, validate_request_size
+from app.core.exceptions import ValidationError, api_error
+from app.core.constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR
 from app.api.middleware.auth import require_api_key
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
 from app.api.schemas.weather import parse_json_safely
@@ -59,7 +57,7 @@ def ingest():
                 'status': '/status - Health check',
                 'health': '/health - Detailed health check'
             }
-        }), 200
+        }), HTTP_OK
     
     # Handle POST requests - actual ingestion
     request_id = getattr(g, 'request_id', 'unknown')
@@ -70,11 +68,7 @@ def ingest():
             request_data = request.get_json(force=True, silent=True)
         except BadRequest as e:
             logger.error(f"BadRequest parsing JSON [{request_id}]: {str(e)}")
-            return jsonify({
-                'error': 'Invalid JSON format',
-                'message': 'Please check your request body.',
-                'request_id': request_id
-            }), 400
+            return api_error('InvalidJSON', 'Please check your request body.', HTTP_BAD_REQUEST, request_id)
         
         if request_data is None:
             # Try to parse manually if get_json failed
@@ -82,11 +76,7 @@ def ingest():
                 request_data = parse_json_safely(request.data)
                 if request_data is None:
                     logger.error(f"All JSON parsing attempts failed [{request_id}]")
-                    return jsonify({
-                        'error': 'Invalid JSON format',
-                        'message': 'Please ensure your JSON is properly formatted.',
-                        'request_id': request_id
-                    }), 400
+                    return api_error('InvalidJSON', 'Please ensure your JSON is properly formatted.', HTTP_BAD_REQUEST, request_id)
             else:
                 request_data = {}
         
@@ -97,13 +87,9 @@ def ingest():
         if lat is not None or lon is not None:
             try:
                 lat, lon = InputValidator.validate_coordinates(lat, lon)
-            except InputValidationError as e:
+            except ValidationError as e:
                 logger.warning(f"Coordinate validation failed [{request_id}]: {str(e)}")
-                return jsonify({
-                    'error': 'Validation error',
-                    'message': str(e),
-                    'request_id': request_id
-                }), 400
+                return api_error('ValidationError', str(e), HTTP_BAD_REQUEST, request_id)
         
         data = ingest_data(lat=lat, lon=lon)
         
@@ -116,33 +102,17 @@ def ingest():
                 'timestamp': data.get('timestamp').isoformat() if data.get('timestamp') else None
             },
             'request_id': request_id
-        }), 200
+        }), HTTP_OK
         
-    except InputValidationError as e:
+    except ValidationError as e:
         logger.error(f"Validation error in ingest [{request_id}]: {str(e)}")
-        return jsonify({
-            'error': 'Validation error',
-            'message': str(e),
-            'request_id': request_id
-        }), 400
+        return api_error('ValidationError', str(e), HTTP_BAD_REQUEST, request_id)
     except ValueError as e:
         logger.error(f"Validation error in ingest [{request_id}]: {str(e)}")
-        return jsonify({
-            'error': 'Validation error',
-            'message': str(e),
-            'request_id': request_id
-        }), 400
+        return api_error('ValidationError', str(e), HTTP_BAD_REQUEST, request_id)
     except BadRequest as e:
         logger.error(f"BadRequest error in ingest [{request_id}]: {str(e)}")
-        return jsonify({
-            'error': 'Invalid request',
-            'message': 'The request could not be processed',
-            'request_id': request_id
-        }), 400
+        return api_error('InvalidRequest', 'The request could not be processed', HTTP_BAD_REQUEST, request_id)
     except Exception as e:
         logger.error(f"Error in ingest endpoint [{request_id}]: {str(e)}", exc_info=True)
-        return jsonify({
-            'error': 'Ingestion failed',
-            'message': 'An error occurred during data ingestion',
-            'request_id': request_id
-        }), 500
+        return api_error('IngestionFailed', 'An error occurred during data ingestion', HTTP_INTERNAL_ERROR, request_id)

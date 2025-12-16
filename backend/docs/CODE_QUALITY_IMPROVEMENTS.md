@@ -77,8 +77,8 @@ As a senior backend engineer, I've conducted a comprehensive review and enhancem
 #### **Removed Exposed Credentials**
 **Before:**
 ```env
-OWM_API_KEY=REDACTED_OWM_KEY  # ❌ EXPOSED!
-METEOSTAT_API_KEY=REDACTED_WEATHERSTACK_KEY  # ❌ EXPOSED!
+OWM_API_KEY=your_real_key_here  # ❌ EXPOSED!
+METEOSTAT_API_KEY=your_real_key_here  # ❌ EXPOSED!
 ```
 
 **After:**

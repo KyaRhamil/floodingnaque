@@ -6,32 +6,98 @@ import hashlib
 import hmac
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from app.services.risk_classifier import classify_risk_level, RISK_LEVELS
 
 logger = logging.getLogger(__name__)
 
-# Lazy load model
-_model = None
-_model_path = os.path.join('models', 'flood_rf_model.joblib')
-_model_metadata = None
-_model_checksum = None  # Store checksum for integrity verification
+# Default model path constant
+DEFAULT_MODEL_PATH = os.path.join('models', 'flood_rf_model.joblib')
 
 # HMAC key for model signing (should be set in environment)
 _MODEL_SIGNING_KEY = os.getenv('MODEL_SIGNING_KEY', '')
 
 
+class ModelLoader:
+    """
+    Singleton class for lazy-loading and managing ML models.
+    
+    This replaces global mutable state with a controlled singleton pattern
+    that supports dependency injection for testing.
+    """
+    
+    _instance: Optional['ModelLoader'] = None
+    
+    def __init__(self):
+        """Initialize the model loader."""
+        self._model: Optional[Any] = None
+        self._model_path: str = DEFAULT_MODEL_PATH
+        self._model_metadata: Optional[Dict[str, Any]] = None
+        self._model_checksum: Optional[str] = None
+    
+    @classmethod
+    def get_instance(cls) -> 'ModelLoader':
+        """Get or create the singleton ModelLoader instance."""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+    
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance (useful for testing)."""
+        cls._instance = None
+    
+    @property
+    def model(self) -> Optional[Any]:
+        """Get the currently loaded model."""
+        return self._model
+    
+    @property
+    def model_path(self) -> str:
+        """Get the current model path."""
+        return self._model_path
+    
+    @property
+    def metadata(self) -> Optional[Dict[str, Any]]:
+        """Get the model metadata."""
+        return self._model_metadata
+    
+    @property
+    def checksum(self) -> Optional[str]:
+        """Get the model checksum."""
+        return self._model_checksum
+    
+    def set_model(
+        self,
+        model: Any,
+        path: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        checksum: Optional[str] = None
+    ) -> None:
+        """Set the loaded model and its metadata."""
+        self._model = model
+        self._model_path = path
+        self._model_metadata = metadata
+        self._model_checksum = checksum
+
+
+# Helper function to get model loader instance
+def _get_model_loader() -> ModelLoader:
+    """Get the ModelLoader singleton instance."""
+    return ModelLoader.get_instance()
+
+
 def get_model_metadata(model_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Get metadata for a model."""
     if model_path is None:
-        model_path = _model_path
+        model_path = _get_model_loader().model_path
     
     metadata_path = Path(model_path).with_suffix('.json')
     if metadata_path.exists():
         try:
             with open(metadata_path, 'r') as f:
                 return json.load(f)
-        except Exception as e:
+        except (json.JSONDecodeError, IOError) as e:
             logger.warning(f"Could not load metadata: {str(e)}")
     return None
 
@@ -212,13 +278,13 @@ def save_model_with_checksum(model, model_path: str, metadata: Dict[str, Any]) -
     return checksum
 
 
-def list_available_models(models_dir: str = 'models') -> list:
+def list_available_models(models_dir: str = 'models') -> List[Dict[str, Any]]:
     """List all available model versions."""
     models_path = Path(models_dir)
     if not models_path.exists():
         return []
     
-    models = []
+    models: List[Dict[str, Any]] = []
     for file in models_path.glob('flood_rf_model_v*.joblib'):
         try:
             version_str = file.stem.split('_v')[-1]
@@ -253,7 +319,11 @@ def get_latest_model_version(models_dir: str = 'models') -> Optional[int]:
     return None
 
 
-def _load_model(model_path: Optional[str] = None, force_reload: bool = False, verify_integrity: bool = True):
+def _load_model(
+    model_path: Optional[str] = None,
+    force_reload: bool = False,
+    verify_integrity: bool = True
+) -> Any:
     """
     Load the trained model with optional integrity verification.
     
@@ -269,16 +339,14 @@ def _load_model(model_path: Optional[str] = None, force_reload: bool = False, ve
         FileNotFoundError: If model file doesn't exist
         ValueError: If integrity check fails
     """
-    global _model, _model_path, _model_metadata, _model_checksum
+    loader = _get_model_loader()
     
     # Use provided path or default
     if model_path is None:
-        model_path = _model_path
-    else:
-        _model_path = model_path
+        model_path = loader.model_path
     
     # Reload if path changed or force reload
-    if _model is None or force_reload or model_path != _model_path:
+    if loader.model is None or force_reload or model_path != loader.model_path:
         if not os.path.exists(model_path):
             raise FileNotFoundError(
                 f"Model file not found: {model_path}. "
@@ -303,23 +371,25 @@ def _load_model(model_path: Optional[str] = None, force_reload: bool = False, ve
                 )
         
         try:
-            _model = joblib.load(model_path)
-            _model_metadata = get_model_metadata(model_path)
-            _model_checksum = compute_model_checksum(model_path)
+            model = joblib.load(model_path)
+            metadata = get_model_metadata(model_path)
+            checksum = compute_model_checksum(model_path)
+            
+            loader.set_model(model, model_path, metadata, checksum)
             
             logger.info(f"Model loaded successfully from {model_path}")
-            if _model_metadata:
-                logger.info(f"Model version: {_model_metadata.get('version', 'unknown')}")
-            logger.info(f"Model checksum: {_model_checksum[:16]}...")
+            if metadata:
+                logger.info(f"Model version: {metadata.get('version', 'unknown')}")
+            logger.info(f"Model checksum: {checksum[:16]}...")
             
-        except Exception as e:
+        except (IOError, OSError) as e:
             logger.error(f"Error loading model: {str(e)}")
             raise
     
-    return _model
+    return loader.model
 
 
-def load_model_version(version: int, models_dir: str = 'models', force_reload: bool = False):
+def load_model_version(version: int, models_dir: str = 'models', force_reload: bool = False) -> Any:
     """Load a specific model version."""
     model_path = Path(models_dir) / f'flood_rf_model_v{version}.joblib'
     if not model_path.exists():
@@ -327,7 +397,13 @@ def load_model_version(version: int, models_dir: str = 'models', force_reload: b
     
     return _load_model(str(model_path), force_reload=force_reload)
 
-def predict_flood(input_data, model_version: Optional[int] = None, return_proba: bool = False, return_risk_level: bool = True):
+
+def predict_flood(
+    input_data: Dict[str, Any],
+    model_version: Optional[int] = None,
+    return_proba: bool = False,
+    return_risk_level: bool = True
+) -> Dict[str, Any] | int:
     """
     Predict flood based on input data.
     
@@ -410,9 +486,10 @@ def predict_flood(input_data, model_version: Optional[int] = None, return_proba:
         
         # Build response
         if return_proba or return_risk_level:
-            response = {
+            loader = _get_model_loader()
+            response: Dict[str, Any] = {
                 'prediction': result,
-                'model_version': _model_metadata.get('version') if _model_metadata else None
+                'model_version': loader.metadata.get('version') if loader.metadata else None
             }
             if probability_dict:
                 response['probability'] = probability_dict
@@ -428,28 +505,31 @@ def predict_flood(input_data, model_version: Optional[int] = None, return_proba:
         else:
             logger.info(f"Prediction made: {result} (0=no flood, 1=flood)")
             return result
-    except Exception as e:
+    except (KeyError, ValueError, TypeError) as e:
         logger.error(f"Error making prediction: {str(e)}")
         raise
 
 
 def get_current_model_info() -> Optional[Dict[str, Any]]:
     """Get information about the currently loaded model."""
-    if _model is None:
+    loader = _get_model_loader()
+    
+    if loader.model is None:
         try:
             _load_model()
-        except:
+        except (FileNotFoundError, ValueError, OSError) as e:
+            logger.warning(f"Could not load model for info: {e}")
             return None
     
-    info = {
-        'model_path': _model_path,
-        'model_type': type(_model).__name__ if _model else None,
-        'metadata': _model_metadata,
-        'checksum': _model_checksum[:16] + '...' if _model_checksum else None,
-        'integrity_verified': bool(_model_checksum)
+    info: Dict[str, Any] = {
+        'model_path': loader.model_path,
+        'model_type': type(loader.model).__name__ if loader.model else None,
+        'metadata': loader.metadata,
+        'checksum': loader.checksum[:16] + '...' if loader.checksum else None,
+        'integrity_verified': bool(loader.checksum)
     }
     
-    if _model and hasattr(_model, 'feature_names_in_'):
-        info['features'] = list(_model.feature_names_in_)
+    if loader.model and hasattr(loader.model, 'feature_names_in_'):
+        info['features'] = list(loader.model.feature_names_in_)
     
     return info

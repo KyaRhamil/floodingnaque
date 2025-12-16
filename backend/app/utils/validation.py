@@ -13,6 +13,8 @@ from datetime import datetime
 from flask import request, jsonify, g
 import logging
 
+from app.core.exceptions import ValidationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,11 +26,6 @@ ENDPOINT_SIZE_LIMITS = {
     'models': 1 * 1024,        # 1 KB - query params only
     'default': 100 * 1024,     # 100 KB - default limit
 }
-
-
-class ValidationError(Exception):
-    """Custom validation error."""
-    pass
 
 
 def validate_request_size(max_size: Optional[int] = None, endpoint_name: Optional[str] = None):
