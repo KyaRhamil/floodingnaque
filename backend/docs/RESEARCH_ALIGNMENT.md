@@ -6,7 +6,7 @@ This document maps the current implementation to your thesis research objectives
 
 ### Specific Problem 1: Live Weather Data Collection
 ✅ **IMPLEMENTED**
-- **Location**: `backend/ingest.py`
+- **Location**: `backend/app/services/ingest.py`
 - **Features**:
   - OpenWeatherMap API integration
   - Weatherstack API integration (precipitation data)
@@ -17,7 +17,7 @@ This document maps the current implementation to your thesis research objectives
 
 ### Specific Problem 2: Random Forest Classification
 ✅ **IMPLEMENTED**
-- **Location**: `backend/train.py`, `backend/predict.py`
+- **Location**: `backend/scripts/train.py`, `backend/app/services/predict.py`
 - **Features**:
   - Random Forest classifier implementation
   - Model training with comprehensive metrics
@@ -28,7 +28,7 @@ This document maps the current implementation to your thesis research objectives
 
 ### Specific Problem 3: Alert Delivery System
 🔄 **PARTIALLY IMPLEMENTED**
-- **Location**: `backend/alerts.py`
+- **Location**: `backend/app/services/alerts.py`
 - **Features**:
   - Alert system architecture
   - Web dashboard alerts (via API)
@@ -48,7 +48,7 @@ This document maps the current implementation to your thesis research objectives
 
 ### Specific Problem 5: System Evaluation
 ✅ **IMPLEMENTED**
-- **Location**: `backend/evaluation.py`
+- **Location**: `backend/app/services/evaluation.py`
 - **Features**:
   - Accuracy evaluation framework
   - Scalability testing structure
@@ -196,8 +196,8 @@ This document maps the current implementation to your thesis research objectives
 - `GET /api/docs` - Complete API documentation
 
 ### Evaluation
-- Use `backend/evaluation.py` for comprehensive metrics
-- Use `backend/validate_model.py` for model validation
+- Use `backend/app/services/evaluation.py` for comprehensive metrics
+- Use `backend/scripts/validate_model.py` for model validation
 - Review `models/*.json` for model metadata
 
 ## Research Contribution

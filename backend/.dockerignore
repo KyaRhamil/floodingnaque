@@ -1,0 +1,102 @@
+# =====================================================
+# Docker Ignore File for Floodingnaque Backend
+# =====================================================
+# Prevents unnecessary files from being copied to Docker image
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.env.*
+!.env.example
+.venv
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Testing
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Documentation (don't need in runtime)
+docs/
+*.md
+!README.md
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
+
+# Logs (will be created at runtime)
+logs/
+*.log
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scripts not needed in production
+scripts/
+
+# Tests not needed in production image
+tests/
+
+# Evaluation results
+evaluation_results/
+
+# Backups
+backups/
+*.bak
+
+# Docker files (prevent nested copying)
+Dockerfile*
+docker-compose*
+.dockerignore

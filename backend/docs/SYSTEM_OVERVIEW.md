@@ -87,11 +87,11 @@
 │                      DEPLOYMENT (API)                                │
 ├─────────────────────────────────────────────────────────────────────┤
 │  Flask API (app/api/app.py)                                         │
-│  ├── POST /predict                                                  │
+│  ├── POST /predict (routes/predict.py)                              │
 │  │   ├── Input: temperature, humidity, precipitation               │
-│  │   ├── Load model (predict.py)                                   │
+│  │   ├── Load model (services/predict.py)                          │
 │  │   ├── Make prediction                                            │
-│  │   └── Classify risk (risk_classifier.py)                        │
+│  │   └── Classify risk (services/risk_classifier.py)               │
 │  │       ├── Safe (0) - Low risk                                    │
 │  │       ├── Alert (1) - Moderate risk                              │
 │  │       └── Critical (2) - High risk                               │
@@ -175,33 +175,62 @@ floodingnaque/
 ├── backend/
 │   ├── app/
 │   │   ├── api/
-│   │   │   └── app.py                    ← Flask API endpoints
+│   │   │   ├── app.py               # Flask application factory
+│   │   │   ├── routes/              # API route blueprints
+│   │   │   │   ├── data.py          # Data retrieval endpoints
+│   │   │   │   ├── health.py        # Health check endpoints
+│   │   │   │   ├── ingest.py        # Weather data ingestion
+│   │   │   │   ├── models.py        # Model management endpoints
+│   │   │   │   └── predict.py       # Prediction endpoints
+│   │   │   ├── middleware/          # Request middleware
+│   │   │   │   ├── auth.py          # Authentication
+│   │   │   │   ├── logging.py       # Request logging
+│   │   │   │   ├── rate_limit.py    # Rate limiting
+│   │   │   │   └── security.py      # Security headers
+│   │   │   └── schemas/             # Request/response validation
+│   │   │       ├── prediction.py    # Prediction schemas
+│   │   │       └── weather.py       # Weather data schemas
+│   │   ├── core/                    # Core functionality
+│   │   │   ├── config.py            # Configuration management
+│   │   │   ├── constants.py         # Application constants
+│   │   │   ├── exceptions.py        # Custom exceptions
+│   │   │   └── security.py          # Security utilities
 │   │   ├── services/
-│   │   │   ├── predict.py                ← Prediction service
-│   │   │   └── risk_classifier.py        ← 3-level classification
-│   │   └── models/
-│   │       └── db.py                     ← Database models
+│   │   │   ├── predict.py           # ⭐ Prediction service
+│   │   │   ├── risk_classifier.py   # ⭐ 3-level classification
+│   │   │   ├── alerts.py            # Alert notifications
+│   │   │   ├── evaluation.py        # Model evaluation
+│   │   │   ├── ingest.py            # Weather data ingestion
+│   │   │   └── scheduler.py         # Background tasks
+│   │   ├── models/
+│   │   │   └── db.py                # SQLAlchemy models
+│   │   └── utils/
+│   │       ├── utils.py             # Helper functions
+│   │       └── validation.py        # Input validation
 │   │
 │   ├── scripts/
-│   │   ├── train.py                      ← ⭐ Main training script
-│   │   ├── generate_thesis_report.py     ← ⭐ Generate charts
-│   │   ├── merge_datasets.py             ← ⭐ Merge CSV files
-│   │   ├── compare_models.py             ← ⭐ Compare versions
-│   │   ├── validate_model.py             ← Validate model
-│   │   └── evaluate_model.py             ← Evaluate model
+│   │   ├── train.py                 # ⭐ Main training script
+│   │   ├── progressive_train.py     # ⭐ Progressive training (v1-v4)
+│   │   ├── preprocess_official_flood_records.py # CSV preprocessing
+│   │   ├── generate_thesis_report.py # ⭐ Generate charts
+│   │   ├── merge_datasets.py        # ⭐ Merge CSV files
+│   │   ├── compare_models.py        # ⭐ Compare versions
+│   │   ├── validate_model.py        # Validate model
+│   │   ├── evaluate_model.py        # Evaluate model
+│   │   └── migrate_db.py            # Database migrations
 │   │
 │   ├── data/
-│   │   ├── synthetic_dataset.csv         ← Example data
-│   │   ├── merged_dataset.csv            ← Merged data
-│   │   └── *.csv                         ← Your datasets
+│   │   ├── Floodingnaque_Paranaque_Official_Flood_Records_*.csv
+│   │   ├── synthetic_dataset.csv    # Example data
+│   │   └── processed/               # Preprocessed data
 │   │
 │   ├── models/
-│   │   ├── flood_rf_model.joblib         ← Latest model
-│   │   ├── flood_rf_model.json           ← Latest metadata
-│   │   ├── flood_rf_model_v*.joblib      ← Versioned models
-│   │   └── flood_rf_model_v*.json        ← Versioned metadata
+│   │   ├── flood_rf_model.joblib    # Latest model
+│   │   ├── flood_rf_model.json      # Latest metadata
+│   │   ├── flood_rf_model_v*.joblib # Versioned models
+│   │   └── flood_rf_model_v*.json   # Versioned metadata
 │   │
-│   ├── reports/                          ← Generated charts
+│   ├── reports/                     # Generated charts
 │   │   ├── feature_importance.png
 │   │   ├── confusion_matrix.png
 │   │   ├── roc_curve.png
@@ -212,18 +241,24 @@ floodingnaque/
 │   │   ├── model_report.txt
 │   │   └── comparison_report.txt
 │   │
-│   ├── docs/
-│   │   ├── THESIS_GUIDE.md               ← Complete thesis guide
-│   │   ├── QUICK_REFERENCE.md            ← Quick commands
-│   │   ├── SYSTEM_OVERVIEW.md            ← This file
-│   │   ├── MODEL_MANAGEMENT.md           ← Model versioning
-│   │   └── BACKEND_COMPLETE.md           ← Full documentation
+│   ├── tests/
+│   │   ├── unit/                    # Unit tests
+│   │   ├── integration/             # Integration tests
+│   │   └── security/                # Security tests
 │   │
-│   ├── IMPROVEMENTS_SUMMARY.md           ← What's new
-│   ├── requirements.txt                  ← Dependencies
-│   └── main.py                           ← API entry point
+│   ├── docs/
+│   │   ├── THESIS_GUIDE.md          # Complete thesis guide
+│   │   ├── QUICK_REFERENCE.md       # Quick commands
+│   │   ├── SYSTEM_OVERVIEW.md       # This file
+│   │   ├── MODEL_MANAGEMENT.md      # Model versioning
+│   │   └── BACKEND_COMPLETE.md      # Full documentation
+│   │
+│   ├── main.py                      # API entry point
+│   ├── requirements.txt             # Dependencies
+│   ├── Dockerfile                   # Docker configuration
+│   └── pytest.ini                   # Pytest configuration
 │
-└── RANDOM_FOREST_THESIS_READY.md         ← Quick start guide
+└── RANDOM_FOREST_THESIS_READY.md    # Quick start guide
 ```
 
 ---

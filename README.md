@@ -232,7 +232,7 @@ curl http://localhost:5000/api/models
 
 ### Detailed Guides
 
-- **[backend/IMPROVEMENTS_SUMMARY.md](backend/IMPROVEMENTS_SUMMARY.md)** - All improvements explained
+- **[backend/docs/IMPROVEMENTS_SUMMARY.md](backend/docs/IMPROVEMENTS_SUMMARY.md)** - All improvements explained
 - **[backend/docs/SYSTEM_OVERVIEW.md](backend/docs/SYSTEM_OVERVIEW.md)** - System architecture
 - **[backend/docs/MODEL_MANAGEMENT.md](backend/docs/MODEL_MANAGEMENT.md)** - Model versioning
 - **[backend/docs/BACKEND_COMPLETE.md](backend/docs/BACKEND_COMPLETE.md)** - Full documentation

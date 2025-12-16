@@ -8,7 +8,7 @@ Industry-standard security hardening applied.
 from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 import uuid
-from app.services.scheduler import scheduler
+from app.services import scheduler as scheduler_module
 from app.core.config import load_env, get_config
 from app.core.exceptions import AppException
 from app.models.db import init_db
@@ -229,8 +229,7 @@ def _register_blueprints(app: Flask):
 def _start_scheduler():
     """Start the background scheduler."""
     try:
-        scheduler.start()
-        logger.info("Scheduler started successfully")
+        scheduler_module.start()
     except Exception as e:
         logger.error(f"Error starting scheduler: {str(e)}")
 

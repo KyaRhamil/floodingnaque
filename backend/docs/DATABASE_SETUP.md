@@ -39,18 +39,18 @@ Stores weather data ingested from external APIs.
 
 ## Initialization
 
-The database is automatically initialized when you run the Flask application (`app.py`). The `init_db()` function creates all necessary tables if they don't exist.
+The database is automatically initialized when you run the Flask application (`main.py`). The `init_db()` function creates all necessary tables if they don't exist.
 
 To manually initialize the database:
 ```bash
-python -c "from db import init_db; init_db()"
+python -c "from app.models.db import init_db; init_db()"
 ```
 
 ## Verifying Setup
 
 To verify the database setup, run:
 ```bash
-python inspect_db.py
+python scripts/inspect_db.py
 ```
 
 This will show:
@@ -60,33 +60,35 @@ This will show:
 
 ## Usage
 
-The database is accessed through SQLAlchemy sessions. The `db.py` module provides:
+The database is accessed through SQLAlchemy sessions. The `app/models/db.py` module provides:
 - `WeatherData` model class for ORM operations
-- `db_session` for database operations
+- `get_db_session()` context manager for database operations
 - `init_db()` function to create tables
 
 Example usage:
 ```python
-from db import WeatherData, db_session
+from app.models.db import WeatherData, get_db_session
 from datetime import datetime
 
 # Create a new record
-weather = WeatherData(
-    temperature=298.15,
-    humidity=65.0,
-    precipitation=0.0,
-    timestamp=datetime.now()
-)
-db_session.add(weather)
-db_session.commit()
+with get_db_session() as session:
+    weather = WeatherData(
+        temperature=298.15,
+        humidity=65.0,
+        precipitation=0.0,
+        timestamp=datetime.now()
+    )
+    session.add(weather)
+    # Session auto-commits on context exit
 
 # Query records
-records = db_session.query(WeatherData).all()
+with get_db_session() as session:
+    records = session.query(WeatherData).all()
 ```
 
 ## Notes
 
-- The database file (`floodingnaque.db`) is created automatically in the `backend/` directory
-- Make sure to commit sessions after making changes: `db_session.commit()`
+- The database file (`floodingnaque.db`) is created automatically in the `backend/data/` directory
+- Sessions are managed via context manager for proper cleanup
 - For production, consider using PostgreSQL or MySQL instead of SQLite
 
