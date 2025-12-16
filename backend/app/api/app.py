@@ -9,7 +9,7 @@ from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 import uuid
 from app.services import scheduler as scheduler_module
-from app.core.config import load_env, get_config
+from app.core.config import load_env, get_config, is_debug_mode
 from app.core.exceptions import AppException
 from app.models.db import init_db
 from app.utils.utils import setup_logging
@@ -121,7 +121,7 @@ def _setup_cors(app: Flask):
              max_age=600)
     else:
         # Development fallback - allow localhost origins
-        if os.getenv('FLASK_DEBUG', 'False').lower() == 'true':
+        if is_debug_mode():  # Use centralized check
             CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000'])
         else:
             # Production without CORS_ORIGINS set - restrict to same origin
@@ -241,6 +241,6 @@ app = create_app()
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     host = os.getenv('HOST', '0.0.0.0')
-    debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    debug = is_debug_mode()  # Use centralized check
     logger.info(f"Starting Flask app on {host}:{port} (debug={debug})")
     app.run(host=host, port=port, debug=debug)

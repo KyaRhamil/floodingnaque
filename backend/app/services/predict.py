@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import json
 import hashlib
+import hmac
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -15,6 +16,9 @@ _model = None
 _model_path = os.path.join('models', 'flood_rf_model.joblib')
 _model_metadata = None
 _model_checksum = None  # Store checksum for integrity verification
+
+# HMAC key for model signing (should be set in environment)
+_MODEL_SIGNING_KEY = os.getenv('MODEL_SIGNING_KEY', '')
 
 
 def get_model_metadata(model_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -49,20 +53,98 @@ def compute_model_checksum(model_path: str) -> str:
     return sha256_hash.hexdigest()
 
 
+def compute_model_hmac_signature(model_path: str, signing_key: str) -> str:
+    """
+    Compute HMAC-SHA256 signature for a model file.
+    
+    This provides authenticity verification in addition to integrity.
+    An attacker cannot forge a valid signature without the signing key.
+    
+    Args:
+        model_path: Path to the model file
+        signing_key: Secret key for HMAC signing
+        
+    Returns:
+        str: Hex-encoded HMAC-SHA256 signature
+    """
+    if not signing_key:
+        raise ValueError("MODEL_SIGNING_KEY is required for HMAC signature")
+    
+    h = hmac.new(signing_key.encode('utf-8'), digestmod=hashlib.sha256)
+    with open(model_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def verify_model_hmac_signature(model_path: str, expected_signature: str, signing_key: str) -> bool:
+    """
+    Verify HMAC signature of a model file.
+    
+    Uses timing-safe comparison to prevent timing attacks.
+    
+    Args:
+        model_path: Path to the model file
+        expected_signature: Expected HMAC signature from metadata
+        signing_key: Secret key for HMAC verification
+        
+    Returns:
+        bool: True if signature is valid
+    """
+    if not signing_key or not expected_signature:
+        return False
+    
+    try:
+        actual_signature = compute_model_hmac_signature(model_path, signing_key)
+        return hmac.compare_digest(actual_signature, expected_signature)
+    except Exception as e:
+        logger.error(f"HMAC verification failed: {e}")
+        return False
+
+
 def verify_model_integrity(model_path: str, expected_checksum: Optional[str] = None) -> bool:
     """
-    Verify model file integrity using checksum.
+    Verify model file integrity using checksum and optional HMAC signature.
+    
+    Security levels:
+    1. Checksum (SHA-256): Verifies file hasn't been corrupted
+    2. HMAC Signature: Verifies file authenticity (requires MODEL_SIGNING_KEY)
     
     Args:
         model_path: Path to the model file
         expected_checksum: Expected SHA-256 checksum (from metadata)
         
     Returns:
-        bool: True if checksum matches or no expected checksum provided
+        bool: True if verification passes
     """
+    metadata = get_model_metadata(model_path)
+    
+    # First verify HMAC signature if available (strongest protection)
+    if _MODEL_SIGNING_KEY and metadata:
+        expected_hmac = metadata.get('hmac_signature')
+        if expected_hmac:
+            if not verify_model_hmac_signature(model_path, expected_hmac, _MODEL_SIGNING_KEY):
+                logger.error(
+                    f"SECURITY: HMAC signature verification FAILED for {model_path}! "
+                    "Model may have been tampered with."
+                )
+                return False
+            logger.info(f"Model HMAC signature verified: {model_path}")
+            return True
+        else:
+            logger.warning(
+                f"No HMAC signature in metadata for {model_path}. "
+                "Re-train model with signing enabled for better security."
+            )
+    elif os.getenv('REQUIRE_MODEL_SIGNATURE', 'false').lower() == 'true':
+        logger.error(
+            "SECURITY: REQUIRE_MODEL_SIGNATURE is enabled but "
+            "MODEL_SIGNING_KEY is not set or model has no signature."
+        )
+        return False
+    
+    # Fall back to checksum verification
     if not expected_checksum:
-        # Try to get from metadata
-        metadata = get_model_metadata(model_path)
         if metadata:
             expected_checksum = metadata.get('checksum')
     
@@ -84,7 +166,9 @@ def verify_model_integrity(model_path: str, expected_checksum: Optional[str] = N
 
 def save_model_with_checksum(model, model_path: str, metadata: Dict[str, Any]) -> str:
     """
-    Save a model with checksum in metadata for integrity verification.
+    Save a model with checksum and optional HMAC signature for integrity verification.
+    
+    If MODEL_SIGNING_KEY is set, also computes an HMAC signature for authenticity.
     
     Args:
         model: The model object to save
@@ -103,6 +187,21 @@ def save_model_with_checksum(model, model_path: str, metadata: Dict[str, Any]) -
     # Update metadata with checksum
     metadata['checksum'] = checksum
     metadata['checksum_algorithm'] = 'SHA-256'
+    
+    # Compute and store HMAC signature if signing key is available
+    if _MODEL_SIGNING_KEY:
+        try:
+            hmac_sig = compute_model_hmac_signature(model_path, _MODEL_SIGNING_KEY)
+            metadata['hmac_signature'] = hmac_sig
+            metadata['hmac_algorithm'] = 'HMAC-SHA256'
+            logger.info(f"Model signed with HMAC: {hmac_sig[:16]}...")
+        except Exception as e:
+            logger.warning(f"Could not sign model with HMAC: {e}")
+    else:
+        logger.warning(
+            "MODEL_SIGNING_KEY not set. Model saved without HMAC signature. "
+            "Consider setting this for production security."
+        )
     
     # Save metadata
     metadata_path = Path(model_path).with_suffix('.json')

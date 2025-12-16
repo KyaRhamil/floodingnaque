@@ -11,7 +11,11 @@ from app.services.predict import predict_flood
 from app.api.middleware.auth import require_api_key
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
 from app.api.schemas.weather import parse_json_safely
-from app.utils.validation import InputValidator, ValidationError as InputValidationError
+from app.utils.validation import (
+    InputValidator, 
+    ValidationError as InputValidationError,
+    validate_request_size
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,6 +25,7 @@ predict_bp = Blueprint('predict', __name__)
 
 @predict_bp.route('/predict', methods=['POST'])
 @limiter.limit(get_endpoint_limit('predict'))
+@validate_request_size(endpoint_name='predict')  # 10KB limit for prediction payloads
 @require_api_key
 def predict():
     """Predict flood risk based on weather data."""
