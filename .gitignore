@@ -149,7 +149,6 @@ data/*.csv
 .env.production
 .env.development
 .env.prod
-.env.example
 backend/.env.prod
 
 # Evaluation results
