@@ -2,9 +2,12 @@
 # Floodingnaque - Production Docker Compose
 # =====================================================
 # Usage: 
-#   docker-compose -f docker-compose.prod.yml up -d --build
-#   docker-compose -f docker-compose.prod.yml logs -f
-#   docker-compose -f docker-compose.prod.yml down
+#   docker-compose -f docker-compose-production.yml up -d --build
+#   docker-compose -f docker-compose-production.yml logs -f
+#   docker-compose -f docker-compose-production.yml down
+# =====================================================
+# NOTE: This configuration uses Supabase as the database.
+#       Ensure DATABASE_URL is set in ./backend/.env.production pointing to Supabase.
 # =====================================================
 
 services:
@@ -25,34 +28,29 @@ services:
       - FLASK_DEBUG=False
       - PORT=5000
       - HOST=0.0.0.0
-      # Database - Uses local PostgreSQL or Supabase (from .env.prod if DATABASE_URL is set)
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:change_me_in_production@db:5432/floodingnaque}
+      # DATABASE_URL is loaded from .env.production file (points to Supabase)
       # Redis for rate limiting
       - RATE_LIMIT_STORAGE_URL=redis://redis:6379/0
       - RATE_LIMIT_ENABLED=True
-      # Security (loaded from .env.prod)
+      # Security (loaded from .env.production)
       - AUTH_BYPASS_ENABLED=False
       # CORS - Set your frontend domain
       - CORS_ORIGINS=${CORS_ORIGINS:-https://floodingnaque.vercel.app}
       # Logging
       - LOG_LEVEL=INFO
       - LOG_FORMAT=json
-      # Weather API Keys
-      - OWM_API_KEY=${OWM_API_KEY}
-      - WEATHERSTACK_API_KEY=${WEATHERSTACK_API_KEY:-}
+      # Weather API Keys are loaded from .env.production via env_file
       # Scheduler
       - SCHEDULER_ENABLED=True
       - SCHEDULER_TIMEZONE=Asia/Manila
     env_file:
-      - ./backend/.env.prod
+      - ./backend/.env.production
     volumes:
       # Persistent data volumes (no code mounting in production!)
       - floodingnaque_models:/app/models
       - floodingnaque_logs:/app/logs
       - floodingnaque_data:/app/data
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -76,36 +74,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-
-  # ===================
-  # PostgreSQL Database
-  # ===================
-  db:
-    image: postgres:15-alpine
-    container_name: floodingnaque-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-floodingnaque}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - floodingnaque-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-floodingnaque}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
 
   # ===================
   # Redis (Rate Limiting & Cache)
@@ -164,8 +132,6 @@ networks:
 # Volumes
 # ===================
 volumes:
-  postgres_data:
-    name: floodingnaque-postgres-data
   redis_data:
     name: floodingnaque-redis-data
   floodingnaque_models:

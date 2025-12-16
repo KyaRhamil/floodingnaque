@@ -2,9 +2,12 @@
 # Floodingnaque - Development Docker Compose
 # =====================================================
 # Usage:
-#   docker-compose up -d --build
-#   docker-compose logs -f backend
-#   docker-compose down
+#   docker-compose -f docker-compose-development.yml up -d --build
+#   docker-compose -f docker-compose-development.yml logs -f backend
+#   docker-compose -f docker-compose-development.yml down
+# =====================================================
+# NOTE: This configuration uses Supabase as the database.
+#       Ensure DATABASE_URL is set in ./backend/.env.development pointing to Supabase.
 # =====================================================
 
 services:
@@ -15,7 +18,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: production
+      target: development
     container_name: floodingnaque-api-dev
     restart: unless-stopped
     ports:
@@ -25,12 +28,12 @@ services:
       - FLASK_DEBUG=True
       - PORT=5000
       - HOST=0.0.0.0
-      - DATABASE_URL=postgresql://postgres:password@db:5432/floodingnaque
+      # DATABASE_URL is loaded from .env.development file (points to Supabase)
       - RATE_LIMIT_ENABLED=False
       - SCHEDULER_ENABLED=True
       - LOG_LEVEL=DEBUG
     env_file:
-      - ./backend/.env
+      - ./backend/.env.development
     volumes:
       # Mount code for development hot-reload
       - ./backend/app:/app/app:ro
@@ -38,9 +41,6 @@ services:
       # Persistent data
       - ./backend/models:/app/models
       - ./backend/data:/app/data
-    depends_on:
-      db:
-        condition: service_healthy
     networks:
       - floodingnaque-dev
     healthcheck:
@@ -48,31 +48,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
-
-  # ===================
-  # PostgreSQL Database
-  # ===================
-  db:
-    image: postgres:15-alpine
-    container_name: floodingnaque-db-dev
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: floodingnaque
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
-    networks:
-      - floodingnaque-dev
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d floodingnaque"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      start_period: 40s
 
 # ===================
 # Networks
@@ -80,9 +56,3 @@ services:
 networks:
   floodingnaque-dev:
     driver: bridge
-
-# ===================
-# Volumes
-# ===================
-volumes:
-  postgres_data_dev:
