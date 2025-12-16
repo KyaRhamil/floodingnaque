@@ -1,4 +1,4 @@
-# Contributing to Flooding Naque
+# Contributing to Floodingnaque
 
 Thank you for your interest in contributing to Floodingnaque! This document outlines the process for contributing to the project.
 
