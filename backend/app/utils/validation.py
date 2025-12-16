@@ -6,16 +6,84 @@ Provides comprehensive validation for all API inputs.
 import re
 import bleach
 import validators
-from typing import Dict, Any, Optional, List, Union
+import warnings
+from functools import wraps
+from typing import Dict, Any, Optional, List, Union, Callable
 from datetime import datetime
+from flask import request, jsonify, g
 import logging
 
 logger = logging.getLogger(__name__)
 
 
+# Per-endpoint body size limits (in bytes)
+ENDPOINT_SIZE_LIMITS = {
+    'predict': 10 * 1024,      # 10 KB - prediction payload should be small
+    'ingest': 10 * 1024,       # 10 KB - coordinates only
+    'data': 1 * 1024,          # 1 KB - query params only
+    'models': 1 * 1024,        # 1 KB - query params only
+    'default': 100 * 1024,     # 100 KB - default limit
+}
+
+
 class ValidationError(Exception):
     """Custom validation error."""
     pass
+
+
+def validate_request_size(max_size: Optional[int] = None, endpoint_name: Optional[str] = None):
+    """
+    Decorator to validate request body size per-endpoint.
+    
+    This provides defense-in-depth against memory exhaustion attacks
+    by enforcing stricter limits than the global MAX_CONTENT_LENGTH.
+    
+    Args:
+        max_size: Maximum body size in bytes. If None, uses endpoint default.
+        endpoint_name: Name of endpoint for looking up default limit.
+        
+    Returns:
+        Decorator function
+    """
+    def decorator(f: Callable) -> Callable:
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Determine size limit
+            limit = max_size
+            if limit is None:
+                name = endpoint_name or f.__name__
+                limit = ENDPOINT_SIZE_LIMITS.get(name, ENDPOINT_SIZE_LIMITS['default'])
+            
+            # Check content length header first (fast path)
+            content_length = request.content_length
+            if content_length and content_length > limit:
+                request_id = getattr(g, 'request_id', 'unknown')
+                logger.warning(
+                    f"Request body too large for {f.__name__} [{request_id}]: "
+                    f"{content_length} bytes (limit: {limit})"
+                )
+                return jsonify({
+                    'error': 'Request too large',
+                    'message': f'Request body exceeds endpoint limit of {limit // 1024}KB',
+                    'request_id': request_id
+                }), 413
+            
+            # Also check actual data size (handles chunked encoding)
+            if request.data and len(request.data) > limit:
+                request_id = getattr(g, 'request_id', 'unknown')
+                logger.warning(
+                    f"Request data too large for {f.__name__} [{request_id}]: "
+                    f"{len(request.data)} bytes (limit: {limit})"
+                )
+                return jsonify({
+                    'error': 'Request too large',
+                    'message': f'Request body exceeds endpoint limit of {limit // 1024}KB',
+                    'request_id': request_id
+                }), 413
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 
 class InputValidator:
@@ -307,7 +375,27 @@ class InputValidator:
     
     @staticmethod
     def sanitize_sql_input(value: str) -> str:
-        """Sanitize input to prevent SQL injection (additional layer)."""
+        """
+        DEPRECATED: This function provides minimal additional security.
+        
+        Always use parameterized queries (SQLAlchemy ORM or bound parameters)
+        instead of string sanitization. This function exists only as a
+        defense-in-depth measure and should NOT be relied upon.
+        
+        Args:
+            value: Input string to sanitize
+            
+        Returns:
+            Sanitized string (with dangerous patterns removed)
+            
+        Warning:
+            This is NOT a substitute for parameterized queries!
+        """
+        warnings.warn(
+            "sanitize_sql_input is deprecated. Use parameterized queries instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         # Remove potentially dangerous characters
         dangerous_chars = ['--', ';', '/*', '*/', 'xp_', 'sp_', 'DROP', 'DELETE', 'INSERT', 'UPDATE']
         cleaned = value

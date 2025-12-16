@@ -5,9 +5,23 @@ import os
 import secrets
 from dataclasses import dataclass, field
 from typing import List, Optional
+from datetime import timedelta
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def is_debug_mode() -> bool:
+    """
+    Check if application is running in debug mode.
+    
+    Centralized check for consistent debug mode detection across the app.
+    Uses FLASK_DEBUG environment variable.
+    
+    Returns:
+        bool: True if debug mode is enabled
+    """
+    return os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
 
 
 def _get_secret_key() -> str:
@@ -82,6 +96,27 @@ class Config:
     RATE_LIMIT_DEFAULT: int = field(default_factory=lambda: int(os.getenv('RATE_LIMIT_DEFAULT', '100')))
     ENABLE_HTTPS: bool = field(default_factory=lambda: os.getenv('ENABLE_HTTPS', 'False').lower() == 'true')
     
+    # JWT Token Settings
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = field(
+        default_factory=lambda: int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES_MINUTES', '30'))
+    )
+    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = field(
+        default_factory=lambda: int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES_DAYS', '7'))
+    )
+    JWT_TOKEN_LOCATION: List[str] = field(
+        default_factory=lambda: os.getenv('JWT_TOKEN_LOCATION', 'headers').split(',')
+    )
+    JWT_ALGORITHM: str = field(default_factory=lambda: os.getenv('JWT_ALGORITHM', 'HS256'))
+    
+    # Model Security
+    MODEL_SIGNING_KEY: str = field(default_factory=lambda: os.getenv('MODEL_SIGNING_KEY', ''))
+    REQUIRE_MODEL_SIGNATURE: bool = field(
+        default_factory=lambda: os.getenv('REQUIRE_MODEL_SIGNATURE', 'false').lower() == 'true'
+    )
+    VERIFY_MODEL_INTEGRITY: bool = field(
+        default_factory=lambda: os.getenv('VERIFY_MODEL_INTEGRITY', 'true').lower() == 'true'
+    )
+    
     # CORS
     CORS_ORIGINS: str = field(default_factory=lambda: os.getenv('CORS_ORIGINS', 'https://floodingnaque.vercel.app'))
     
@@ -107,6 +142,14 @@ class Config:
             return []
         return [origin.strip() for origin in self.CORS_ORIGINS.split(',') if origin.strip()]
     
+    def get_jwt_access_token_expires(self) -> timedelta:
+        """Get JWT access token expiration as timedelta."""
+        return timedelta(minutes=self.JWT_ACCESS_TOKEN_EXPIRES_MINUTES)
+    
+    def get_jwt_refresh_token_expires(self) -> timedelta:
+        """Get JWT refresh token expiration as timedelta."""
+        return timedelta(days=self.JWT_REFRESH_TOKEN_EXPIRES_DAYS)
+    
     @classmethod
     def validate(cls) -> List[str]:
         """
@@ -131,6 +174,19 @@ class Config:
             
             if not config.ENABLE_HTTPS:
                 warnings.append("HTTPS should be enabled in production")
+            
+            # JWT security checks
+            if config.JWT_ACCESS_TOKEN_EXPIRES_MINUTES > 60:
+                warnings.append(
+                    f"JWT_ACCESS_TOKEN_EXPIRES_MINUTES is {config.JWT_ACCESS_TOKEN_EXPIRES_MINUTES}. "
+                    "Consider shorter expiration (15-30 minutes) for production."
+                )
+            
+            # Model security checks
+            if config.REQUIRE_MODEL_SIGNATURE and not config.MODEL_SIGNING_KEY:
+                warnings.append(
+                    "REQUIRE_MODEL_SIGNATURE is enabled but MODEL_SIGNING_KEY is not set"
+                )
         
         return warnings
     

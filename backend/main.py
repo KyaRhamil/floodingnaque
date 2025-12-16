@@ -13,12 +13,13 @@ app_dir = Path(__file__).parent / 'app'
 sys.path.insert(0, str(app_dir))
 
 from app.api.app import app
+from app.core.config import is_debug_mode
 
 if __name__ == '__main__':
     # Get configuration from environment
     port = int(os.getenv('PORT', 5000))
     host = os.getenv('HOST', '0.0.0.0')
-    debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    debug = is_debug_mode()  # Use centralized check
 
     # Only print once (not on reloader subprocess)
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
