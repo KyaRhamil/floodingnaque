@@ -1,10 +1,32 @@
 import requests
 import os
+import re
 from datetime import datetime
 from app.models.db import WeatherData, get_db_session
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Regex pattern for redacting API keys in URLs/logs
+_API_KEY_PATTERNS = [
+    (re.compile(r'(appid=)[^&]+'), r'\1[REDACTED]'),
+    (re.compile(r'(access_key=)[^&]+'), r'\1[REDACTED]'),
+    (re.compile(r'(api_key=)[^&]+'), r'\1[REDACTED]'),
+    (re.compile(r'(key=)[^&]+'), r'\1[REDACTED]'),
+]
+
+
+def _redact_api_keys(text: str) -> str:
+    """Redact API keys from URLs and log messages."""
+    result = text
+    for pattern, replacement in _API_KEY_PATTERNS:
+        result = pattern.sub(replacement, result)
+    return result
+
+
+def _safe_log_url(url: str) -> str:
+    """Return a URL safe for logging (with API keys redacted)."""
+    return _redact_api_keys(url)
 
 def ingest_data(lat=None, lon=None):
     """
@@ -36,7 +58,9 @@ def ingest_data(lat=None, lon=None):
     
     try:
         # Fetch from OpenWeatherMap
+        # Note: OWM requires appid in query string, but we redact in logs
         owm_url = f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={owm_api_key}'
+        logger.debug(f"Fetching weather data from: {_safe_log_url(owm_url)}")
         owm_response = requests.get(owm_url, timeout=10)
         owm_response.raise_for_status()
         owm_data = owm_response.json()
@@ -66,6 +90,7 @@ def ingest_data(lat=None, lon=None):
             # Note: HTTPS requires paid plan, but we use it for security
             # Free tier users should upgrade or the request will fail gracefully
             weatherstack_url = f'https://api.weatherstack.com/current?access_key={weatherstack_api_key}&query={lat},{lon}&units=m'
+            logger.debug(f"Fetching precipitation from: {_safe_log_url(weatherstack_url)}")
             weatherstack_response = requests.get(weatherstack_url, timeout=10)
             weatherstack_response.raise_for_status()
             weatherstack_data = weatherstack_response.json()

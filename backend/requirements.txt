@@ -37,6 +37,7 @@ seaborn>=0.12.0
 # Note: cryptography can be tricky on Windows, using flexible version
 cryptography>=41.0.0  # For secure data handling
 itsdangerous>=2.1.0  # Secure session handling
+bcrypt>=4.0.0  # Secure password/API key hashing (Argon2-like security)
 
 # Input Validation
 validators==0.22.0  # Email, URL validation

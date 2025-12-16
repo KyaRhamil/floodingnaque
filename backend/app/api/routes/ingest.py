@@ -8,7 +8,11 @@ Includes input validation and security measures.
 from flask import Blueprint, jsonify, request, g
 from werkzeug.exceptions import BadRequest
 from app.services.ingest import ingest_data
-from app.utils.validation import InputValidator, ValidationError as InputValidationError
+from app.utils.validation import (
+    InputValidator, 
+    ValidationError as InputValidationError,
+    validate_request_size
+)
 from app.api.middleware.auth import require_api_key
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
 from app.api.schemas.weather import parse_json_safely
@@ -21,6 +25,7 @@ ingest_bp = Blueprint('ingest', __name__)
 
 @ingest_bp.route('/ingest', methods=['GET', 'POST'])
 @limiter.limit(get_endpoint_limit('ingest'))
+@validate_request_size(endpoint_name='ingest')  # 10KB limit for ingest payloads
 @require_api_key
 def ingest():
     """Ingest weather data from external APIs."""

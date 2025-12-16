@@ -8,6 +8,7 @@ Implements OWASP-recommended security headers for industry-standard protection.
 from flask import Flask, request
 import os
 import logging
+from app.core.config import is_debug_mode
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def add_security_headers(response):
     Returns:
         Modified response with security headers
     """
-    is_production = os.getenv('FLASK_DEBUG', 'False').lower() != 'true'
+    is_production = not is_debug_mode()  # Use centralized check
     
     # === Core Security Headers ===
     
@@ -148,7 +149,7 @@ def get_cors_origins():
     
     if not origins_str:
         # Default to allowing localhost for development
-        if os.getenv('FLASK_DEBUG', 'False').lower() == 'true':
+        if is_debug_mode():  # Use centralized check
             return ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000']
         else:
             # In production, must explicitly set CORS_ORIGINS
