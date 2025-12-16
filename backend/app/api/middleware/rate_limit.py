@@ -146,7 +146,8 @@ def get_endpoint_limit(endpoint_name):
     """
     Get the rate limit string for a specific endpoint.
     
-    Returns higher limit for authenticated users if available.
+    Returns the base limit for the endpoint.
+    For dynamic authentication-based limits, use rate_limit_authenticated_only.
     
     Args:
         endpoint_name: Name of the endpoint
@@ -154,12 +155,6 @@ def get_endpoint_limit(endpoint_name):
     Returns:
         str: Rate limit string for the endpoint
     """
-    # Check if authenticated and if auth-specific limit exists
-    if getattr(g, 'authenticated', False):
-        auth_key = f"{endpoint_name}_auth"
-        if auth_key in ENDPOINT_LIMITS:
-            return ENDPOINT_LIMITS[auth_key]
-    
     return ENDPOINT_LIMITS.get(endpoint_name, f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds")
 
 
@@ -170,9 +165,19 @@ def get_current_rate_limit_info():
     Returns:
         dict: Rate limit information
     """
-    return {
-        'key_type': 'api_key' if getattr(g, 'api_key_hash', None) else 'ip',
-        'authenticated': getattr(g, 'authenticated', False),
-        'storage': 'redis' if 'redis' in RATE_LIMIT_STORAGE else 'memory',
-        'enabled': RATE_LIMIT_ENABLED
-    }
+    try:
+        from flask import g
+        return {
+            'key_type': 'api_key' if getattr(g, 'api_key_hash', None) else 'ip',
+            'authenticated': getattr(g, 'authenticated', False),
+            'storage': 'redis' if 'redis' in RATE_LIMIT_STORAGE else 'memory',
+            'enabled': RATE_LIMIT_ENABLED
+        }
+    except RuntimeError:
+        # Outside of request context
+        return {
+            'key_type': 'unknown',
+            'authenticated': False,
+            'storage': 'redis' if 'redis' in RATE_LIMIT_STORAGE else 'memory',
+            'enabled': RATE_LIMIT_ENABLED
+        }

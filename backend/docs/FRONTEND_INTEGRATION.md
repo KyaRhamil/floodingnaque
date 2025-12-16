@@ -244,6 +244,6 @@ interface PredictionResponse {
 ## Support
 
 - API Documentation: `http://localhost:5000/api/docs`
-- Backend README: `README.md`
+- Backend README: `../README.md`
 - Complete Guide: `BACKEND_COMPLETE.md`
 

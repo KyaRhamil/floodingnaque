@@ -44,6 +44,7 @@ bleach==6.1.0  # HTML sanitization
 
 # Rate Limiting (optional)
 Flask-Limiter==3.5.0
+redis>=5.0.0  # Redis client for rate limiting storage
 
 # Monitoring & Logging
 python-json-logger==2.0.7  # Structured logging

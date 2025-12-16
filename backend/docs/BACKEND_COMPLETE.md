@@ -201,25 +201,30 @@ LOG_LEVEL=INFO
 ### Development Mode
 ```bash
 cd backend
-python app.py
+python main.py
 ```
 
 ### Production Mode
 ```bash
 cd backend
-gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 app:app
+gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 main:app
 ```
 
-Or use the Procfile:
+Or use waitress (Windows-compatible):
 ```bash
-gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 --access-logfile - --error-logfile - app:app
+waitress-serve --host=0.0.0.0 --port=5000 --threads=4 main:app
 ```
 
 ## Training the Model
 
 ```bash
 cd backend
-python train.py
+python scripts/train.py
+```
+
+With hyperparameter tuning:
+```bash
+python scripts/train.py --grid-search --cv-folds 10
 ```
 
 The script will:
@@ -232,12 +237,12 @@ The script will:
 
 ### Test Import
 ```bash
-python -c "from app import app; print('App imports successfully')"
+python -c "from app.api.app import app; print('App imports successfully')"
 ```
 
 ### Test Database
 ```bash
-python inspect_db.py
+python scripts/inspect_db.py
 ```
 
 ### Test Endpoints
@@ -300,27 +305,77 @@ curl -X POST http://localhost:5000/predict \
 
 ```
 backend/
-├── app.py                 # Main Flask application
-├── db.py                  # Database models and session management
-├── ingest.py              # Weather data ingestion
-├── predict.py             # ML model prediction
-├── scheduler.py           # Background task scheduler
-├── train.py               # Model training script
-├── utils.py               # Utility functions
-├── config.py              # Configuration management
-├── requirements.txt       # Python dependencies
-├── Procfile               # Production deployment config
-├── .env.example           # Environment variables template
-├── DATABASE_SETUP.md      # Database setup guide
-├── SETUP_COMPLETE.md      # Initial setup documentation
-└── BACKEND_COMPLETE.md    # This file
+├── main.py                  # Application entry point
+├── app/                     # Main application code
+│   ├── __init__.py
+│   ├── api/                 # API layer
+│   │   ├── __init__.py
+│   │   ├── app.py           # Flask application factory
+│   │   ├── routes/          # API route blueprints
+│   │   │   ├── __init__.py
+│   │   │   ├── data.py      # Data retrieval endpoints
+│   │   │   ├── health.py    # Health check endpoints
+│   │   │   ├── ingest.py    # Weather data ingestion
+│   │   │   ├── models.py    # Model management endpoints
+│   │   │   └── predict.py   # Prediction endpoints
+│   │   ├── middleware/      # Request middleware
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py      # Authentication middleware
+│   │   │   ├── logging.py   # Request logging
+│   │   │   ├── rate_limit.py # Rate limiting
+│   │   │   └── security.py  # Security headers
+│   │   └── schemas/         # Request/response schemas
+│   │       ├── __init__.py
+│   │       ├── prediction.py
+│   │       └── weather.py
+│   ├── core/                # Core functionality
+│   │   ├── __init__.py
+│   │   ├── config.py        # Configuration management
+│   │   ├── constants.py     # Application constants
+│   │   ├── exceptions.py    # Custom exceptions
+│   │   └── security.py      # Security utilities
+│   ├── services/            # Business logic
+│   │   ├── __init__.py
+│   │   ├── alerts.py        # Alert notification system
+│   │   ├── evaluation.py    # Model evaluation
+│   │   ├── ingest.py        # Weather data ingestion
+│   │   ├── predict.py       # Flood prediction service
+│   │   ├── risk_classifier.py # 3-level risk classification
+│   │   └── scheduler.py     # Background tasks
+│   ├── models/              # Database models
+│   │   ├── __init__.py
+│   │   └── db.py            # SQLAlchemy models
+│   └── utils/               # Utilities
+│       ├── __init__.py
+│       ├── utils.py         # Helper functions
+│       └── validation.py    # Input validation
+├── scripts/                 # Utility scripts
+│   ├── train.py             # Model training
+│   ├── progressive_train.py # Progressive training
+│   ├── generate_thesis_report.py
+│   ├── compare_models.py
+│   ├── merge_datasets.py
+│   ├── validate_model.py
+│   ├── evaluate_model.py
+│   └── migrate_db.py
+├── tests/                   # Test suite
+│   ├── unit/
+│   ├── integration/
+│   └── security/
+├── docs/                    # Documentation
+├── data/                    # Data files
+├── models/                  # ML models
+├── requirements.txt
+├── Procfile
+├── Dockerfile
+└── pytest.ini
 ```
 
 ## Next Steps
 
 1. ✅ Set up API keys in `.env` file
-2. ✅ Train the model: `python train.py`
-3. ✅ Start the server: `python app.py`
+2. ✅ Train the model: `python scripts/train.py`
+3. ✅ Start the server: `python main.py`
 4. ✅ Test all endpoints
 5. ✅ Deploy to production (Heroku, Render, AWS, etc.)
 

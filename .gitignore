@@ -148,6 +148,9 @@ data/*.csv
 .env.local
 .env.production
 .env.development
+.env.prod
+.env.example
+backend/.env.prod
 
 # Evaluation results
 evaluation_results/

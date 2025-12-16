@@ -238,20 +238,45 @@ python scripts/train.py
 
 ```
 backend/
+├── app/
+│   ├── api/
+│   │   ├── app.py               # Flask application factory
+│   │   ├── routes/              # API route blueprints
+│   │   │   ├── data.py
+│   │   │   ├── health.py
+│   │   │   ├── ingest.py
+│   │   │   ├── models.py
+│   │   │   └── predict.py
+│   │   ├── middleware/          # Request middleware
+│   │   │   ├── auth.py
+│   │   │   ├── logging.py
+│   │   │   ├── rate_limit.py
+│   │   │   └── security.py
+│   │   └── schemas/             # Request/response schemas
+│   ├── core/                    # Config, exceptions
+│   ├── services/                # Business logic
+│   ├── models/                  # Database models
+│   └── utils/                   # Utilities
 ├── scripts/
-│   ├── train.py                    # ← Main training
-│   ├── generate_thesis_report.py   # ← Generate reports
-│   ├── merge_datasets.py           # ← Merge CSVs
-│   ├── validate_model.py           # ← Validate model
+│   ├── train.py                 # ← Main training
+│   ├── progressive_train.py     # ← Progressive training (v1-v4)
+│   ├── generate_thesis_report.py # ← Generate reports
+│   ├── merge_datasets.py        # ← Merge CSVs
+│   ├── compare_models.py
+│   ├── validate_model.py
 │   └── evaluate_model.py
 ├── models/
-│   ├── flood_rf_model.joblib       # ← Latest model
-│   ├── flood_rf_model_v*.joblib    # ← Versioned models
-│   └── *.json                      # ← Metadata
+│   ├── flood_rf_model.joblib    # ← Latest model
+│   ├── flood_rf_model_v*.joblib # ← Versioned models
+│   └── *.json                   # ← Metadata
 ├── data/
-│   └── *.csv                       # ← Your datasets
+│   └── *.csv                    # ← Your datasets
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── security/
 └── reports/
-    └── *.png, *.txt                # ← Generated reports
+    └── *.png, *.txt             # ← Generated reports
 ```
 
 ---
