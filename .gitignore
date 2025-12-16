@@ -99,7 +99,7 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Environments - NEVER commit real .env files with secrets
 .env
 .venv
 env/
@@ -107,6 +107,20 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Environment-specific files (contain secrets)
+.env.local
+.env.production
+.env.development
+.env.staging
+.env.prod
+.env.dev
+backend/.env
+backend/.env.local
+backend/.env.production
+backend/.env.development  
+backend/.env.staging
+backend/.env.prod
 
 # Spyder project settings
 .spyderproject
@@ -144,12 +158,6 @@ models/*.joblib
 models/confusion_matrix.png
 models/feature_importance.png
 data/*.csv
-.env
-.env.local
-.env.production
-.env.development
-.env.prod
-backend/.env.prod
 
 # Evaluation results
 evaluation_results/

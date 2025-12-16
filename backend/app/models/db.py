@@ -89,7 +89,12 @@ class WeatherData(Base):
     source = Column(
         String(50), 
         default='OWM',
-        info={'description': 'Data source: OWM, Weatherstack, Manual'}
+        info={'description': 'Data source: OWM, Weatherstack, Meteostat, Manual'}
+    )
+    station_id = Column(
+        String(50),
+        nullable=True,
+        info={'description': 'Weather station ID (for Meteostat data)'}
     )
     timestamp = Column(
         DateTime, 
@@ -125,7 +130,8 @@ class WeatherData(Base):
         Index('idx_weather_timestamp', 'timestamp'),
         Index('idx_weather_location', 'location_lat', 'location_lon'),
         Index('idx_weather_created', 'created_at'),
-        {'comment': 'Weather data measurements from various sources'}
+        Index('idx_weather_source', 'source'),
+        {'comment': 'Weather data measurements from various sources including Meteostat'}
     )
     
     def __repr__(self):
@@ -143,6 +149,7 @@ class WeatherData(Base):
             'location_lat': self.location_lat,
             'location_lon': self.location_lon,
             'source': self.source,
+            'station_id': self.station_id,
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

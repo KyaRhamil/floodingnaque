@@ -5,7 +5,7 @@ Contains modular route definitions:
 - health: /status, /health, / (root)
 - ingest: /ingest
 - predict: /predict
-- data: /data
+- data: /data, /meteostat/stations, /meteostat/hourly, /meteostat/daily, /meteostat/current, /meteostat/status
 - models: /api/models, /api/docs, /api/version
 """
 

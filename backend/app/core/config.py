@@ -7,8 +7,12 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from datetime import timedelta
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Base directory for the backend
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 def is_debug_mode() -> bool:
@@ -65,9 +69,70 @@ def _get_jwt_secret_key() -> str:
     return key
 
 
+def get_env_file() -> Path:
+    """
+    Determine which .env file to load based on APP_ENV.
+    
+    Priority:
+    1. APP_ENV environment variable (development, staging, production)
+    2. Falls back to .env if exists, otherwise .env.development
+    
+    Returns:
+        Path to the appropriate .env file
+    """
+    app_env = os.getenv('APP_ENV', '').lower()
+    
+    env_file_map = {
+        'development': '.env.development',
+        'dev': '.env.development',
+        'staging': '.env.staging',
+        'stage': '.env.staging',
+        'production': '.env.production',
+        'prod': '.env.production',
+    }
+    
+    # Get the appropriate env file name
+    env_file_name = env_file_map.get(app_env)
+    
+    if env_file_name:
+        env_file = BASE_DIR / env_file_name
+        if env_file.exists():
+            return env_file
+        logger.warning(f"Environment file {env_file_name} not found, falling back...")
+    
+    # Fallback order: .env -> .env.development
+    default_env = BASE_DIR / '.env'
+    if default_env.exists():
+        return default_env
+    
+    dev_env = BASE_DIR / '.env.development'
+    if dev_env.exists():
+        logger.info("Using .env.development as default")
+        return dev_env
+    
+    # No env file found - will rely on system environment variables
+    logger.warning("No .env file found. Using system environment variables only.")
+    return default_env  # Return path even if doesn't exist - load_dotenv handles gracefully
+
+
 def load_env():
-    """Load environment variables from .env file."""
-    load_dotenv()
+    """
+    Load environment variables from the appropriate .env file.
+    
+    The file is selected based on APP_ENV environment variable:
+    - development/dev -> .env.development
+    - staging/stage -> .env.staging  
+    - production/prod -> .env.production
+    - (unset) -> .env or .env.development
+    """
+    env_file = get_env_file()
+    
+    if env_file.exists():
+        logger.info(f"Loading environment from: {env_file.name}")
+        load_dotenv(env_file, override=True)
+    else:
+        logger.warning(f"Environment file not found: {env_file}")
+        load_dotenv()  # Try to load from default .env
 
 
 @dataclass
@@ -123,6 +188,12 @@ class Config:
     # External APIs
     OWM_API_KEY: str = field(default_factory=lambda: os.getenv('OWM_API_KEY', ''))
     WEATHERSTACK_API_KEY: str = field(default_factory=lambda: os.getenv('WEATHERSTACK_API_KEY', ''))
+    
+    # Meteostat Configuration
+    METEOSTAT_ENABLED: bool = field(default_factory=lambda: os.getenv('METEOSTAT_ENABLED', 'True').lower() == 'true')
+    METEOSTAT_CACHE_MAX_AGE_DAYS: int = field(default_factory=lambda: int(os.getenv('METEOSTAT_CACHE_MAX_AGE_DAYS', '7')))
+    METEOSTAT_STATION_ID: str = field(default_factory=lambda: os.getenv('METEOSTAT_STATION_ID', ''))
+    METEOSTAT_AS_FALLBACK: bool = field(default_factory=lambda: os.getenv('METEOSTAT_AS_FALLBACK', 'True').lower() == 'true')
     
     # Model Configuration
     MODEL_DIR: str = field(default_factory=lambda: os.getenv('MODEL_DIR', 'models'))

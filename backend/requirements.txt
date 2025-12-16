@@ -62,3 +62,6 @@ faker==21.0.0  # Generate test data
 # Enhanced Training 
 tqdm>=4.65.0  # Progress bars
 shap>=0.42.0  # Model explainability
+
+# Weather Data Sources
+meteostat>=1.6.0  # Historical weather data from weather stations

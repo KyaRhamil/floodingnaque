@@ -243,3 +243,9 @@ weatherstack_breaker = CircuitBreaker(
     recovery_timeout=60,
     name='weatherstack'
 )
+
+meteostat_breaker = CircuitBreaker(
+    failure_threshold=5,
+    recovery_timeout=60,
+    name='meteostat'
+)

@@ -13,6 +13,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Lazy import for meteostat to avoid import errors if not installed
+_meteostat_service = None
+
+def _get_meteostat_service():
+    """Lazy load meteostat service."""
+    global _meteostat_service
+    if _meteostat_service is None:
+        try:
+            from app.services.meteostat_service import get_meteostat_service
+            _meteostat_service = get_meteostat_service()
+        except ImportError:
+            logger.warning("Meteostat is not installed. Install with: pip install meteostat")
+            _meteostat_service = False  # Mark as unavailable
+    return _meteostat_service if _meteostat_service else None
+
 # Regex pattern for redacting API keys in URLs/logs
 _API_KEY_PATTERNS = [
     (re.compile(r'(appid=)[^&]+'), r'\1[REDACTED]'),
@@ -148,6 +163,20 @@ def ingest_data(lat=None, lon=None):
     
     data['precipitation'] = precipitation
     data['timestamp'] = datetime.now()
+    
+    # If we still have no precipitation data, try Meteostat as final fallback
+    if precipitation == 0 and os.getenv('METEOSTAT_AS_FALLBACK', 'True').lower() == 'true':
+        meteostat_svc = _get_meteostat_service()
+        if meteostat_svc:
+            try:
+                meteostat_data = meteostat_svc.get_weather_for_prediction(lat, lon)
+                if meteostat_data and meteostat_data.get('precipitation'):
+                    precipitation = meteostat_data['precipitation']
+                    data['precipitation'] = precipitation
+                    data['source'] = 'OWM+Meteostat'
+                    logger.info(f"Got precipitation from Meteostat fallback: {precipitation} mm")
+            except Exception as e:
+                logger.debug(f"Meteostat fallback failed: {e}")
 
     # Save to DB
     try:

@@ -686,3 +686,181 @@ FROM weather_data) AS anon_1]
 2025-12-15 21:10:48,028 - INFO - Successfully saved weather data to database
 2025-12-15 21:10:48,031 - INFO - Scheduled data ingestion completed.
 2025-12-15 21:10:48,031 - INFO - Job "scheduled_ingest (trigger: interval[1:00:00], next run at: 2025-12-15 22:10:46 +08)" executed successfully
+2025-12-17 01:29:28,166 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 01:29:28,166 - INFO - Security headers middleware enabled
+2025-12-17 01:29:28,167 - INFO - Request logging middleware enabled
+2025-12-17 01:29:28,170 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:29:28,170 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:29:28,172 - INFO - Scheduler started
+2025-12-17 01:29:28,173 - INFO - Background scheduler started successfully.
+2025-12-17 01:29:28,202 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-17 01:29:28,203 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-17 01:29:28,205 - INFO -  * Restarting with stat
+2025-12-17 01:29:29,912 - INFO - Rate limiting is disabled
+2025-12-17 01:29:29,912 - INFO - Security headers middleware enabled
+2025-12-17 01:29:29,913 - INFO - Request logging middleware enabled
+2025-12-17 01:29:29,916 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:29:29,916 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:29:29,918 - INFO - Scheduler started
+2025-12-17 01:29:29,919 - INFO - Background scheduler started successfully.
+2025-12-17 01:29:29,930 - WARNING -  * Debugger is active!
+2025-12-17 01:29:29,935 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:37:10,007 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 01:37:10,007 - INFO - Security headers middleware enabled
+2025-12-17 01:37:10,008 - INFO - Request logging middleware enabled
+2025-12-17 01:37:10,011 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:37:10,011 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:37:10,012 - INFO - Scheduler started
+2025-12-17 01:37:10,013 - INFO - Background scheduler started successfully.
+2025-12-17 01:37:10,043 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-17 01:37:10,044 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-17 01:37:10,046 - INFO -  * Restarting with stat
+2025-12-17 01:37:11,702 - INFO - Rate limiting is disabled
+2025-12-17 01:37:11,702 - INFO - Security headers middleware enabled
+2025-12-17 01:37:11,703 - INFO - Request logging middleware enabled
+2025-12-17 01:37:11,708 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:37:11,708 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:37:11,710 - INFO - Scheduler started
+2025-12-17 01:37:11,711 - INFO - Background scheduler started successfully.
+2025-12-17 01:37:11,723 - WARNING -  * Debugger is active!
+2025-12-17 01:37:11,734 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:40:13,637 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 01:40:13,638 - INFO - Security headers middleware enabled
+2025-12-17 01:40:13,638 - INFO - Request logging middleware enabled
+2025-12-17 01:40:13,641 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:40:13,642 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:40:13,643 - INFO - Scheduler started
+2025-12-17 01:40:13,644 - INFO - Background scheduler started successfully.
+2025-12-17 01:40:13,664 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-17 01:40:13,664 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-17 01:40:13,667 - INFO -  * Restarting with stat
+2025-12-17 01:40:15,229 - INFO - Rate limiting is disabled
+2025-12-17 01:40:15,229 - INFO - Security headers middleware enabled
+2025-12-17 01:40:15,229 - INFO - Request logging middleware enabled
+2025-12-17 01:40:15,232 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:40:15,233 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:40:15,235 - INFO - Scheduler started
+2025-12-17 01:40:15,236 - INFO - Background scheduler started successfully.
+2025-12-17 01:40:15,251 - WARNING -  * Debugger is active!
+2025-12-17 01:40:15,255 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:40:43,551 - INFO - Request 47f7e4b3-0759-430d-bf1e-16aa9a64b8ae: GET /health
+2025-12-17 01:40:51,379 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-17 01:40:51,379 - INFO - Model version: 1
+2025-12-17 01:40:51,379 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-17 01:40:51,381 - INFO - Response 47f7e4b3-0759-430d-bf1e-16aa9a64b8ae: 200 (7.830s)
+2025-12-17 01:40:51,382 - INFO - 127.0.0.1 - - [17/Dec/2025 01:40:51] "GET /health HTTP/1.1" 200 -
+2025-12-17 01:40:57,126 - INFO - Request 4d4666cb-26f5-4ded-8d96-31ccfaaf6677: GET /status
+2025-12-17 01:40:57,128 - INFO - Response 4d4666cb-26f5-4ded-8d96-31ccfaaf6677: 200 (0.002s)
+2025-12-17 01:40:57,128 - INFO - 127.0.0.1 - - [17/Dec/2025 01:40:57] "GET /status HTTP/1.1" 200 -
+2025-12-17 01:56:40,522 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\core\\config.py', reloading
+2025-12-17 01:56:41,068 - INFO -  * Restarting with stat
+2025-12-17 01:56:42,977 - INFO - Rate limiting is disabled
+2025-12-17 01:56:42,977 - INFO - Security headers middleware enabled
+2025-12-17 01:56:42,977 - INFO - Request logging middleware enabled
+2025-12-17 01:56:42,980 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:56:42,981 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:56:42,982 - INFO - Scheduler started
+2025-12-17 01:56:42,983 - INFO - Background scheduler started successfully.
+2025-12-17 01:56:42,996 - WARNING -  * Debugger is active!
+2025-12-17 01:56:43,001 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:56:54,421 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\utils\\circuit_breaker.py', reloading
+2025-12-17 01:56:54,748 - INFO -  * Restarting with stat
+2025-12-17 01:56:56,719 - INFO - Rate limiting is disabled
+2025-12-17 01:56:56,720 - INFO - Security headers middleware enabled
+2025-12-17 01:56:56,720 - INFO - Request logging middleware enabled
+2025-12-17 01:56:56,723 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:56:56,723 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:56:56,725 - INFO - Scheduler started
+2025-12-17 01:56:56,726 - INFO - Background scheduler started successfully.
+2025-12-17 01:56:56,738 - WARNING -  * Debugger is active!
+2025-12-17 01:56:56,745 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:57:27,935 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\core\\config.py', reloading
+2025-12-17 01:57:28,331 - INFO -  * Restarting with stat
+2025-12-17 01:57:31,028 - INFO - Rate limiting is disabled
+2025-12-17 01:57:31,090 - INFO - Security headers middleware enabled
+2025-12-17 01:57:31,135 - INFO - Request logging middleware enabled
+2025-12-17 01:57:31,156 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:57:31,185 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:57:31,196 - INFO - Scheduler started
+2025-12-17 01:57:31,203 - INFO - Background scheduler started successfully.
+2025-12-17 01:57:31,218 - WARNING -  * Debugger is active!
+2025-12-17 01:57:31,250 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:58:18,113 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\services\\ingest.py', reloading
+2025-12-17 01:58:18,518 - INFO -  * Restarting with stat
+2025-12-17 01:58:20,587 - INFO - Rate limiting is disabled
+2025-12-17 01:58:20,587 - INFO - Security headers middleware enabled
+2025-12-17 01:58:20,587 - INFO - Request logging middleware enabled
+2025-12-17 01:58:20,590 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 01:58:20,591 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 01:58:20,592 - INFO - Scheduler started
+2025-12-17 01:58:20,593 - INFO - Background scheduler started successfully.
+2025-12-17 01:58:20,609 - WARNING -  * Debugger is active!
+2025-12-17 01:58:20,614 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 01:59:15,376 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\routes\\data.py', reloading
+2025-12-17 01:59:15,859 - INFO -  * Restarting with stat
+2025-12-17 02:03:38,224 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 02:03:38,224 - INFO - Security headers middleware enabled
+2025-12-17 02:03:38,224 - INFO - Request logging middleware enabled
+2025-12-17 02:03:38,231 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 02:03:38,231 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 02:03:38,233 - INFO - Scheduler started
+2025-12-17 02:03:38,234 - INFO - Background scheduler started successfully.
+2025-12-17 02:09:12,684 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 02:09:12,684 - INFO - Security headers middleware enabled
+2025-12-17 02:09:12,684 - INFO - Request logging middleware enabled
+2025-12-17 02:09:12,689 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 02:09:12,689 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 02:09:12,691 - INFO - Scheduler started
+2025-12-17 02:09:12,691 - INFO - Background scheduler started successfully.
+2025-12-17 02:09:12,722 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-17 02:09:12,723 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-17 02:09:12,724 - INFO -  * Restarting with stat
+2025-12-17 02:09:14,515 - INFO - Rate limiting is disabled
+2025-12-17 02:09:14,515 - INFO - Security headers middleware enabled
+2025-12-17 02:09:14,515 - INFO - Request logging middleware enabled
+2025-12-17 02:09:14,519 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 02:09:14,520 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 02:09:14,521 - INFO - Scheduler started
+2025-12-17 02:09:14,522 - INFO - Background scheduler started successfully.
+2025-12-17 02:09:14,538 - WARNING -  * Debugger is active!
+2025-12-17 02:09:14,542 - INFO -  * Debugger PIN: 105-142-505
+2025-12-17 02:09:19,101 - INFO - Request 3858403e-60c4-4ed6-a4bc-345dbc04aed1: GET /meteostat/stations
+2025-12-17 02:09:19,148 - INFO - MeteostatService initialized (enabled=True, fallback=True)
+2025-12-17 02:09:19,205 - INFO - Response 3858403e-60c4-4ed6-a4bc-345dbc04aed1: 200 (0.105s)
+2025-12-17 02:09:19,206 - INFO - 127.0.0.1 - - [17/Dec/2025 02:09:19] "GET /meteostat/stations HTTP/1.1" 200 -
+2025-12-17 02:09:45,859 - INFO - Request 7141cc20-a42f-4e0b-b842-b55591cf31a4: GET /meteostat/hourly
+2025-12-17 02:09:45,970 - INFO - Response 7141cc20-a42f-4e0b-b842-b55591cf31a4: 200 (0.110s)
+2025-12-17 02:09:45,971 - INFO - 127.0.0.1 - - [17/Dec/2025 02:09:45] "GET /meteostat/hourly HTTP/1.1" 200 -
+2025-12-17 02:09:56,760 - INFO - Request 036673b9-fba0-4718-8335-8ce30189f5a4: GET /meteostat/daily
+2025-12-17 02:09:56,858 - INFO - Response 036673b9-fba0-4718-8335-8ce30189f5a4: 200 (0.098s)
+2025-12-17 02:09:56,859 - INFO - 127.0.0.1 - - [17/Dec/2025 02:09:56] "GET /meteostat/daily HTTP/1.1" 200 -
+2025-12-17 02:10:03,057 - INFO - Request 197b04be-2543-4eb7-aeea-09de2b9d3ed2: GET /meteostat/current
+2025-12-17 02:10:03,116 - INFO - Response 197b04be-2543-4eb7-aeea-09de2b9d3ed2: 200 (0.059s)
+2025-12-17 02:10:03,116 - INFO - 127.0.0.1 - - [17/Dec/2025 02:10:03] "GET /meteostat/current HTTP/1.1" 200 -
+2025-12-17 02:10:10,438 - INFO - Request 6b0ff7cd-a0d5-4e64-ae10-b3e75efa262f: GET /meteostat/status
+2025-12-17 02:10:10,471 - INFO - Response 6b0ff7cd-a0d5-4e64-ae10-b3e75efa262f: 200 (0.033s)
+2025-12-17 02:10:10,471 - INFO - 127.0.0.1 - - [17/Dec/2025 02:10:10] "GET /meteostat/status HTTP/1.1" 200 -
+2025-12-17 02:13:58,837 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\routes\\__init__.py', reloading
+2025-12-17 02:13:59,173 - INFO -  * Restarting with stat
+2025-12-17 02:24:35,549 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 02:24:35,550 - INFO - Security headers middleware enabled
+2025-12-17 02:24:35,550 - INFO - Request logging middleware enabled
+2025-12-17 02:24:35,554 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 02:24:35,554 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-17 02:24:35,556 - INFO - Scheduler started
+2025-12-17 02:24:35,557 - INFO - Background scheduler started successfully.
+2025-12-17 02:24:35,558 - INFO - Loading environment from: .env.development
+2025-12-17 02:24:35,583 - INFO - Database tables initialized successfully
+2025-12-17 02:24:35,583 - INFO - Created tables: weather_data, predictions, alert_history, model_registry
+2025-12-17 02:24:35,584 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 02:24:35,584 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-17 02:24:35,585 - INFO - Security headers middleware enabled
+2025-12-17 02:24:35,585 - INFO - Security headers middleware enabled
+2025-12-17 02:24:35,585 - INFO - Request logging middleware enabled
+2025-12-17 02:24:35,585 - INFO - Request logging middleware enabled
+2025-12-17 02:24:35,591 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-17 02:24:35,591 - INFO - Registered blueprints: health, ingest, predict, data, models
