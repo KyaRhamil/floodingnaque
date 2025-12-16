@@ -19,7 +19,7 @@ Train a new model with automatic versioning:
 
 ```bash
 cd backend
-python train.py
+python scripts/train.py
 ```
 
 This will:
@@ -35,13 +35,13 @@ This will:
 
 ```bash
 # Specify a version number
-python train.py --version 5
+python scripts/train.py --version 5
 
 # Use a different data file
-python train.py --data data/custom_dataset.csv
+python scripts/train.py --data data/custom_dataset.csv
 
 # Specify models directory
-python train.py --models-dir models/production
+python scripts/train.py --models-dir models/production
 ```
 
 ### Training Output
@@ -96,7 +96,7 @@ Response:
 
 In Python:
 ```python
-from predict import load_model_version, predict_flood
+from app.services.predict import load_model_version, predict_flood
 
 # Load specific version
 model = load_model_version(version=2)
@@ -126,22 +126,22 @@ curl -X POST http://localhost:5000/predict \
 
 Validate the latest model:
 ```bash
-python validate_model.py
+python scripts/validate_model.py
 ```
 
 Validate a specific model version:
 ```bash
-python validate_model.py --model models/flood_rf_model_v2.joblib
+python scripts/validate_model.py --model models/flood_rf_model_v2.joblib
 ```
 
 Validate with custom test data:
 ```bash
-python validate_model.py --data data/test_dataset.csv
+python scripts/validate_model.py --data data/test_dataset.csv
 ```
 
 Get JSON output:
 ```bash
-python validate_model.py --json
+python scripts/validate_model.py --json
 ```
 
 ### Validation Checks
@@ -268,7 +268,7 @@ Each model has a corresponding JSON metadata file:
 
 In Python:
 ```python
-from predict import get_model_metadata
+from app.services.predict import get_model_metadata
 
 metadata = get_model_metadata('models/flood_rf_model_v3.joblib')
 print(f"Version: {metadata['version']}")
@@ -427,7 +427,7 @@ curl http://localhost:5000/api/models
 ### Model Not Found
 
 If you get "Model file not found":
-1. Train a model: `python train.py`
+1. Train a model: `python scripts/train.py`
 2. Check models directory: `ls models/`
 3. Verify model path in code
 
@@ -435,7 +435,7 @@ If you get "Model file not found":
 
 If version numbering is incorrect:
 - Delete old metadata files
-- Retrain with explicit version: `python train.py --version 1`
+- Retrain with explicit version: `python scripts/train.py --version 1`
 
 ### Validation Failures
 
@@ -451,10 +451,10 @@ If validation fails:
 
 ```bash
 # 1. Train a new model
-python train.py
+python scripts/train.py
 
 # 2. Validate the model
-python validate_model.py
+python scripts/validate_model.py
 
 # 3. Check model info via API
 curl http://localhost:5000/health
@@ -471,7 +471,7 @@ curl http://localhost:5000/api/models
 ### Comparing Model Versions
 
 ```python
-from predict import list_available_models, get_model_metadata
+from app.services.predict import list_available_models, get_model_metadata
 
 models = list_available_models()
 for model in models:

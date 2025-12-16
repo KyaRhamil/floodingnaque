@@ -30,7 +30,7 @@ A Flask-based REST API for flood prediction using machine learning and weather d
 - ✅ Production deployment ready
 - ✅ Thesis-defense ready
 
-**See**: [BACKEND_ENHANCEMENTS_COMPLETE.md](BACKEND_ENHANCEMENTS_COMPLETE.md) for full details
+**See**: [docs/BACKEND_ENHANCEMENTS_COMPLETE.md](docs/BACKEND_ENHANCEMENTS_COMPLETE.md) for full details
 
 ## Quick Start
 
@@ -152,60 +152,105 @@ The API is CORS-enabled and ready for frontend integration. All endpoints return
 
 ```
 backend/
-├── main.py             # Application entry point
-├── app/                # Main application code
+├── main.py                  # Application entry point
+├── app/                     # Main application code
 │   ├── __init__.py
-│   ├── api/            # API routes and application setup
+│   ├── api/                 # API layer
 │   │   ├── __init__.py
-│   │   └── app.py      # Flask application factory and route definitions
-│   ├── core/           # Core functionality (config, logging)
+│   │   ├── app.py           # Flask application factory
+│   │   ├── routes/          # API route blueprints
+│   │   │   ├── __init__.py
+│   │   │   ├── data.py      # Data retrieval endpoints
+│   │   │   ├── health.py    # Health check endpoints
+│   │   │   ├── ingest.py    # Weather data ingestion endpoints
+│   │   │   ├── models.py    # Model management endpoints
+│   │   │   └── predict.py   # Prediction endpoints
+│   │   ├── middleware/      # Request middleware
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py      # Authentication middleware
+│   │   │   ├── logging.py   # Request logging middleware
+│   │   │   ├── rate_limit.py # Rate limiting middleware
+│   │   │   └── security.py  # Security headers middleware
+│   │   └── schemas/         # Request/response validation
+│   │       ├── __init__.py
+│   │       ├── prediction.py # Prediction schemas
+│   │       └── weather.py   # Weather data schemas
+│   ├── core/                # Core functionality
 │   │   ├── __init__.py
-│   │   └── config.py   # Configuration management
-│   ├── services/       # Business logic (weather, prediction, alerts)
+│   │   ├── config.py        # Configuration management
+│   │   ├── constants.py     # Application constants
+│   │   ├── exceptions.py    # Custom exceptions
+│   │   └── security.py      # Security utilities
+│   ├── services/            # Business logic layer
 │   │   ├── __init__.py
 │   │   ├── alerts.py        # Alert notification system
 │   │   ├── evaluation.py    # Model evaluation utilities
 │   │   ├── ingest.py        # Weather data ingestion
 │   │   ├── predict.py       # Flood prediction service
-│   │   ├── risk_classifier.py # Risk classification logic
-│   │   └── scheduler.py     # Scheduled tasks
-│   ├── models/         # Data models
+│   │   ├── risk_classifier.py # 3-level risk classification
+│   │   └── scheduler.py     # Background scheduled tasks
+│   ├── models/              # Database models
 │   │   ├── __init__.py
-│   │   └── db.py       # Database models and connections
-│   └── utils/          # Utilities
+│   │   └── db.py            # SQLAlchemy models
+│   └── utils/               # Utilities
 │       ├── __init__.py
-│       └── utils.py    # Helper functions
-├── scripts/            # Utility scripts (training, validation, etc.)
+│       ├── utils.py         # Helper functions
+│       └── validation.py    # Input validation helpers
+├── scripts/                 # Utility scripts
 │   ├── __init__.py
-│   ├── train.py        # Model training script
-│   ├── evaluate_model.py # Model evaluation script
-│   ├── validate_model.py # Model validation script
-│   └── inspect_db.py   # Database inspection utility
-├── tests/              # Test files
+│   ├── train.py             # Model training script
+│   ├── progressive_train.py # Progressive training (v1-v4)
+│   ├── preprocess_official_flood_records.py # CSV preprocessing
+│   ├── generate_thesis_report.py # Generate thesis charts
+│   ├── compare_models.py    # Model version comparison
+│   ├── merge_datasets.py    # Merge multiple CSV files
+│   ├── validate_model.py    # Model validation
+│   ├── evaluate_model.py    # Model evaluation
+│   ├── migrate_db.py        # Database migrations
+│   └── inspect_db.py        # Database inspection
+├── tests/                   # Test suite
 │   ├── __init__.py
-│   └── test_models.py  # Model tests
-├── docs/               # Documentation
+│   ├── unit/                # Unit tests
+│   │   ├── __init__.py
+│   │   ├── test_predict.py
+│   │   └── test_schemas.py
+│   ├── integration/         # Integration tests
+│   │   ├── __init__.py
+│   │   └── test_endpoints.py
+│   └── security/            # Security tests
+│       ├── __init__.py
+│       └── test_auth.py
+├── docs/                    # Documentation
 │   ├── BACKEND_COMPLETE.md
+│   ├── BACKEND_ENHANCEMENTS_COMPLETE.md
+│   ├── CODE_QUALITY_IMPROVEMENTS.md
+│   ├── DATABASE_IMPROVEMENTS.md
 │   ├── DATABASE_SETUP.md
 │   ├── FRONTEND_INTEGRATION.md
+│   ├── IMPROVEMENTS_SUMMARY.md
 │   ├── MODEL_MANAGEMENT.md
+│   ├── OFFICIAL_FLOOD_RECORDS_GUIDE.md
 │   ├── POWERSHELL_API_EXAMPLES.md
+│   ├── QUICK_REFERENCE.md
+│   ├── QUICK_START_v2.md
 │   ├── RESEARCH_ALIGNMENT.md
 │   ├── SETUP_COMPLETE.md
-│   └── TEST_3LEVEL_CLASSIFICATION.md
-├── data/               # Data files
-│   ├── synthetic_dataset.csv # Sample training data
-│   └── floodingnaque.db      # SQLite database
-├── models/             # ML models
-│   ├── flood_rf_model.json    # Current model metadata
-│   ├── flood_rf_model.joblib  # Current trained model
-│   ├── flood_rf_model_v1.json # Previous model metadata
-│   └── flood_rf_model_v1.joblib # Previous trained model
-├── requirements.txt    # Python dependencies
-├── Procfile           # Production deployment config
-├── Dockerfile         # Docker configuration
-├── .env.example       # Example environment variables
-└── TODO.md            # Development roadmap
+│   ├── SYSTEM_OVERVIEW.md
+│   ├── TEST_3LEVEL_CLASSIFICATION.md
+│   ├── THESIS_GUIDE.md
+│   ├── UPGRADE_SUMMARY.md
+│   └── WINDOWS_INSTALL_GUIDE.md
+├── data/                    # Data files
+│   ├── Floodingnaque_Paranaque_Official_Flood_Records_*.csv
+│   └── synthetic_dataset.csv
+├── models/                  # ML models (versioned)
+│   ├── flood_rf_model.json     # Current model metadata
+│   ├── flood_rf_model.joblib   # Current trained model
+│   └── flood_rf_model_v*.json  # Versioned models
+├── requirements.txt         # Python dependencies
+├── Procfile                 # Production deployment config
+├── Dockerfile               # Docker configuration
+└── pytest.ini               # Pytest configuration
 ```
 
 ## Features

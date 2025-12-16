@@ -468,20 +468,36 @@ python scripts/generate_thesis_report.py
 
 ```
 backend/
+├── app/
+│   ├── api/
+│   │   ├── app.py               # Flask application factory
+│   │   ├── routes/              # API route blueprints
+│   │   ├── middleware/          # Request middleware
+│   │   └── schemas/             # Request/response schemas
+│   ├── core/                    # Config, exceptions
+│   ├── services/                # Business logic
+│   ├── models/                  # Database models
+│   └── utils/                   # Utilities
 ├── scripts/
-│   ├── train.py                      # Main training script
-│   ├── generate_thesis_report.py     # Report generator
-│   ├── merge_datasets.py             # Dataset merger
-│   ├── validate_model.py             # Model validator
-│   └── evaluate_model.py             # Model evaluator
+│   ├── train.py                 # Main training script
+│   ├── progressive_train.py     # Progressive training
+│   ├── generate_thesis_report.py # Report generator
+│   ├── merge_datasets.py        # Dataset merger
+│   ├── compare_models.py        # Model comparison
+│   ├── validate_model.py        # Model validator
+│   └── evaluate_model.py        # Model evaluator
 ├── models/
-│   ├── flood_rf_model.joblib         # Latest model
-│   ├── flood_rf_model_v*.joblib      # Versioned models
-│   └── *.json                        # Metadata files
+│   ├── flood_rf_model.joblib    # Latest model
+│   ├── flood_rf_model_v*.joblib # Versioned models
+│   └── *.json                   # Metadata files
 ├── data/
-│   └── *.csv                         # Your datasets
+│   └── *.csv                    # Your datasets
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── security/
 └── reports/
-    └── *.png, *.txt                  # Generated reports
+    └── *.png, *.txt             # Generated reports
 ```
 
 ### Quick Command Reference

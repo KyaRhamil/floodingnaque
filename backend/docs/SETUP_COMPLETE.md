@@ -6,12 +6,12 @@ All backend code has been completed and improved with proper error handling, val
 
 ## Key Improvements Made
 
-### 1. Database Session Management (`db.py`)
+### 1. Database Session Management (`app/models/db.py`)
 - ✅ Replaced global session with scoped_session for thread-safe operations
 - ✅ Added context manager `get_db_session()` for proper session handling
 - ✅ Sessions now properly commit/rollback on success/failure
 
-### 2. Error Handling & Validation (`ingest.py`)
+### 2. Error Handling & Validation (`app/services/ingest.py`)
 - ✅ Added comprehensive error handling for API calls
 - ✅ Added validation for API keys (OWM_API_KEY required)
 - ✅ Added timeout handling for HTTP requests (10 seconds)
@@ -20,20 +20,20 @@ All backend code has been completed and improved with proper error handling, val
 - ✅ Added proper logging for all operations
 - ✅ Made location configurable via function parameters
 
-### 3. Model Loading (`predict.py`)
+### 3. Model Loading (`app/services/predict.py`)
 - ✅ Changed to lazy loading (model loads only when needed)
 - ✅ Added graceful handling for missing model file
 - ✅ Added input data validation (required fields check)
 - ✅ Added feature name matching for model compatibility
 - ✅ Improved error messages and logging
 
-### 4. Logging Setup (`utils.py`)
+### 4. Logging Setup (`app/utils/utils.py`)
 - ✅ Ensures logs directory exists before creating handler
 - ✅ Increased log file size to 10MB with 5 backups
 - ✅ Added console logging in addition to file logging
 - ✅ Improved log formatting
 
-### 5. Flask Application (`app.py`)
+### 5. Flask Application (`app/api/app.py`)
 - ✅ Added CORS support for frontend integration
 - ✅ Added comprehensive error handling for all endpoints
 - ✅ Added `/health` endpoint for detailed health checks
@@ -135,37 +135,42 @@ FLASK_DEBUG=False
 ### Development Mode
 ```bash
 cd backend
-python app.py
+python main.py
 ```
 
 ### Production Mode (using gunicorn)
 ```bash
 cd backend
-gunicorn app:app
+gunicorn main:app
+```
+
+Or on Windows:
+```bash
+waitress-serve --host=0.0.0.0 --port=5000 main:app
 ```
 
 ## Testing
 
 ### Test Import
 ```bash
-python -c "from app import app; print('App imports successfully')"
+python -c "from app.api.app import app; print('App imports successfully')"
 ```
 
 ### Test Database
 ```bash
-python inspect_db.py
+python scripts/inspect_db.py
 ```
 
 ### Test Model Training
 ```bash
-python train.py
+python scripts/train.py
 ```
 
 ## Next Steps
 
 1. **Set up API keys**: Add `OWM_API_KEY` and optionally `METEOSTAT_API_KEY` to your `.env` file
-2. **Train the model**: Run `python train.py` if you haven't already
-3. **Start the server**: Run `python app.py` to start the Flask application
+2. **Train the model**: Run `python scripts/train.py` if you haven't already
+3. **Start the server**: Run `python main.py` to start the Flask application
 4. **Test endpoints**: Use curl, Postman, or your frontend to test the API endpoints
 
 ## Notes

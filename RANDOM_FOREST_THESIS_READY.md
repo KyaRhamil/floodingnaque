@@ -226,7 +226,7 @@ python -c "import pandas as pd; df = pd.read_csv('backend/data/merged_dataset.cs
 **Quick References:**
 - **backend/docs/QUICK_REFERENCE.md** - Command cheat sheet
 - **backend/docs/THESIS_GUIDE.md** - Complete thesis preparation guide
-- **backend/IMPROVEMENTS_SUMMARY.md** - Detailed improvements explanation
+- **backend/docs/IMPROVEMENTS_SUMMARY.md** - Detailed improvements explanation
 
 **Technical Docs:**
 - **backend/docs/MODEL_MANAGEMENT.md** - Model versioning details
@@ -331,4 +331,4 @@ Your Random Forest flood prediction model is now **thesis-defense ready** with:
 Refer to the detailed guides:
 - Quick commands: `backend/docs/QUICK_REFERENCE.md`
 - Full thesis guide: `backend/docs/THESIS_GUIDE.md`
-- All improvements: `backend/IMPROVEMENTS_SUMMARY.md`
+- All improvements: `backend/docs/IMPROVEMENTS_SUMMARY.md`

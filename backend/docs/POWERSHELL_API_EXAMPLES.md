@@ -186,7 +186,7 @@ Invoke-RestMethod -Uri "http://localhost:5000/predict" -Method POST -ContentType
 Make sure the Flask server is running:
 ```powershell
 cd backend
-python app.py
+python main.py
 ```
 
 ### Check Server Status
