@@ -7,6 +7,7 @@ Industry-standard security hardening applied.
 
 from flask import Flask, jsonify, request, g
 from flask_cors import CORS
+from flask_compress import Compress
 import uuid
 from app.services import scheduler as scheduler_module
 from app.core.config import load_env, get_config, is_debug_mode
@@ -24,6 +25,9 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
+
+# Initialize Flask-Compress for response compression
+compress = Compress()
 
 
 def create_app(config_class=None):
@@ -77,6 +81,9 @@ def create_app(config_class=None):
     # Setup request logging
     setup_request_logging(app)
     
+    # Initialize response compression
+    compress.init_app(app)
+    
     # Register error handlers
     _register_error_handlers(app)
     
@@ -85,6 +92,9 @@ def create_app(config_class=None):
     
     # Start scheduler
     _start_scheduler()
+    
+    # Preload ML model on startup for faster first request
+    _preload_model(app)
     
     return app
 
@@ -232,6 +242,19 @@ def _start_scheduler():
         scheduler_module.start()
     except Exception as e:
         logger.error(f"Error starting scheduler: {str(e)}")
+
+
+def _preload_model(app: Flask):
+    """Preload ML model on application startup for faster first request."""
+    with app.app_context():
+        try:
+            from app.services.predict import _load_model
+            _load_model()
+            logger.info("ML model preloaded successfully on startup")
+        except FileNotFoundError as e:
+            logger.warning(f"Model preload skipped - model not found: {e}")
+        except Exception as e:
+            logger.warning(f"Model preload failed (non-critical): {e}")
 
 
 # Create default app instance for backwards compatibility
