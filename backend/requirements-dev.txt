@@ -1,0 +1,23 @@
+# Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+# Note: This requires the main requirements.txt to be installed first
+
+# Include base requirements
+-r requirements.txt
+
+# Development Tools
+jupyter==1.0.0
+ipython==8.18.1
+
+# Testing 
+pytest==7.4.3
+pytest-cov==4.1.0
+faker==21.0.0  # Generate test data
+
+# Model Explainability (optional, large dependency)
+shap>=0.42.0
+
+# Code Quality (optional)
+# flake8>=6.0.0
+# black>=23.0.0
+# mypy>=1.0.0

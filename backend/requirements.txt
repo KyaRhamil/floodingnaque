@@ -1,7 +1,7 @@
 # Web Framework
 Flask==3.0.0
 flask-cors==4.0.0
-Werkzeug==3.0.1
+Werkzeug>=3.0.4
 
 # Production Server
 gunicorn==21.2.0  # Linux/Docker only
@@ -34,8 +34,8 @@ matplotlib>=3.7.0
 seaborn>=0.12.0
 
 # Security
-# Note: cryptography can be tricky on Windows, using flexible version
-cryptography>=41.0.0  # For secure data handling
+# Note: cryptography pinned to specific version for security
+cryptography==42.0.0  # For secure data handling (pinned for security)
 itsdangerous>=2.1.0  # Secure session handling
 bcrypt>=4.0.0  # Secure password/API key hashing (Argon2-like security)
 
@@ -53,18 +53,11 @@ flask-compress>=1.14  # Response compression for better performance
 # Monitoring & Logging
 python-json-logger==2.0.7  # Structured logging
 
-# Development Tools
-jupyter==1.0.0
-ipython==8.18.1
-
-# Testing 
-pytest==7.4.3
-pytest-cov==4.1.0
-faker==21.0.0  # Generate test data
-
 # Enhanced Training 
 tqdm>=4.65.0  # Progress bars
-shap>=0.42.0  # Model explainability
+
+# Model Explainability (large dependency, install separately if needed)
+shap>=0.42.0
 
 # Weather Data Sources
 meteostat>=1.6.0  # Historical weather data from weather stations
