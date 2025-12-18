@@ -1456,3 +1456,18 @@ FROM weather_data) AS anon_1]
 2025-12-18 11:50:03,935 - WARNING -  * Debugger is active!
 2025-12-18 11:50:03,940 - INFO -  * Debugger PIN: 105-142-505
 2025-12-18 11:50:07,518 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\utils\\__init__.py', reloading
+2025-12-18 11:50:07,960 - INFO -  * Restarting with stat
+2025-12-18 11:50:09,875 - INFO - Rate limiting is disabled
+2025-12-18 11:50:09,875 - INFO - Security headers middleware enabled
+2025-12-18 11:50:09,876 - INFO - Request logging middleware enabled
+2025-12-18 11:50:09,876 - WARNING - prometheus_flask_exporter not installed. Install with: pip install prometheus-flask-exporter
+2025-12-18 11:50:09,881 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:50:09,881 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:50:09,883 - INFO - Scheduler started
+2025-12-18 11:50:09,883 - INFO - Background scheduler started successfully.
+2025-12-18 11:50:11,109 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:50:11,110 - INFO - Model version: 1
+2025-12-18 11:50:11,111 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:50:11,112 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:50:11,125 - WARNING -  * Debugger is active!
+2025-12-18 11:50:11,129 - INFO -  * Debugger PIN: 105-142-505
