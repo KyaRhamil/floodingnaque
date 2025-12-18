@@ -30,7 +30,7 @@ pg8000>=1.30.0  # PostgreSQL adapter for Supabase (pure Python, Windows-friendly
 
 # Visualization
 # Note: Using version ranges for better compatibility
-matplotlib>=3.7.0
+matplotlib==3.9.2  # Pinned for better wheel availability
 seaborn>=0.12.0
 
 # Security
@@ -52,12 +52,14 @@ flask-compress>=1.14  # Response compression for better performance
 
 # Monitoring & Logging
 python-json-logger==2.0.7  # Structured logging
+prometheus-flask-exporter>=0.23.0  # Prometheus metrics
 
 # Enhanced Training 
 tqdm>=4.65.0  # Progress bars
 
-# Model Explainability (large dependency, install separately if needed)
-shap>=0.42.0
-
 # Weather Data Sources
 meteostat>=1.6.0  # Historical weather data from weather stations
+
+# Caching
+# Note: redis is already included above for rate limiting
+# For caching, we'll use Flask-Caching with Redis backend

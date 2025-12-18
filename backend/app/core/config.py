@@ -155,6 +155,7 @@ class Config:
     DB_POOL_SIZE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_SIZE', '20')))
     DB_MAX_OVERFLOW: int = field(default_factory=lambda: int(os.getenv('DB_MAX_OVERFLOW', '10')))
     DB_POOL_RECYCLE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_RECYCLE', '3600')))
+    DB_POOL_TIMEOUT: int = field(default_factory=lambda: int(os.getenv('DB_POOL_TIMEOUT', '30')))
     
     # Security
     RATE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true')

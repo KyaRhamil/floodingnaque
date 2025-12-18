@@ -9,15 +9,36 @@
 jupyter==1.0.0
 ipython==8.18.1
 
-# Testing 
+# Testing
 pytest==7.4.3
 pytest-cov==4.1.0
+pytest-mock==3.12.0  # Mock objects for pytest
+pytest-xdist==3.5.0  # Parallel test execution
 faker==21.0.0  # Generate test data
+responses==0.24.1  # Mock requests library
+httpx==0.25.2  # Async HTTP client for testing
+
+# Load Testing
+locust==2.20.1  # Load/performance testing
+
+# Security Testing
+bandit==1.7.6  # Security linting
+safety==3.0.0  # Dependency vulnerability checking
 
 # Model Explainability (optional, large dependency)
 shap>=0.42.0
 
+# Test Coverage and Reporting
+coverage==7.3.2
+coverage-badge==1.1.0
+pytest-html==4.1.1  # HTML test reports
+
 # Code Quality (optional)
-# flake8>=6.0.0
-# black>=23.0.0
-# mypy>=1.0.0
+flake8>=6.0.0
+black>=23.0.0
+mypy>=1.0.0
+isort>=5.12.0  # Import sorting
+
+# API Contract Testing
+schemathesis==3.22.0  # OpenAPI-based testing (optional)
+hypothesis==6.92.0  # Property-based testing

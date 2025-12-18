@@ -33,6 +33,12 @@ elif DB_URL.startswith('postgresql://') and '+' not in DB_URL.split('://')[0]:
     DB_URL = DB_URL.replace('postgresql://', 'postgresql+pg8000://', 1)
 
 # Connection pool settings for better performance and reliability
+# Get pool settings from environment
+DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '5'))
+DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '10'))
+DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '3600'))
+DB_POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))
+
 if DB_URL.startswith('sqlite'):
     # SQLite-specific settings
     engine = create_engine(
@@ -44,15 +50,21 @@ if DB_URL.startswith('sqlite'):
     )
 else:
     # PostgreSQL/Supabase settings
-    # Use NullPool for serverless/cloud environments to avoid connection issues
+    # Use QueuePool for production with configurable settings
     is_supabase = 'supabase' in DB_URL.lower()
+    
+    # Adjust pool size for Supabase free tier
+    pool_size = 1 if is_supabase else DB_POOL_SIZE
+    max_overflow = 2 if is_supabase else DB_MAX_OVERFLOW
+    pool_recycle = 300 if is_supabase else DB_POOL_RECYCLE
+    
     engine = create_engine(
         DB_URL,
         echo=False,
-        pool_size=5 if not is_supabase else 1,  # Smaller pool for Supabase free tier
-        max_overflow=10 if not is_supabase else 2,
-        pool_recycle=300 if is_supabase else 3600,  # Shorter recycle for cloud
-        pool_timeout=30,  # Connection timeout to prevent leaks
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+        pool_recycle=pool_recycle,
+        pool_timeout=DB_POOL_TIMEOUT,  # Use configurable timeout
         pool_pre_ping=True,  # Check connection health
         poolclass=QueuePool,
     )

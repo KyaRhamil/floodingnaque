@@ -864,3 +864,595 @@ FROM weather_data) AS anon_1]
 2025-12-17 02:24:35,585 - INFO - Request logging middleware enabled
 2025-12-17 02:24:35,591 - INFO - Registered blueprints: health, ingest, predict, data, models
 2025-12-17 02:24:35,591 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:18:56,745 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 11:18:56,745 - INFO - Security headers middleware enabled
+2025-12-18 11:18:56,746 - INFO - Request logging middleware enabled
+2025-12-18 11:18:56,750 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:18:56,750 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:18:56,770 - INFO - Scheduler started
+2025-12-18 11:18:56,771 - INFO - Background scheduler started successfully.
+2025-12-18 11:18:58,901 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:18:58,901 - INFO - Model version: 1
+2025-12-18 11:18:58,901 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:18:58,902 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:18:58,903 - INFO - Loading environment from: .env.development
+2025-12-18 11:18:58,919 - INFO - Database tables initialized successfully
+2025-12-18 11:18:58,919 - INFO - Created tables: weather_data, predictions, alert_history, model_registry
+2025-12-18 11:18:58,921 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 11:18:58,921 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 11:18:58,921 - INFO - Security headers middleware enabled
+2025-12-18 11:18:58,921 - INFO - Security headers middleware enabled
+2025-12-18 11:18:58,923 - INFO - Request logging middleware enabled
+2025-12-18 11:18:58,923 - INFO - Request logging middleware enabled
+2025-12-18 11:18:58,929 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:18:58,929 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:18:58,930 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:18:58,930 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:19:23,800 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 11:19:23,800 - INFO - Security headers middleware enabled
+2025-12-18 11:19:23,801 - INFO - Request logging middleware enabled
+2025-12-18 11:19:23,805 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:19:23,805 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:19:23,807 - INFO - Scheduler started
+2025-12-18 11:19:23,808 - INFO - Background scheduler started successfully.
+2025-12-18 11:19:24,792 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:19:24,793 - INFO - Model version: 1
+2025-12-18 11:19:24,793 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:19:24,793 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:19:24,847 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-18 11:19:24,848 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-18 11:19:24,851 - INFO -  * Restarting with stat
+2025-12-18 11:19:26,366 - INFO - Rate limiting is disabled
+2025-12-18 11:19:26,367 - INFO - Security headers middleware enabled
+2025-12-18 11:19:26,367 - INFO - Request logging middleware enabled
+2025-12-18 11:19:26,371 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:19:26,371 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:19:26,373 - INFO - Scheduler started
+2025-12-18 11:19:26,374 - INFO - Background scheduler started successfully.
+2025-12-18 11:19:27,327 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:19:27,327 - INFO - Model version: 1
+2025-12-18 11:19:27,327 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:19:27,327 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:19:27,335 - WARNING -  * Debugger is active!
+2025-12-18 11:19:27,340 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:23:13,188 - INFO - Request ecf65e11-fb62-4354-a257-cc0ce7ef1fb0: GET /
+2025-12-18 11:23:13,189 - INFO - Response ecf65e11-fb62-4354-a257-cc0ce7ef1fb0: 200 (0.001s)
+2025-12-18 11:23:13,190 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:13] "GET / HTTP/1.1" 200 -
+2025-12-18 11:23:15,236 - INFO - Request a64c9ba3-0d4e-4620-9bd2-c2a852161205: GET /
+2025-12-18 11:23:15,236 - INFO - Response a64c9ba3-0d4e-4620-9bd2-c2a852161205: 200 (0.001s)
+2025-12-18 11:23:15,237 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:15] "GET / HTTP/1.1" 200 -
+2025-12-18 11:23:17,297 - INFO - Request b36da533-4b7a-4b01-91a8-92efdb17aed4: GET /
+2025-12-18 11:23:17,298 - INFO - Response b36da533-4b7a-4b01-91a8-92efdb17aed4: 200 (0.000s)
+2025-12-18 11:23:17,298 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:17] "GET / HTTP/1.1" 200 -
+2025-12-18 11:23:19,329 - INFO - Request b24ca56b-694d-4343-bc60-2ec74988921c: GET /status
+2025-12-18 11:23:19,331 - INFO - Response b24ca56b-694d-4343-bc60-2ec74988921c: 200 (0.002s)
+2025-12-18 11:23:19,332 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:19] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:23:21,539 - INFO - Request 21283e9e-7fec-49bf-8459-e6f1910f8461: GET /status
+2025-12-18 11:23:21,540 - INFO - Response 21283e9e-7fec-49bf-8459-e6f1910f8461: 200 (0.001s)
+2025-12-18 11:23:21,541 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:21] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:23:23,587 - INFO - Request 5cbe6251-e5fb-4a05-bccf-6ae88e734c16: GET /health
+2025-12-18 11:23:23,588 - INFO - Response 5cbe6251-e5fb-4a05-bccf-6ae88e734c16: 200 (0.002s)
+2025-12-18 11:23:23,589 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:23] "GET /health HTTP/1.1" 200 -
+2025-12-18 11:23:25,609 - INFO - Request 93c6f5fa-7196-4d05-a1db-840c4695ca08: GET /health
+2025-12-18 11:23:25,610 - INFO - Response 93c6f5fa-7196-4d05-a1db-840c4695ca08: 200 (0.001s)
+2025-12-18 11:23:25,611 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:25] "GET /health HTTP/1.1" 200 -
+2025-12-18 11:23:27,666 - INFO - Request 2868c3de-49de-4108-bdb9-d154563379b9: GET /api/models
+2025-12-18 11:23:27,667 - INFO - Response 2868c3de-49de-4108-bdb9-d154563379b9: 200 (0.001s)
+2025-12-18 11:23:27,668 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:27] "GET /api/models HTTP/1.1" 200 -
+2025-12-18 11:23:29,705 - INFO - Request 3340dd18-ae2a-49e3-8560-50e01d61bb7b: GET /api/models
+2025-12-18 11:23:29,707 - INFO - Response 3340dd18-ae2a-49e3-8560-50e01d61bb7b: 200 (0.002s)
+2025-12-18 11:23:29,708 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:29] "GET /api/models HTTP/1.1" 200 -
+2025-12-18 11:23:31,747 - INFO - Request 62bb6b69-f0a4-4cfc-8b2d-6d20e7fff096: GET /data
+2025-12-18 11:23:31,760 - ERROR - Error retrieving weather data [fca6132c-d102-4d87-9f39-576be8a06333]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:23:31,761 - INFO - Response 62bb6b69-f0a4-4cfc-8b2d-6d20e7fff096: 500 (0.015s)
+2025-12-18 11:23:31,762 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:31] "[35m[1mGET /data HTTP/1.1[0m" 500 -
+2025-12-18 11:23:33,812 - INFO - Request 341f53a1-326a-484a-bead-19f9529dfc0a: GET /data
+2025-12-18 11:23:33,813 - ERROR - Error retrieving weather data [aace3af2-7ae9-45b3-9b2f-06b412293990]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:23:33,814 - INFO - Response 341f53a1-326a-484a-bead-19f9529dfc0a: 500 (0.002s)
+2025-12-18 11:23:33,814 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:33] "[35m[1mGET /data HTTP/1.1[0m" 500 -
+2025-12-18 11:23:35,862 - INFO - Request a3d16414-f285-4a0c-86d2-afafd7daaa31: GET /data
+2025-12-18 11:23:35,863 - ERROR - Error retrieving weather data [a67faf06-4163-4122-a5dd-e76b38156ca5]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:23:35,864 - INFO - Response a3d16414-f285-4a0c-86d2-afafd7daaa31: 500 (0.002s)
+2025-12-18 11:23:35,864 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:35] "[35m[1mGET /data?limit=5 HTTP/1.1[0m" 500 -
+2025-12-18 11:23:37,913 - INFO - Request 17afd346-f7bc-4e20-846d-301a44a74bd1: GET /data
+2025-12-18 11:23:37,914 - ERROR - Error retrieving weather data [fdf19eaa-9ea6-4ff7-8611-0e60aec34f48]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:23:37,915 - INFO - Response 17afd346-f7bc-4e20-846d-301a44a74bd1: 500 (0.002s)
+2025-12-18 11:23:37,915 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:37] "[35m[1mGET /data?limit=1 HTTP/1.1[0m" 500 -
+2025-12-18 11:23:39,978 - INFO - Request aac03c2d-a68a-4150-a9d1-5ba3ea56e3d4: POST /predict
+2025-12-18 11:23:39,980 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:23:39,980 - INFO - Response aac03c2d-a68a-4150-a9d1-5ba3ea56e3d4: 401 (0.002s)
+2025-12-18 11:23:39,981 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:39] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:23:42,022 - INFO - Request 0016dc3a-7ae8-4b2b-9193-14d7a6e41c10: POST /predict
+2025-12-18 11:23:42,023 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:23:42,023 - INFO - Response 0016dc3a-7ae8-4b2b-9193-14d7a6e41c10: 401 (0.001s)
+2025-12-18 11:23:42,023 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:42] "[31m[1mPOST /predict?risk_level=true HTTP/1.1[0m" 401 -
+2025-12-18 11:23:44,072 - INFO - Request 06cf4914-a863-47ce-b658-dde5e7982dee: POST /predict
+2025-12-18 11:23:44,073 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:23:44,073 - INFO - Response 06cf4914-a863-47ce-b658-dde5e7982dee: 401 (0.001s)
+2025-12-18 11:23:44,073 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:44] "[31m[1mPOST /predict?return_proba=true HTTP/1.1[0m" 401 -
+2025-12-18 11:23:46,089 - INFO - Request be6eb281-9602-4d92-8169-12601c4c1b5a: GET /data
+2025-12-18 11:23:46,089 - INFO - Response be6eb281-9602-4d92-8169-12601c4c1b5a: 400 (0.001s)
+2025-12-18 11:23:46,090 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:46] "[31m[1mGET /data?limit=99999 HTTP/1.1[0m" 400 -
+2025-12-18 11:23:48,122 - INFO - Request 5f008e4a-799d-4a59-8b53-2cb4e1677770: GET /data
+2025-12-18 11:23:48,122 - INFO - Response 5f008e4a-799d-4a59-8b53-2cb4e1677770: 400 (0.001s)
+2025-12-18 11:23:48,123 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:48] "[31m[1mGET /data?limit=-1 HTTP/1.1[0m" 400 -
+2025-12-18 11:23:50,155 - INFO - Request 3c8f8b01-a9ea-430e-8724-bacc768542e0: POST /predict
+2025-12-18 11:23:50,155 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:23:50,156 - INFO - Response 3c8f8b01-a9ea-430e-8724-bacc768542e0: 401 (0.001s)
+2025-12-18 11:23:50,156 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:50] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:23:52,187 - INFO - Request 05d22e5d-f46c-4298-8400-212d0cb7b1da: GET /
+2025-12-18 11:23:52,187 - INFO - Response 05d22e5d-f46c-4298-8400-212d0cb7b1da: 200 (0.001s)
+2025-12-18 11:23:52,188 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:52] "GET / HTTP/1.1" 200 -
+2025-12-18 11:23:54,232 - INFO - Request 58f9d5d6-fc85-457d-9fec-a5fa65d940c1: GET /status
+2025-12-18 11:23:54,234 - INFO - Response 58f9d5d6-fc85-457d-9fec-a5fa65d940c1: 200 (0.001s)
+2025-12-18 11:23:54,234 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:54] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:23:56,281 - INFO - Request 7b7e4068-1cd6-449d-950b-187d049ee6e5: GET /health
+2025-12-18 11:23:56,282 - INFO - Response 7b7e4068-1cd6-449d-950b-187d049ee6e5: 200 (0.001s)
+2025-12-18 11:23:56,283 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:56] "GET /health HTTP/1.1" 200 -
+2025-12-18 11:23:58,314 - INFO - Request db52170e-61f1-486a-87f2-c6a9a0b5d1aa: GET /api/models
+2025-12-18 11:23:58,315 - INFO - Response db52170e-61f1-486a-87f2-c6a9a0b5d1aa: 200 (0.001s)
+2025-12-18 11:23:58,315 - INFO - 127.0.0.1 - - [18/Dec/2025 11:23:58] "GET /api/models HTTP/1.1" 200 -
+2025-12-18 11:24:00,360 - INFO - Request 5f17179f-7a74-43fb-a9ee-3b5ce4920673: GET /data
+2025-12-18 11:24:00,361 - ERROR - Error retrieving weather data [e539b188-de17-496f-873e-a7098c34d2be]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:24:00,361 - INFO - Response 5f17179f-7a74-43fb-a9ee-3b5ce4920673: 500 (0.002s)
+2025-12-18 11:24:00,362 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:00] "[35m[1mGET /data HTTP/1.1[0m" 500 -
+2025-12-18 11:24:02,392 - INFO - Request 63d2142b-1d7c-43bf-8df8-42cb4b56fd4a: GET /status
+2025-12-18 11:24:02,393 - INFO - Response 63d2142b-1d7c-43bf-8df8-42cb4b56fd4a: 200 (0.001s)
+2025-12-18 11:24:02,394 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:02] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:04,423 - INFO - Request 89bae8b5-bd9f-414c-873e-2ac84bde49c0: OPTIONS /status
+2025-12-18 11:24:04,424 - INFO - Response 89bae8b5-bd9f-414c-873e-2ac84bde49c0: 200 (0.001s)
+2025-12-18 11:24:04,425 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:04] "OPTIONS /status HTTP/1.1" 200 -
+2025-12-18 11:24:06,455 - INFO - Request ffd26135-50b3-4f9d-adbd-e2e036bdc537: GET /status
+2025-12-18 11:24:06,456 - INFO - Response ffd26135-50b3-4f9d-adbd-e2e036bdc537: 200 (0.001s)
+2025-12-18 11:24:06,456 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:06] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:08,487 - INFO - Request f96d0470-f27d-477a-aada-da6b89a0fced: POST /predict
+2025-12-18 11:24:08,488 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:24:08,489 - INFO - Response f96d0470-f27d-477a-aada-da6b89a0fced: 401 (0.001s)
+2025-12-18 11:24:08,489 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:08] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:24:10,515 - INFO - Request eef7670b-7950-4a0c-813b-bf0c194be955: GET /
+2025-12-18 11:24:10,515 - INFO - Response eef7670b-7950-4a0c-813b-bf0c194be955: 200 (0.001s)
+2025-12-18 11:24:10,516 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:10] "GET / HTTP/1.1" 200 -
+2025-12-18 11:24:12,561 - INFO - Request 8d864c1e-793c-4391-86b7-ab36953f683c: GET /status
+2025-12-18 11:24:12,562 - INFO - Response 8d864c1e-793c-4391-86b7-ab36953f683c: 200 (0.001s)
+2025-12-18 11:24:12,562 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:12] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:14,598 - INFO - Request 0a432adc-5b91-47a5-8880-4e1fa38a4355: GET /health
+2025-12-18 11:24:14,599 - INFO - Response 0a432adc-5b91-47a5-8880-4e1fa38a4355: 200 (0.001s)
+2025-12-18 11:24:14,600 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:14] "GET /health HTTP/1.1" 200 -
+2025-12-18 11:24:16,663 - INFO - Request e17ebea7-af8b-4379-a47b-e04259723af9: GET /api/models
+2025-12-18 11:24:16,664 - INFO - Response e17ebea7-af8b-4379-a47b-e04259723af9: 200 (0.002s)
+2025-12-18 11:24:16,665 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:16] "GET /api/models HTTP/1.1" 200 -
+2025-12-18 11:24:18,711 - INFO - Request 98690215-3812-402a-abcb-55aab9b0cd86: GET /api/version
+2025-12-18 11:24:18,712 - INFO - Response 98690215-3812-402a-abcb-55aab9b0cd86: 200 (0.000s)
+2025-12-18 11:24:18,712 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:18] "GET /api/version HTTP/1.1" 200 -
+2025-12-18 11:24:20,758 - INFO - Request 0ce45916-eba4-4cbe-8a4a-7c34548c2137: GET /api/docs
+2025-12-18 11:24:20,759 - INFO - Response 0ce45916-eba4-4cbe-8a4a-7c34548c2137: 200 (0.001s)
+2025-12-18 11:24:20,760 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:20] "GET /api/docs HTTP/1.1" 200 -
+2025-12-18 11:24:22,807 - INFO - Request 95dcc5ff-a117-4c7d-8312-a1677444e395: GET /data
+2025-12-18 11:24:22,808 - ERROR - Error retrieving weather data [9e30f6b1-93d4-4a21-a146-3b16b35e2089]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:24:22,809 - INFO - Response 95dcc5ff-a117-4c7d-8312-a1677444e395: 500 (0.002s)
+2025-12-18 11:24:22,809 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:22] "[35m[1mGET /data HTTP/1.1[0m" 500 -
+2025-12-18 11:24:24,858 - INFO - Request 0887d566-72fa-488c-9fe5-b1310642e0eb: GET /data
+2025-12-18 11:24:24,860 - ERROR - Error retrieving weather data [7bafa903-97f0-4839-b687-f31970e17d7a]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:24:24,860 - INFO - Response 0887d566-72fa-488c-9fe5-b1310642e0eb: 500 (0.002s)
+2025-12-18 11:24:24,861 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:24] "[35m[1mGET /data?limit=10 HTTP/1.1[0m" 500 -
+2025-12-18 11:24:26,909 - INFO - Request dd225dcf-d7e7-47f2-9870-e188f3c2ab19: GET /data
+2025-12-18 11:24:26,910 - INFO - Response dd225dcf-d7e7-47f2-9870-e188f3c2ab19: 400 (0.001s)
+2025-12-18 11:24:26,910 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:26] "[31m[1mGET /data?limit=9999 HTTP/1.1[0m" 400 -
+2025-12-18 11:24:28,958 - INFO - Request 859f0d55-4003-454d-9f26-e9d15ada100b: POST /ingest
+2025-12-18 11:24:28,959 - WARNING - Missing API key for POST /ingest from 127.0.0.1
+2025-12-18 11:24:28,959 - INFO - Response 859f0d55-4003-454d-9f26-e9d15ada100b: 401 (0.001s)
+2025-12-18 11:24:28,960 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:28] "[31m[1mPOST /ingest HTTP/1.1[0m" 401 -
+2025-12-18 11:24:31,009 - INFO - Request 3ac97afb-2ce0-4a2c-b247-d45b44e43ceb: POST /ingest
+2025-12-18 11:24:31,586 - INFO - Initialized 2 API keys with bcrypt hashing
+2025-12-18 11:24:32,162 - WARNING - Invalid API key attempt for POST /ingest from 127.0.0.1
+2025-12-18 11:24:32,163 - INFO - Response 3ac97afb-2ce0-4a2c-b247-d45b44e43ceb: 401 (1.153s)
+2025-12-18 11:24:32,163 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:32] "[31m[1mPOST /ingest HTTP/1.1[0m" 401 -
+2025-12-18 11:24:34,216 - INFO - Request 4d634032-cb88-48af-af04-130bd40354c5: GET /
+2025-12-18 11:24:34,217 - INFO - Response 4d634032-cb88-48af-af04-130bd40354c5: 200 (0.001s)
+2025-12-18 11:24:34,218 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:34] "GET / HTTP/1.1" 200 -
+2025-12-18 11:24:36,242 - INFO - Request 396ed4ec-91c3-4262-9a89-25c64943f0c3: GET /status
+2025-12-18 11:24:36,243 - INFO - Response 396ed4ec-91c3-4262-9a89-25c64943f0c3: 200 (0.001s)
+2025-12-18 11:24:36,243 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:36] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:38,266 - INFO - Request 1c90ece8-c185-4490-bdba-a51d6b9f18da: GET /health
+2025-12-18 11:24:38,268 - INFO - Response 1c90ece8-c185-4490-bdba-a51d6b9f18da: 200 (0.001s)
+2025-12-18 11:24:38,268 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:38] "GET /health HTTP/1.1" 200 -
+2025-12-18 11:24:40,310 - INFO - Request 5920a03b-3af4-448d-ade7-6e756602a9bd: GET /api/docs
+2025-12-18 11:24:40,311 - INFO - Response 5920a03b-3af4-448d-ade7-6e756602a9bd: 200 (0.001s)
+2025-12-18 11:24:40,311 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:40] "GET /api/docs HTTP/1.1" 200 -
+2025-12-18 11:24:42,344 - INFO - Request 0415ef76-ba72-4ca4-9e70-8b2a0f370c9a: GET /api/models
+2025-12-18 11:24:42,345 - INFO - Response 0415ef76-ba72-4ca4-9e70-8b2a0f370c9a: 200 (0.001s)
+2025-12-18 11:24:42,345 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:42] "GET /api/models HTTP/1.1" 200 -
+2025-12-18 11:24:44,368 - INFO - Request 34c7162c-9c58-420f-9747-36b71ea17bb4: GET /api/version
+2025-12-18 11:24:44,368 - INFO - Response 34c7162c-9c58-420f-9747-36b71ea17bb4: 200 (0.001s)
+2025-12-18 11:24:44,369 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:44] "GET /api/version HTTP/1.1" 200 -
+2025-12-18 11:24:46,391 - INFO - Request 3f8fc388-fec7-454e-8999-3067cb1987a1: GET /data
+2025-12-18 11:24:46,393 - ERROR - Error retrieving weather data [0fb44284-0f80-4e28-9aaf-4a9928f41c2e]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:24:46,393 - INFO - Response 3f8fc388-fec7-454e-8999-3067cb1987a1: 500 (0.002s)
+2025-12-18 11:24:46,394 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:46] "[35m[1mGET /data HTTP/1.1[0m" 500 -
+2025-12-18 11:24:48,455 - INFO - Request 300e1694-e12f-4a04-98c8-a377a0022215: GET /status
+2025-12-18 11:24:48,456 - INFO - Response 300e1694-e12f-4a04-98c8-a377a0022215: 200 (0.001s)
+2025-12-18 11:24:48,457 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:48] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:50,486 - INFO - Request e4c4df40-c318-43b4-b73d-ba6d7d44a3e0: GET /status
+2025-12-18 11:24:50,486 - INFO - Response e4c4df40-c318-43b4-b73d-ba6d7d44a3e0: 200 (0.001s)
+2025-12-18 11:24:50,487 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:50] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:52,535 - INFO - Request bef8c39c-13f5-4036-8be7-455ad919c911: GET /status
+2025-12-18 11:24:52,536 - INFO - Response bef8c39c-13f5-4036-8be7-455ad919c911: 200 (0.001s)
+2025-12-18 11:24:52,536 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:52] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:54,566 - INFO - Request 2185577f-5539-4a95-976b-1f34a69cc1d3: GET /status
+2025-12-18 11:24:54,567 - INFO - Response 2185577f-5539-4a95-976b-1f34a69cc1d3: 200 (0.001s)
+2025-12-18 11:24:54,567 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:54] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:24:56,615 - INFO - Request c446d3c5-394b-4a5b-a14c-0c8f75fc119c: GET /ingest
+2025-12-18 11:24:56,616 - WARNING - Missing API key for GET /ingest from 127.0.0.1
+2025-12-18 11:24:56,616 - INFO - Response c446d3c5-394b-4a5b-a14c-0c8f75fc119c: 401 (0.001s)
+2025-12-18 11:24:56,617 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:56] "[31m[1mGET /ingest HTTP/1.1[0m" 401 -
+2025-12-18 11:24:58,661 - INFO - Request 6e9afc7a-04f3-446d-86cb-938a8b046fac: GET /data
+2025-12-18 11:24:58,662 - INFO - Response 6e9afc7a-04f3-446d-86cb-938a8b046fac: 400 (0.001s)
+2025-12-18 11:24:58,662 - INFO - 127.0.0.1 - - [18/Dec/2025 11:24:58] "[31m[1mGET /data?limit=5000 HTTP/1.1[0m" 400 -
+2025-12-18 11:25:00,716 - INFO - Request b14f4e0d-2454-4882-867a-5a11dfe4ff6b: GET /data
+2025-12-18 11:25:00,717 - INFO - Response b14f4e0d-2454-4882-867a-5a11dfe4ff6b: 400 (0.001s)
+2025-12-18 11:25:00,718 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:00] "[31m[1mGET /data?limit=-1 HTTP/1.1[0m" 400 -
+2025-12-18 11:25:02,757 - INFO - Request ca048c54-c0f4-46c9-ad11-68dd8a49dc2d: GET /status
+2025-12-18 11:25:02,758 - INFO - Response ca048c54-c0f4-46c9-ad11-68dd8a49dc2d: 200 (0.001s)
+2025-12-18 11:25:02,759 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:02] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:25:04,805 - INFO - Request afeba278-f479-4f05-94e8-916007d6a237: GET /
+2025-12-18 11:25:04,806 - INFO - Response afeba278-f479-4f05-94e8-916007d6a237: 200 (0.001s)
+2025-12-18 11:25:04,806 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:04] "GET / HTTP/1.1" 200 -
+2025-12-18 11:25:06,852 - INFO - Request fef2e8df-3308-440f-9841-2f67257da259: GET /status
+2025-12-18 11:25:06,853 - INFO - Response fef2e8df-3308-440f-9841-2f67257da259: 200 (0.001s)
+2025-12-18 11:25:06,854 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:06] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:25:08,895 - INFO - Request ac739496-6d15-4753-ac15-afb2bda28e79: GET /health
+2025-12-18 11:25:08,896 - INFO - Response ac739496-6d15-4753-ac15-afb2bda28e79: 200 (0.001s)
+2025-12-18 11:25:08,897 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:08] "GET /health HTTP/1.1" 200 -
+2025-12-18 11:25:10,940 - INFO - Request b447572a-004c-4ab3-9d6f-758dd60a88fe: GET /api/docs
+2025-12-18 11:25:10,941 - INFO - Response b447572a-004c-4ab3-9d6f-758dd60a88fe: 200 (0.001s)
+2025-12-18 11:25:10,942 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:10] "GET /api/docs HTTP/1.1" 200 -
+2025-12-18 11:25:12,969 - INFO - Request edd04233-25ec-44a3-8e39-20cf33fd0bba: GET /status
+2025-12-18 11:25:12,970 - INFO - Response edd04233-25ec-44a3-8e39-20cf33fd0bba: 200 (0.001s)
+2025-12-18 11:25:12,970 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:12] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:25:15,023 - INFO - Request 50cb3bf1-069d-4355-841d-c7b893fd8766: GET /data
+2025-12-18 11:25:15,024 - INFO - Response 50cb3bf1-069d-4355-841d-c7b893fd8766: 400 (0.001s)
+2025-12-18 11:25:15,025 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:15] "[31m[1mGET /data?limit=5000 HTTP/1.1[0m" 400 -
+2025-12-18 11:25:17,065 - INFO - Request c708ab9b-d6dd-4cd6-9278-b8141d05a19e: POST /predict
+2025-12-18 11:25:17,066 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:25:17,067 - INFO - Response c708ab9b-d6dd-4cd6-9278-b8141d05a19e: 401 (0.001s)
+2025-12-18 11:25:17,067 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:17] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:19,100 - INFO - Request 12f1b822-52b8-42b4-86c5-fe77338605e4: POST /predict
+2025-12-18 11:25:19,101 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:25:19,102 - INFO - Response 12f1b822-52b8-42b4-86c5-fe77338605e4: 401 (0.001s)
+2025-12-18 11:25:19,102 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:19] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:21,209 - INFO - Request 193b1d3e-8f22-4942-be67-e1e0d06af910: POST /predict
+2025-12-18 11:25:21,799 - WARNING - Invalid API key attempt for POST /predict from 127.0.0.1
+2025-12-18 11:25:21,799 - INFO - Response 193b1d3e-8f22-4942-be67-e1e0d06af910: 401 (0.590s)
+2025-12-18 11:25:21,800 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:21] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:23,827 - INFO - Request 245667b3-12ba-4a01-98e5-bf64504a840a: POST /predict
+2025-12-18 11:25:23,828 - WARNING - Invalid API key attempt for POST /predict from 127.0.0.1
+2025-12-18 11:25:23,828 - INFO - Response 245667b3-12ba-4a01-98e5-bf64504a840a: 401 (0.001s)
+2025-12-18 11:25:23,829 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:23] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:25,852 - INFO - Request b144191d-66f1-4ca0-a6b1-b53af45cf2b7: POST /predict
+2025-12-18 11:25:26,449 - WARNING - Invalid API key attempt for POST /predict from 127.0.0.1
+2025-12-18 11:25:26,450 - INFO - Response b144191d-66f1-4ca0-a6b1-b53af45cf2b7: 401 (0.598s)
+2025-12-18 11:25:26,451 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:26] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:28,483 - INFO - Request ccf9a04f-2838-491e-8f67-faf97f3f3a63: POST /predict
+2025-12-18 11:25:29,056 - WARNING - Invalid API key attempt for POST /predict from 127.0.0.1
+2025-12-18 11:25:29,057 - INFO - Response ccf9a04f-2838-491e-8f67-faf97f3f3a63: 401 (0.574s)
+2025-12-18 11:25:29,058 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:29] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:31,083 - INFO - Request f1de262e-64af-4bbe-a4f4-dcc0b951a06e: POST /predict
+2025-12-18 11:25:31,753 - WARNING - Invalid API key attempt for POST /predict from 127.0.0.1
+2025-12-18 11:25:31,755 - INFO - Response f1de262e-64af-4bbe-a4f4-dcc0b951a06e: 401 (0.672s)
+2025-12-18 11:25:31,757 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:31] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:33,789 - INFO - Request b9f133c9-1478-4c5c-9cfb-91fd2a0cdda6: POST /predict
+2025-12-18 11:25:34,365 - WARNING - Invalid API key attempt for POST /predict from 127.0.0.1
+2025-12-18 11:25:34,365 - INFO - Response b9f133c9-1478-4c5c-9cfb-91fd2a0cdda6: 401 (0.576s)
+2025-12-18 11:25:34,366 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:34] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:37,692 - INFO - Request 4cd78fae-4478-4bf1-9932-6619f097b1fb: POST /predict
+2025-12-18 11:25:37,692 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:25:37,692 - INFO - Response 4cd78fae-4478-4bf1-9932-6619f097b1fb: 401 (0.001s)
+2025-12-18 11:25:37,693 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:37] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:39,728 - INFO - Request afdabcb0-605d-4c90-8ec9-7e7c3ec0a048: POST /predict
+2025-12-18 11:25:39,728 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:25:39,729 - INFO - Response afdabcb0-605d-4c90-8ec9-7e7c3ec0a048: 401 (0.001s)
+2025-12-18 11:25:39,730 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:39] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:41,764 - INFO - Request 04818793-fd0e-4599-93fe-e3805f40be6c: POST /predict
+2025-12-18 11:25:41,764 - WARNING - Request body too large for predict [7ec6968f-aa81-4dc8-b14e-5c6f73673f3f]: 1048655 bytes (limit: 10240)
+2025-12-18 11:25:41,765 - INFO - Response 04818793-fd0e-4599-93fe-e3805f40be6c: 413 (0.001s)
+2025-12-18 11:25:41,765 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:41] "[31m[1mPOST /predict HTTP/1.1[0m" 413 -
+2025-12-18 11:25:43,810 - INFO - Request b215f9a4-2630-4a11-ab72-d50bf349fe00: POST /predict
+2025-12-18 11:25:43,810 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:25:43,811 - INFO - Response b215f9a4-2630-4a11-ab72-d50bf349fe00: 401 (0.001s)
+2025-12-18 11:25:43,811 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:43] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:45,853 - INFO - Request f0454faa-5ac1-4601-b1f2-504750042a6d: POST /predict
+2025-12-18 11:25:45,854 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:25:45,854 - INFO - Response f0454faa-5ac1-4601-b1f2-504750042a6d: 401 (0.001s)
+2025-12-18 11:25:45,855 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:45] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:25:47,902 - INFO - Request cc7cd3bf-c766-4924-8c1b-ec6d27ca9e20: POST /ingest
+2025-12-18 11:25:47,903 - WARNING - Missing API key for POST /ingest from 127.0.0.1
+2025-12-18 11:25:47,903 - INFO - Response cc7cd3bf-c766-4924-8c1b-ec6d27ca9e20: 401 (0.001s)
+2025-12-18 11:25:47,903 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:47] "[31m[1mPOST /ingest HTTP/1.1[0m" 401 -
+2025-12-18 11:25:50,003 - INFO - Request 1b39992e-ccf8-40a3-ad9d-e24c5c76ea8b: GET /data
+2025-12-18 11:25:50,005 - ERROR - Error retrieving weather data [7c7cd6cc-2303-4351-b8f2-7387469fc34d]: (sqlite3.OperationalError) no such column: weather_data.is_deleted
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT weather_data.id AS weather_data_id, weather_data.temperature AS weather_data_temperature, weather_data.humidity AS weather_data_humidity, weather_data.precipitation AS weather_data_precipitation, weather_data.wind_speed AS weather_data_wind_speed, weather_data.pressure AS weather_data_pressure, weather_data.location_lat AS weather_data_location_lat, weather_data.location_lon AS weather_data_location_lon, weather_data.source AS weather_data_source, weather_data.station_id AS weather_data_station_id, weather_data.timestamp AS weather_data_timestamp, weather_data.created_at AS weather_data_created_at, weather_data.updated_at AS weather_data_updated_at, weather_data.is_deleted AS weather_data_is_deleted, weather_data.deleted_at AS weather_data_deleted_at 
+FROM weather_data) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-18 11:25:50,005 - INFO - Response 1b39992e-ccf8-40a3-ad9d-e24c5c76ea8b: 500 (0.002s)
+2025-12-18 11:25:50,006 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:50] "[35m[1mGET /data?path=../../../etc/passwd HTTP/1.1[0m" 500 -
+2025-12-18 11:25:52,067 - INFO - Request 460aa792-5385-4305-a36a-59ddedbda969: GET /status
+2025-12-18 11:25:52,068 - INFO - Response 460aa792-5385-4305-a36a-59ddedbda969: 200 (0.001s)
+2025-12-18 11:25:52,068 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:52] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:25:54,099 - INFO - Request 97509167-d466-48cc-847a-b190bb862c96: GET /status
+2025-12-18 11:25:54,100 - INFO - Response 97509167-d466-48cc-847a-b190bb862c96: 200 (0.001s)
+2025-12-18 11:25:54,100 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:54] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:25:56,130 - INFO - Request 0ec73137-b565-4b88-aa3b-909a8a36802a: GET /status
+2025-12-18 11:25:56,131 - INFO - Response 0ec73137-b565-4b88-aa3b-909a8a36802a: 200 (0.001s)
+2025-12-18 11:25:56,132 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:56] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:25:58,163 - INFO - Request 57495928-2b96-47c1-9ae7-8c2cc6228bc9: GET /status
+2025-12-18 11:25:58,164 - INFO - Response 57495928-2b96-47c1-9ae7-8c2cc6228bc9: 200 (0.001s)
+2025-12-18 11:25:58,165 - INFO - 127.0.0.1 - - [18/Dec/2025 11:25:58] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:00,210 - INFO - Request 4c67d519-0997-495e-a31d-03780067a29d: GET /status
+2025-12-18 11:26:00,211 - INFO - Response 4c67d519-0997-495e-a31d-03780067a29d: 200 (0.001s)
+2025-12-18 11:26:00,212 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:00] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:02,243 - INFO - Request a1dfc94b-c940-453b-a628-b44ab71abc88: GET /status
+2025-12-18 11:26:02,244 - INFO - Response a1dfc94b-c940-453b-a628-b44ab71abc88: 200 (0.001s)
+2025-12-18 11:26:02,244 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:02] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:04,279 - INFO - Request 92f5ede3-a488-4eff-a3ed-d65c8595ac08: GET /status
+2025-12-18 11:26:04,281 - INFO - Response 92f5ede3-a488-4eff-a3ed-d65c8595ac08: 200 (0.002s)
+2025-12-18 11:26:04,282 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:04] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:06,311 - INFO - Request db7ff9c5-f86a-4000-a3bc-db0efb255da7: GET /status
+2025-12-18 11:26:06,313 - INFO - Response db7ff9c5-f86a-4000-a3bc-db0efb255da7: 200 (0.002s)
+2025-12-18 11:26:06,314 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:06] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:08,348 - INFO - Request d54ed14e-afce-44e3-a664-5ec698e74cb6: GET /status
+2025-12-18 11:26:08,349 - INFO - Response d54ed14e-afce-44e3-a664-5ec698e74cb6: 200 (0.001s)
+2025-12-18 11:26:08,349 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:08] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:10,380 - INFO - Request 5cfc2d4f-3944-40c4-be26-9232ce5af87c: GET /status
+2025-12-18 11:26:10,381 - INFO - Response 5cfc2d4f-3944-40c4-be26-9232ce5af87c: 200 (0.001s)
+2025-12-18 11:26:10,382 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:10] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:12,417 - INFO - Request e7846f0b-076b-4da5-b653-1b8f21d3eeef: GET /status
+2025-12-18 11:26:12,418 - INFO - Response e7846f0b-076b-4da5-b653-1b8f21d3eeef: 200 (0.001s)
+2025-12-18 11:26:12,419 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:12] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:14,450 - INFO - Request d103c700-34f7-4943-ace7-90b554bfe83e: GET /status
+2025-12-18 11:26:14,451 - INFO - Response d103c700-34f7-4943-ace7-90b554bfe83e: 200 (0.001s)
+2025-12-18 11:26:14,451 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:14] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:16,480 - INFO - Request 082f7090-2903-4861-b27c-4b3c5bf00bbb: GET /status
+2025-12-18 11:26:16,481 - INFO - Response 082f7090-2903-4861-b27c-4b3c5bf00bbb: 200 (0.001s)
+2025-12-18 11:26:16,482 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:16] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:18,525 - INFO - Request 364f26a9-e770-4386-ba0b-9d9e8d2e1b86: GET /status
+2025-12-18 11:26:18,526 - INFO - Response 364f26a9-e770-4386-ba0b-9d9e8d2e1b86: 200 (0.001s)
+2025-12-18 11:26:18,526 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:18] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:20,563 - INFO - Request 73156df0-56c2-41dd-b177-02320061d3b2: GET /status
+2025-12-18 11:26:20,564 - INFO - Response 73156df0-56c2-41dd-b177-02320061d3b2: 200 (0.001s)
+2025-12-18 11:26:20,565 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:20] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:22,597 - INFO - Request 413d3105-55d9-4228-ab46-f20db21ab85d: GET /status
+2025-12-18 11:26:22,598 - INFO - Response 413d3105-55d9-4228-ab46-f20db21ab85d: 200 (0.001s)
+2025-12-18 11:26:22,598 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:22] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:24,634 - INFO - Request 6db1ff1e-47e5-4e75-af24-973839698cb9: GET /status
+2025-12-18 11:26:24,635 - INFO - Response 6db1ff1e-47e5-4e75-af24-973839698cb9: 200 (0.001s)
+2025-12-18 11:26:24,636 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:24] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:26,672 - INFO - Request a6fb6b7c-c638-4067-bcbc-0674903114f4: GET /status
+2025-12-18 11:26:26,673 - INFO - Response a6fb6b7c-c638-4067-bcbc-0674903114f4: 200 (0.001s)
+2025-12-18 11:26:26,673 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:26] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:28,702 - INFO - Request 61f57cb1-70b4-4378-972c-77c4f6822ff9: GET /status
+2025-12-18 11:26:28,703 - INFO - Response 61f57cb1-70b4-4378-972c-77c4f6822ff9: 200 (0.001s)
+2025-12-18 11:26:28,704 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:28] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:30,732 - INFO - Request 1f139052-dab2-44af-8a4a-6b9e413c3227: GET /status
+2025-12-18 11:26:30,734 - INFO - Response 1f139052-dab2-44af-8a4a-6b9e413c3227: 200 (0.001s)
+2025-12-18 11:26:30,734 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:30] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:32,769 - INFO - Request 2fe73a7e-3332-44be-ad8e-d0d104fbec44: GET /status
+2025-12-18 11:26:32,770 - INFO - Response 2fe73a7e-3332-44be-ad8e-d0d104fbec44: 200 (0.001s)
+2025-12-18 11:26:32,770 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:32] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:34,816 - INFO - Request 8c73121f-b14e-43c8-a309-9ba081e48d58: GET /status
+2025-12-18 11:26:34,817 - INFO - Response 8c73121f-b14e-43c8-a309-9ba081e48d58: 200 (0.001s)
+2025-12-18 11:26:34,818 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:34] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:36,858 - INFO - Request abf4781e-30db-41f1-ae73-f5020849ef50: GET /status
+2025-12-18 11:26:36,860 - INFO - Response abf4781e-30db-41f1-ae73-f5020849ef50: 200 (0.001s)
+2025-12-18 11:26:36,860 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:36] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:38,903 - INFO - Request 7e27a79d-df42-4f97-afa5-292998d06181: GET /status
+2025-12-18 11:26:38,904 - INFO - Response 7e27a79d-df42-4f97-afa5-292998d06181: 200 (0.001s)
+2025-12-18 11:26:38,904 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:38] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:40,946 - INFO - Request f1caca2d-103c-49b9-bc60-abfc01fd9bf2: GET /status
+2025-12-18 11:26:40,947 - INFO - Response f1caca2d-103c-49b9-bc60-abfc01fd9bf2: 200 (0.001s)
+2025-12-18 11:26:40,948 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:40] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:42,995 - INFO - Request 3f583419-e3a5-4a5b-a529-beaf31a68779: GET /status
+2025-12-18 11:26:42,996 - INFO - Response 3f583419-e3a5-4a5b-a529-beaf31a68779: 200 (0.001s)
+2025-12-18 11:26:42,996 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:42] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:45,028 - INFO - Request 27fcc4d8-a6df-4eba-84a1-6d3a63534de6: GET /status
+2025-12-18 11:26:45,029 - INFO - Response 27fcc4d8-a6df-4eba-84a1-6d3a63534de6: 200 (0.001s)
+2025-12-18 11:26:45,029 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:45] "GET /status HTTP/1.1" 200 -
+2025-12-18 11:26:47,062 - INFO - Request 9b868ca2-1ad6-4fdc-8913-62e002becd15: POST /predict
+2025-12-18 11:26:47,063 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:26:47,063 - INFO - Response 9b868ca2-1ad6-4fdc-8913-62e002becd15: 401 (0.001s)
+2025-12-18 11:26:47,064 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:47] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:26:49,095 - INFO - Request ff25495b-382a-40c7-b24c-23340a3bad54: POST /predict
+2025-12-18 11:26:49,096 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:26:49,096 - INFO - Response ff25495b-382a-40c7-b24c-23340a3bad54: 401 (0.001s)
+2025-12-18 11:26:49,097 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:49] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:26:51,128 - INFO - Request f2097c36-6825-438e-9b52-6d5586b047a0: GET /nonexistent/endpoint/path
+2025-12-18 11:26:51,128 - INFO - Response f2097c36-6825-438e-9b52-6d5586b047a0: 404 (0.001s)
+2025-12-18 11:26:51,129 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:51] "[33mGET /nonexistent/endpoint/path HTTP/1.1[0m" 404 -
+2025-12-18 11:26:53,161 - INFO - Request 0ca4bb88-8d40-4563-861d-07dd9a5d75ba: POST /predict
+2025-12-18 11:26:53,162 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:26:53,163 - INFO - Response 0ca4bb88-8d40-4563-861d-07dd9a5d75ba: 401 (0.002s)
+2025-12-18 11:26:53,164 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:53] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:26:55,194 - INFO - Request d6c1d53d-a733-481f-807a-2efee13ec5ba: POST /predict
+2025-12-18 11:26:55,195 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:26:55,195 - INFO - Response d6c1d53d-a733-481f-807a-2efee13ec5ba: 401 (0.001s)
+2025-12-18 11:26:55,196 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:55] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:26:57,212 - INFO - Request 6f58d4df-ddac-4bd3-872e-a529e5ce63cd: POST /predict
+2025-12-18 11:26:57,212 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:26:57,213 - INFO - Response 6f58d4df-ddac-4bd3-872e-a529e5ce63cd: 401 (0.001s)
+2025-12-18 11:26:57,213 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:57] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:26:59,245 - INFO - Request ea88be0c-a6c8-491c-b009-314c65c963a9: POST /predict
+2025-12-18 11:26:59,245 - WARNING - Missing API key for POST /predict from 127.0.0.1
+2025-12-18 11:26:59,246 - INFO - Response ea88be0c-a6c8-491c-b009-314c65c963a9: 401 (0.001s)
+2025-12-18 11:26:59,246 - INFO - 127.0.0.1 - - [18/Dec/2025 11:26:59] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-12-18 11:36:52,025 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\core\\config.py', reloading
+2025-12-18 11:36:53,270 - INFO -  * Restarting with stat
+2025-12-18 11:36:57,865 - INFO - Rate limiting is disabled
+2025-12-18 11:36:57,865 - INFO - Security headers middleware enabled
+2025-12-18 11:36:57,866 - INFO - Request logging middleware enabled
+2025-12-18 11:36:57,870 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:36:57,870 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:36:57,872 - INFO - Scheduler started
+2025-12-18 11:36:57,872 - INFO - Background scheduler started successfully.
+2025-12-18 11:36:58,945 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:36:58,945 - INFO - Model version: 1
+2025-12-18 11:36:58,946 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:36:58,946 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:36:58,955 - WARNING -  * Debugger is active!
+2025-12-18 11:36:58,958 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:39:15,560 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-18 11:39:16,006 - INFO -  * Restarting with stat
+2025-12-18 11:39:18,270 - INFO - Rate limiting is disabled
+2025-12-18 11:39:18,271 - INFO - Security headers middleware enabled
+2025-12-18 11:39:18,271 - INFO - Request logging middleware enabled
+2025-12-18 11:39:18,276 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:39:18,276 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:39:18,278 - INFO - Scheduler started
+2025-12-18 11:39:18,278 - INFO - Background scheduler started successfully.
+2025-12-18 11:39:19,397 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:39:19,397 - INFO - Model version: 1
+2025-12-18 11:39:19,397 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:39:19,397 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:39:19,408 - WARNING -  * Debugger is active!
+2025-12-18 11:39:19,413 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:39:28,172 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-18 11:39:28,587 - INFO -  * Restarting with stat
+2025-12-18 11:39:30,427 - INFO - Rate limiting is disabled
+2025-12-18 11:39:30,427 - INFO - Security headers middleware enabled
+2025-12-18 11:39:30,427 - INFO - Request logging middleware enabled
+2025-12-18 11:39:30,432 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:39:30,432 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:39:30,434 - INFO - Scheduler started
+2025-12-18 11:39:30,434 - INFO - Background scheduler started successfully.
+2025-12-18 11:39:31,497 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:39:31,497 - INFO - Model version: 1
+2025-12-18 11:39:31,497 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:39:31,497 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:39:31,507 - WARNING -  * Debugger is active!
+2025-12-18 11:39:31,511 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:41:22,723 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\models\\db.py', reloading
+2025-12-18 11:41:23,196 - INFO -  * Restarting with stat
+2025-12-18 11:41:25,662 - INFO - Rate limiting is disabled
+2025-12-18 11:41:25,662 - INFO - Security headers middleware enabled
+2025-12-18 11:41:25,662 - INFO - Request logging middleware enabled
+2025-12-18 11:41:25,672 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:41:25,672 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:41:25,674 - INFO - Scheduler started
+2025-12-18 11:41:25,674 - INFO - Background scheduler started successfully.
+2025-12-18 11:41:28,516 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:41:28,517 - INFO - Model version: 1
+2025-12-18 11:41:28,518 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:41:28,518 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:41:28,542 - WARNING -  * Debugger is active!
+2025-12-18 11:41:28,550 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:42:03,587 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\utils\\cache.py', reloading
+2025-12-18 11:42:03,934 - INFO -  * Restarting with stat
+2025-12-18 11:42:05,657 - INFO - Rate limiting is disabled
+2025-12-18 11:42:05,657 - INFO - Security headers middleware enabled
+2025-12-18 11:42:05,658 - INFO - Request logging middleware enabled
+2025-12-18 11:42:05,665 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:42:05,666 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:42:05,668 - INFO - Scheduler started
+2025-12-18 11:42:05,668 - INFO - Background scheduler started successfully.
+2025-12-18 11:42:06,911 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:42:06,912 - INFO - Model version: 1
+2025-12-18 11:42:06,913 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:42:06,913 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:42:06,925 - WARNING -  * Debugger is active!
+2025-12-18 11:42:06,929 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:42:47,790 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\utils\\metrics.py', reloading
+2025-12-18 11:42:48,130 - INFO -  * Restarting with stat
+2025-12-18 11:42:49,850 - INFO - Rate limiting is disabled
+2025-12-18 11:42:49,850 - INFO - Security headers middleware enabled
+2025-12-18 11:42:49,851 - INFO - Request logging middleware enabled
+2025-12-18 11:42:49,855 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:42:49,855 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:42:49,857 - INFO - Scheduler started
+2025-12-18 11:42:49,857 - INFO - Background scheduler started successfully.
+2025-12-18 11:42:50,912 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:42:50,912 - INFO - Model version: 1
+2025-12-18 11:42:50,913 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:42:50,913 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:42:50,921 - WARNING -  * Debugger is active!
+2025-12-18 11:42:50,924 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:44:26,950 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\app.py', reloading
+2025-12-18 11:44:27,273 - INFO -  * Restarting with stat
+2025-12-18 11:44:30,367 - INFO - Rate limiting is disabled
+2025-12-18 11:44:30,367 - INFO - Security headers middleware enabled
+2025-12-18 11:44:30,367 - INFO - Request logging middleware enabled
+2025-12-18 11:44:30,368 - WARNING - prometheus_flask_exporter not installed. Install with: pip install prometheus-flask-exporter
+2025-12-18 11:44:30,377 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:44:30,377 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:44:30,379 - INFO - Scheduler started
+2025-12-18 11:44:30,379 - INFO - Background scheduler started successfully.
+2025-12-18 11:44:31,445 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:44:31,445 - INFO - Model version: 1
+2025-12-18 11:44:31,446 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:44:31,446 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:44:31,455 - WARNING -  * Debugger is active!
+2025-12-18 11:44:31,459 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:45:03,476 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\api\\routes\\health.py', reloading
+2025-12-18 11:45:03,919 - INFO -  * Restarting with stat
+2025-12-18 11:45:06,463 - INFO - Rate limiting is disabled
+2025-12-18 11:45:06,463 - INFO - Security headers middleware enabled
+2025-12-18 11:45:06,464 - INFO - Request logging middleware enabled
+2025-12-18 11:45:06,464 - WARNING - prometheus_flask_exporter not installed. Install with: pip install prometheus-flask-exporter
+2025-12-18 11:45:06,475 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:45:06,475 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:45:06,478 - INFO - Scheduler started
+2025-12-18 11:45:06,479 - INFO - Background scheduler started successfully.
+2025-12-18 11:45:08,710 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:45:08,710 - INFO - Model version: 1
+2025-12-18 11:45:08,711 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:45:08,711 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:45:08,727 - WARNING -  * Debugger is active!
+2025-12-18 11:45:08,731 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:50:00,317 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\utils\\__init__.py', reloading
+2025-12-18 11:50:00,613 - INFO -  * Restarting with stat
+2025-12-18 11:50:02,777 - INFO - Rate limiting is disabled
+2025-12-18 11:50:02,777 - INFO - Security headers middleware enabled
+2025-12-18 11:50:02,777 - INFO - Request logging middleware enabled
+2025-12-18 11:50:02,778 - WARNING - prometheus_flask_exporter not installed. Install with: pip install prometheus-flask-exporter
+2025-12-18 11:50:02,785 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 11:50:02,785 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 11:50:02,789 - INFO - Scheduler started
+2025-12-18 11:50:02,791 - INFO - Background scheduler started successfully.
+2025-12-18 11:50:03,926 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 11:50:03,926 - INFO - Model version: 1
+2025-12-18 11:50:03,926 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 11:50:03,927 - INFO - ML model preloaded successfully on startup
+2025-12-18 11:50:03,935 - WARNING -  * Debugger is active!
+2025-12-18 11:50:03,940 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 11:50:07,518 - INFO -  * Detected change in 'C:\\floodingnaque\\backend\\app\\utils\\__init__.py', reloading

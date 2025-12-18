@@ -14,6 +14,7 @@ from app.core.config import load_env, get_config, is_debug_mode
 from app.core.exceptions import AppException
 from app.models.db import init_db
 from app.utils.utils import setup_logging
+from app.utils.metrics import init_prometheus_metrics
 from app.api.middleware import (
     init_rate_limiter,
     setup_security_headers,
@@ -83,6 +84,9 @@ def create_app(config_class=None):
     
     # Initialize response compression
     compress.init_app(app)
+    
+    # Initialize Prometheus metrics
+    init_prometheus_metrics(app)
     
     # Register error handlers
     _register_error_handlers(app)

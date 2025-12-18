@@ -9,10 +9,13 @@ from flask import Blueprint, jsonify, request
 from app.services.predict import get_current_model_info
 from app.services.scheduler import scheduler
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
-from app.models.db import engine, get_db_session
+from app.models.db import engine, get_db_session, get_pool_status
 from sqlalchemy import text
 import logging
 import time
+import os
+import platform
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +76,6 @@ def check_redis_health() -> dict:
     Returns:
         dict: Redis health status or indication that Redis is not in use
     """
-    import os
-    
     storage_url = os.getenv('RATE_LIMIT_STORAGE_URL', 'memory://')
     
     if 'redis' not in storage_url.lower():
@@ -110,6 +111,22 @@ def check_redis_health() -> dict:
     except Exception as e:
         logger.error(f"Redis health check failed: {str(e)}")
         return {'status': 'unhealthy', 'connected': False, 'error': str(e)}
+
+
+def check_cache_health() -> dict:
+    """
+    Check cache system health.
+    
+    Returns:
+        dict: Cache health status
+    """
+    try:
+        from app.utils.cache import get_cache_stats
+        return get_cache_stats()
+    except ImportError:
+        return {'status': 'not_available', 'message': 'Cache module not available'}
+    except Exception as e:
+        return {'status': 'error', 'error': str(e)}
 
 
 @health_bp.route('/', methods=['GET'])
@@ -174,6 +191,12 @@ def health():
     # Check Redis health (if configured)
     redis_health = check_redis_health()
     
+    # Check cache health
+    cache_health = check_cache_health()
+    
+    # Get database pool status
+    pool_status = get_pool_status()
+    
     # Determine overall health status
     # Redis is optional, so don't fail health check if Redis is not configured
     redis_ok = redis_health.get('status') in ('healthy', 'not_configured')
@@ -181,12 +204,20 @@ def health():
     
     response = {
         'status': 'healthy' if is_healthy else 'degraded',
+        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'checks': {
             'database': db_health,
+            'database_pool': pool_status,
             'redis': redis_health,
+            'cache': cache_health,
             'model_available': model_available,
             'scheduler_running': scheduler.running if hasattr(scheduler, 'running') else False,
             'external_apis': external_apis
+        },
+        'system': {
+            'python_version': sys.version.split()[0],
+            'platform': platform.system(),
+            'platform_version': platform.version()[:50] if platform.version() else 'unknown'
         }
     }
     
