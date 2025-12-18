@@ -199,7 +199,6 @@ def health():
     pool_status = get_pool_status()
     
     # Determine overall health status
-    # Redis is optional, so don't fail health check if Redis is not configured
     redis_ok = redis_health.get('status') in ('healthy', 'not_configured')
     is_healthy = db_health['connected'] and model_available and redis_ok
     
@@ -234,16 +233,53 @@ def health():
             metadata = model_info['metadata']
             response['model']['version'] = metadata.get('version')
             response['model']['created_at'] = metadata.get('created_at')
-            response['model']['metrics'] = {
-                'accuracy': metadata.get('metrics', {}).get('accuracy'),
-                'precision': metadata.get('metrics', {}).get('precision'),
-                'recall': metadata.get('metrics', {}).get('recall'),
-                'f1_score': metadata.get('metrics', {}).get('f1_score')
-            }
+            response['model']['metrics'] = metadata.get('metrics', {})
     else:
         response['model'] = {'loaded': False}
     
     # Set appropriate HTTP status
     http_status = 200 if is_healthy else 503
+
+    return jsonify(response), http_status
+
+
+@health_bp.route('/live', methods=['GET'])
+@limiter.limit(get_endpoint_limit('status'))
+def liveness():
+    """
+    Kubernetes liveness probe endpoint.
+    Returns simple status to indicate the service is alive.
+    """
+    return jsonify({
+        'status': 'alive',
+        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    }), 200
+
+
+@health_bp.route('/ready', methods=['GET'])
+@limiter.limit(get_endpoint_limit('status'))
+def readiness():
+    """
+    Kubernetes readiness probe endpoint.
+    Checks if the service is ready to accept traffic.
+    """
+    # Check database connectivity
+    db_health = check_database_health()
     
+    # Check if model is available
+    model_info = get_current_model_info()
+    model_available = model_info is not None
+    
+    is_ready = db_health['connected'] and model_available
+    
+    response = {
+        'status': 'ready' if is_ready else 'not_ready',
+        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+        'checks': {
+            'database': db_health['status'],
+            'model_available': model_available
+        }
+    }
+    
+    http_status = 200 if is_ready else 503
     return jsonify(response), http_status

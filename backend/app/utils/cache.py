@@ -229,6 +229,10 @@ def cached(
         @cached('weather', ttl=300)
         def get_weather(lat, lon):
             ...
+            
+        @cached('prediction', ttl=timedelta(minutes=5))
+        def predict_flood(features):
+            ...
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)

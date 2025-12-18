@@ -5,13 +5,14 @@ Provides rate limiting for API endpoints to prevent abuse and ensure fair usage.
 Supports multiple backends (memory, Redis) and API key-based limits.
 """
 
-from flask_limiter import Limiter
+from app.utils.logging import get_logger
+from app.utils.rate_limit_tiers import get_rate_limit_for_key, get_anonymous_limits
 from flask_limiter.util import get_remote_address
 from flask import request, g
 import os
 import logging
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Check if rate limiting is enabled
 RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true'
@@ -146,8 +147,7 @@ def get_endpoint_limit(endpoint_name):
     """
     Get the rate limit string for a specific endpoint.
     
-    Returns the base limit for the endpoint.
-    For dynamic authentication-based limits, use rate_limit_authenticated_only.
+    Returns dynamic limits based on API key tier or anonymous limits.
     
     Args:
         endpoint_name: Name of the endpoint
@@ -155,7 +155,19 @@ def get_endpoint_limit(endpoint_name):
     Returns:
         str: Rate limit string for the endpoint
     """
-    return ENDPOINT_LIMITS.get(endpoint_name, f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds")
+    # Check if authenticated with API key
+    api_key_hash = getattr(g, 'api_key_hash', None)
+    
+    if api_key_hash:
+        # Get tier-based limits for authenticated users
+        try:
+            return get_rate_limit_for_key(api_key_hash, 'per_minute')
+        except Exception:
+            # Fallback to default if tier system fails
+            return ENDPOINT_LIMITS.get(f"{endpoint_name}_auth", f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds")
+    else:
+        # Anonymous user limits
+        return get_anonymous_limits()
 
 
 def get_current_rate_limit_info():

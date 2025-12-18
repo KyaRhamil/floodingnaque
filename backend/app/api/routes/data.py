@@ -4,12 +4,20 @@ Weather Data Routes.
 Provides endpoints for retrieving historical weather data.
 """
 
-from flask import Blueprint, jsonify, request, g
 from datetime import datetime, timedelta
-from app.models.db import WeatherData, get_db_session
-from app.api.middleware.rate_limit import limiter, get_endpoint_limit
-from app.core.exceptions import api_error
-from app.core.constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_SERVICE_UNAVAILABLE
+from flask import Blueprint, request, jsonify, g
+from sqlalchemy import desc
+from app.models.weather import WeatherData
+from app.models.predictions import FloodPrediction
+from app.utils.database import get_db_session
+from app.utils.api_responses import api_success, api_error
+from app.utils.api_errors import AppException, ValidationError, NotFoundError
+from app.utils.rate_limit import limiter, get_endpoint_limit
+from app.utils.logging import get_logger
+from app.services.meteostat import MeteostatService
+from app.utils.config import get_config
+from app.utils.cache import cached
+from app.utils.api_constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_SERVICE_UNAVAILABLE
 import logging
 import os
 
@@ -140,11 +148,12 @@ def get_nearby_stations():
         return api_error('StationFetchFailed', 'Failed to fetch nearby stations', HTTP_INTERNAL_ERROR, request_id)
 
 
-@data_bp.route('/meteostat/hourly', methods=['GET'])
+@data_bp.route('/weather/hourly', methods=['GET'])
 @limiter.limit(get_endpoint_limit('data'))
-def get_meteostat_hourly():
+@cached('weather_hourly', ttl=300)  # Cache for 5 minutes
+def get_hourly_weather():
     """
-    Get hourly weather data from Meteostat.
+    Get hourly weather observations from Meteostat.
     
     Query Parameters:
         lat (float): Latitude (default: configured default)

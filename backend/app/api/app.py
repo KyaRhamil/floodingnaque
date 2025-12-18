@@ -22,11 +22,19 @@ from app.api.middleware import (
     setup_request_logging,
     get_cors_origins
 )
-from app.api.middleware.request_logger import setup_request_logging_middleware
-from app.api.routes import health_bp, ingest_bp, predict_bp, data_bp, models_bp
+from app.api.routes.health import health_bp
+from app.api.routes.health_k8s import health_k8s_bp
+from app.api.routes.ingest import ingest_bp
+from app.api.routes.predict import predict_bp
+from app.api.routes.data import data_bp
+from app.api.routes.models import models_bp
 from app.api.routes.webhooks import webhooks_bp
 from app.api.routes.batch import batch_bp
 from app.api.routes.export import export_bp
+from app.api.routes.celery import celery_bp
+from app.api.routes.rate_limits import rate_limits_bp
+from app.api.routes.graphql import init_graphql_route
+from app.api.swagger_config import init_swagger
 import logging
 import os
 
@@ -100,11 +108,17 @@ def create_app(config_class=None):
     # Initialize Prometheus metrics
     init_prometheus_metrics(app)
     
+    # Initialize Swagger/OpenAPI documentation
+    _init_swagger_docs(app)
+    
     # Register error handlers
     _register_error_handlers(app)
     
     # Register blueprints
     _register_blueprints(app)
+    
+    # Initialize GraphQL endpoint (if enabled)
+    init_graphql_route(app)
     
     # Start scheduler
     _start_scheduler()
@@ -275,6 +289,7 @@ def _register_blueprints(app: Flask):
     """Register all route blueprints with API versioning."""
     # Register core endpoints (they already have their own url_prefix from blueprint definition)
     app.register_blueprint(health_bp)
+    app.register_blueprint(health_k8s_bp)
     app.register_blueprint(ingest_bp)
     app.register_blueprint(predict_bp)
     app.register_blueprint(data_bp)
@@ -284,8 +299,10 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(webhooks_bp)
     app.register_blueprint(batch_bp)
     app.register_blueprint(export_bp)
+    app.register_blueprint(celery_bp)
+    app.register_blueprint(rate_limits_bp)
     
-    logger.info("Registered blueprints: health, ingest, predict, data, models, webhooks, batch, export")
+    logger.info("Registered blueprints: health, health_k8s, ingest, predict, data, models, webhooks, batch, export, celery, rate_limits")
 
 
 def _start_scheduler():
@@ -296,17 +313,66 @@ def _start_scheduler():
         logger.error(f"Error starting scheduler: {str(e)}")
 
 
-def _preload_model(app: Flask):
-    """Preload ML model on application startup for faster first request."""
-    with app.app_context():
-        try:
-            from app.services.predict import _load_model
-            _load_model()
-            logger.info("ML model preloaded successfully on startup")
-        except FileNotFoundError as e:
-            logger.warning(f"Model preload skipped - model not found: {e}")
-        except Exception as e:
-            logger.warning(f"Model preload failed (non-critical): {e}")
+def _preload_model(app):
+    """Preload ML model on startup for faster first request."""
+    try:
+        from app.services.model_loader import load_model
+        load_model()
+        app.logger.info("ML model preloaded successfully")
+    except Exception as e:
+        app.logger.error(f"Failed to preload ML model: {e}")
+
+
+def _setup_request_tracking(app: Flask):
+    """Setup request ID tracking for correlation."""
+    @app.before_request
+    def assign_request_id():
+        # Use provided request ID or generate new one
+        request_id = request.headers.get('X-Request-ID')
+        if not request_id:
+            request_id = str(uuid.uuid4())
+        g.request_id = request_id
+        request.request_id = request_id  # Backward compatibility
+    
+    @app.after_request
+    def add_request_id_header(response):
+        request_id = getattr(g, 'request_id', None)
+        if request_id:
+            response.headers['X-Request-ID'] = request_id
+        return response
+
+
+def _setup_cors(app: Flask):
+    """Configure CORS for the application."""
+    cors_origins = get_cors_origins()
+    
+    if cors_origins:
+        CORS(app, origins=cors_origins,
+             methods=['GET', 'POST', 'OPTIONS'],
+             allow_headers=['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
+             expose_headers=['X-Request-ID'],
+             supports_credentials=True,
+             max_age=600)
+    else:
+        # Development fallback - allow localhost origins
+        if is_debug_mode():  # Use centralized check
+            CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000'])
+        else:
+            # Production without CORS_ORIGINS set - restrict to same origin
+            CORS(app, origins=[])
+
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('config.Config')
+    _setup_request_tracking(app)
+    _setup_cors(app)
+    _init_swagger_docs(app)
+    _register_error_handlers(app)
+    _register_blueprints(app)
+    _start_scheduler()
+    _preload_model(app)
+    return app
 
 
 # Create default app instance for backwards compatibility
