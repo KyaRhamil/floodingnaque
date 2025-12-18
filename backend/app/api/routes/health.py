@@ -55,20 +55,61 @@ def check_external_api_health() -> dict:
         dict: External API circuit breaker status
     """
     try:
-        from app.utils.circuit_breaker import openweathermap_breaker, weatherstack_breaker
+        from app.utils.circuit_breaker import openweathermap_breaker, weatherstack_breaker, meteostat_breaker
         
         return {
-            'openweathermap': {
-                'circuit_state': openweathermap_breaker.state.value,
-                'failures': openweathermap_breaker._failures
-            },
-            'weatherstack': {
-                'circuit_state': weatherstack_breaker.state.value,
-                'failures': weatherstack_breaker._failures
-            }
+            'openweathermap': openweathermap_breaker.get_status(),
+            'weatherstack': weatherstack_breaker.get_status(),
+            'meteostat': meteostat_breaker.get_status()
         }
     except ImportError:
         return {'status': 'circuit_breaker_not_available'}
+
+
+def check_redis_health() -> dict:
+    """
+    Check Redis connection health if Redis is being used.
+    
+    Returns:
+        dict: Redis health status or indication that Redis is not in use
+    """
+    import os
+    
+    storage_url = os.getenv('RATE_LIMIT_STORAGE_URL', 'memory://')
+    
+    if 'redis' not in storage_url.lower():
+        return {'status': 'not_configured', 'message': 'Redis not in use'}
+    
+    try:
+        import redis
+        from urllib.parse import urlparse
+        
+        parsed = urlparse(storage_url)
+        start = time.time()
+        
+        r = redis.Redis(
+            host=parsed.hostname or 'localhost',
+            port=parsed.port or 6379,
+            password=parsed.password,
+            socket_timeout=5,
+            socket_connect_timeout=5
+        )
+        
+        if r.ping():
+            latency_ms = (time.time() - start) * 1000
+            return {
+                'status': 'healthy',
+                'connected': True,
+                'latency_ms': round(latency_ms, 2)
+            }
+        else:
+            return {'status': 'unhealthy', 'connected': False, 'error': 'Ping failed'}
+            
+    except ImportError:
+        return {'status': 'unavailable', 'error': 'redis package not installed'}
+    except Exception as e:
+        logger.error(f"Redis health check failed: {str(e)}")
+        return {'status': 'unhealthy', 'connected': False, 'error': str(e)}
 
 
 @health_bp.route('/', methods=['GET'])
@@ -130,13 +171,19 @@ def health():
     # Check external API circuit breakers
     external_apis = check_external_api_health()
     
+    # Check Redis health (if configured)
+    redis_health = check_redis_health()
+    
     # Determine overall health status
-    is_healthy = db_health['connected'] and model_available
+    # Redis is optional, so don't fail health check if Redis is not configured
+    redis_ok = redis_health.get('status') in ('healthy', 'not_configured')
+    is_healthy = db_health['connected'] and model_available and redis_ok
     
     response = {
         'status': 'healthy' if is_healthy else 'degraded',
         'checks': {
             'database': db_health,
+            'redis': redis_health,
             'model_available': model_available,
             'scheduler_running': scheduler.running if hasattr(scheduler, 'running') else False,
             'external_apis': external_apis
