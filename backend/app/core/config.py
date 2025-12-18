@@ -69,6 +69,57 @@ def _get_jwt_secret_key() -> str:
     return key
 
 
+def _get_database_url() -> str:
+    """
+    Get DATABASE_URL with environment-specific validation.
+    
+    - Production: Requires Supabase PostgreSQL (fails if not set or using SQLite)
+    - Staging: Requires PostgreSQL (fails if using SQLite)
+    - Development: Allows SQLite fallback with warning
+    
+    Returns:
+        str: Database connection URL
+    
+    Raises:
+        ValueError: If production/staging uses SQLite or DATABASE_URL not configured
+    """
+    url = os.getenv('DATABASE_URL', '')
+    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    app_env = os.getenv('APP_ENV', 'development').lower()
+    
+    # Production and staging require PostgreSQL/Supabase
+    if app_env in ('production', 'prod', 'staging', 'stage'):
+        if not url:
+            raise ValueError(
+                f"CRITICAL: DATABASE_URL must be set for {app_env}! "
+                "Configure a Supabase PostgreSQL connection string in your .env file. "
+                "Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"
+            )
+        if url.startswith('sqlite'):
+            raise ValueError(
+                f"CRITICAL: SQLite is not allowed in {app_env}! "
+                "Configure a Supabase PostgreSQL connection string."
+            )
+        return url
+    
+    # Development mode - allow SQLite fallback with warning
+    if not url:
+        fallback = 'sqlite:///data/floodingnaque.db'
+        logger.warning(
+            "DATABASE_URL not configured - using SQLite fallback for development. "
+            "Set DATABASE_URL to use Supabase PostgreSQL."
+        )
+        return fallback
+    
+    if url.startswith('sqlite') and not is_debug:
+        logger.warning(
+            "Using SQLite database. This is not recommended for production. "
+            "Configure Supabase PostgreSQL for better reliability."
+        )
+    
+    return url
+
+
 def get_env_file() -> Path:
     """
     Determine which .env file to load based on APP_ENV.
@@ -150,8 +201,8 @@ class Config:
     HOST: str = field(default_factory=lambda: os.getenv('HOST', '0.0.0.0'))
     PORT: int = field(default_factory=lambda: int(os.getenv('PORT', '5000')))
     
-    # Database
-    DATABASE_URL: str = field(default_factory=lambda: os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db'))
+    # Database - Supabase PostgreSQL is required (no SQLite fallback in production)
+    DATABASE_URL: str = field(default_factory=lambda: _get_database_url())
     DB_POOL_SIZE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_SIZE', '20')))
     DB_MAX_OVERFLOW: int = field(default_factory=lambda: int(os.getenv('DB_MAX_OVERFLOW', '10')))
     DB_POOL_RECYCLE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_RECYCLE', '3600')))

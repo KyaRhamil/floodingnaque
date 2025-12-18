@@ -22,7 +22,20 @@ pool_metrics = {
 Base = declarative_base()
 
 # Enhanced database configuration with Supabase support
-DB_URL = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
+# Note: The actual DATABASE_URL is validated in app.core.config._get_database_url()
+# Development allows SQLite fallback; Production/Staging require Supabase PostgreSQL
+DB_URL = os.getenv('DATABASE_URL')
+
+if not DB_URL:
+    # Only for initial module load before config is loaded - will be overridden
+    app_env = os.getenv('APP_ENV', 'development').lower()
+    if app_env in ('production', 'prod', 'staging', 'stage'):
+        raise ValueError(
+            f"DATABASE_URL must be set for {app_env}! "
+            "Configure a Supabase PostgreSQL connection string."
+        )
+    DB_URL = 'sqlite:///data/floodingnaque.db'
+    logger.warning("DATABASE_URL not set - using SQLite for development only")
 
 # Supabase-specific: Handle connection string format
 # Use pg8000 driver for better Windows compatibility (pure Python, no compilation needed)
@@ -33,8 +46,8 @@ elif DB_URL.startswith('postgresql://') and '+' not in DB_URL.split('://')[0]:
     DB_URL = DB_URL.replace('postgresql://', 'postgresql+pg8000://', 1)
 
 # Connection pool settings for better performance and reliability
-# Get pool settings from environment
-DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '5'))
+# Get pool settings from environment (defaults match config.py)
+DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '20'))
 DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '10'))
 DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '3600'))
 DB_POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))

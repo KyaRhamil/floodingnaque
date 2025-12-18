@@ -65,11 +65,11 @@ def ingest_data(lat=None, lon=None):
     # Note: METEOSTAT_API_KEY can also be used for Weatherstack API
     weatherstack_api_key = os.getenv('METEOSTAT_API_KEY') or os.getenv('WEATHERSTACK_API_KEY')
 
-    # Default location (New York City)
+    # Default location: Parañaque City, Philippines (from environment or hardcoded default)
     if lat is None:
-        lat = 40.7128
+        lat = float(os.getenv('DEFAULT_LATITUDE', '14.4793'))
     if lon is None:
-        lon = -74.0060
+        lon = float(os.getenv('DEFAULT_LONGITUDE', '121.0198'))
 
     # Validate API keys
     if not owm_api_key:
