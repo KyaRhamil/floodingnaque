@@ -38,6 +38,16 @@ wheels/
 venv/
 ENV/
 
+# Sensitive files - SECURITY
+*.pem
+*.key
+*.crt
+secrets/
+secrets*
+*.secret
+credentials/
+.credentials
+
 # IDE
 .vscode/
 .idea/

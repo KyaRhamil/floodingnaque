@@ -40,10 +40,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     APP_ENV=production \
     FLASK_DEBUG=False
 
-# Install runtime dependencies only
+# Install runtime dependencies only (no curl - using Python healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
-    curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -68,9 +67,9 @@ USER appuser
 # Expose port
 EXPOSE 5000
 
-# Health check - verify the API is responding
+# Health check - verify the API is responding (Python-based, no curl dependency)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=5)" || exit 1
 
 # Production server with Gunicorn
 # - 2 workers (safe default for containers)

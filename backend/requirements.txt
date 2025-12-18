@@ -1,65 +1,106 @@
-# Web Framework
-Flask==3.0.0
-flask-cors==4.0.0
-Werkzeug>=3.0.4
+# ============================================================================
+# WEB FRAMEWORK & API
+# ============================================================================
+Flask==3.0.3
+flask-cors==4.0.1
+Werkzeug==3.0.4
 
-# Production Server
-gunicorn==21.2.0  # Linux/Docker only
-waitress>=3.0.0  # Windows-compatible alternative
+# Production Servers
+gunicorn==22.0.0  # Linux/macOS/Docker
+waitress==3.0.0  # Windows alternative
 
-# HTTP & API
-requests==2.31.0
+# ============================================================================
+# HTTP & EXTERNAL APIs
+# ============================================================================
+requests==2.32.3
+urllib3>=2.0.0,<3.0.0  # Explicit for security
 
-# Data Processing & ML
-# Note: Using version ranges with pre-built wheels for Windows compatibility
-pandas>=2.0.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
-joblib>=1.3.0
+# ============================================================================
+# DATA PROCESSING & MACHINE LEARNING
+# ============================================================================
+# Core scientific stack - version ranges for compatibility
+numpy>=2.1.0
+pandas>=2.1.0,<3.0.0
+scikit-learn==1.5.2  # Pinned for model consistency
+joblib==1.4.2
 
-# Scheduling
-APScheduler>=3.11.0
+# ============================================================================
+# SCHEDULING & BACKGROUND TASKS
+# ============================================================================
+APScheduler==3.10.4
 
-# Configuration
+# ============================================================================
+# CONFIGURATION & ENVIRONMENT
+# ============================================================================
 python-dotenv==1.0.1
 
-# Database
-SQLAlchemy>=2.0.45
-alembic==1.13.1  # Database migrations
-pg8000>=1.30.0  # PostgreSQL adapter for Supabase (pure Python, Windows-friendly)
+# ============================================================================
+# DATABASE & ORM
+# ============================================================================
+SQLAlchemy==2.0.35
+alembic==1.13.3
+pg8000==1.31.2  # Pure Python PostgreSQL driver (Supabase/Windows compatible)
+# psycopg2-binary==2.9.10  # Uncomment for Linux/Docker if you need faster C-based driver
 
-# Visualization
-# Note: Using version ranges for better compatibility
-matplotlib==3.9.2  # Pinned for better wheel availability
-seaborn>=0.12.0
+# ============================================================================
+# DATA VISUALIZATION
+# ============================================================================
+matplotlib==3.9.2
+seaborn==0.13.2
 
-# Security
-# Note: cryptography pinned to specific version for security
-cryptography==42.0.0  # For secure data handling (pinned for security)
-itsdangerous>=2.1.0  # Secure session handling
-bcrypt>=4.0.0  # Secure password/API key hashing (Argon2-like security)
+# ============================================================================
+# SECURITY & AUTHENTICATION
+# ============================================================================
+cryptography==43.0.3  # Latest security patches
+itsdangerous==2.2.0
+bcrypt==4.2.1
+PyJWT==2.9.0  # For JWT token-based authentication
 
-# Input Validation
-validators==0.22.0  # Email, URL validation
-bleach==6.1.0  # HTML sanitization
+# ============================================================================
+# INPUT VALIDATION & SANITIZATION
+# ============================================================================
+validators==0.34.0
+bleach==6.2.0
+email-validator==2.2.0  # Enhanced email validation
 
-# Rate Limiting 
-Flask-Limiter==3.5.0
-redis>=5.0.0  # Redis client for rate limiting storage
+# ============================================================================
+# RATE LIMITING & CACHING
+# ============================================================================
+Flask-Limiter==3.8.0
+redis==5.2.0  # For rate limiting and caching
+limits==3.13.0  # Required by Flask-Limiter
 
-# Performance
-flask-compress>=1.14  # Response compression for better performance
+# ============================================================================
+# PERFORMANCE OPTIMIZATION
+# ============================================================================
+flask-compress==1.15
+Flask-Caching==2.3.0  # Response caching
 
-# Monitoring & Logging
-python-json-logger==2.0.7  # Structured logging
-prometheus-flask-exporter>=0.23.0  # Prometheus metrics
+# ============================================================================
+# MONITORING, LOGGING & ERROR TRACKING
+# ============================================================================
+python-json-logger==3.2.1
+prometheus-flask-exporter>=0.23.0  # Prometheus metrics (kept from original)
+sentry-sdk[flask]==2.18.0  # Uncomment for production error tracking
 
-# Enhanced Training 
-tqdm>=4.65.0  # Progress bars
+# ============================================================================
+# PROGRESS TRACKING
+# ============================================================================
+tqdm==4.67.1
 
-# Weather Data Sources
-meteostat>=1.6.0  # Historical weather data from weather stations
+# ============================================================================
+# WEATHER DATA SOURCES
+# ============================================================================
+meteostat==1.6.8
 
-# Caching
-# Note: redis is already included above for rate limiting
-# For caching, we'll use Flask-Caching with Redis backend
+# Model Explainability (Large dependency ~500MB)
+#shap==0.46.0 Will install after building the backend
+
+# Geospatial (for flood mapping features)
+geopandas==1.0.1
+folium==0.18.0  # Interactive maps
+shapely==2.0.6  # Geometric operations
+
+# Time Series Analysis (for temporal pattern analysis)
+statsmodels==0.14.4
+prophet==1.1.6  # Facebook's forecasting tool
