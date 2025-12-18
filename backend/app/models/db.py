@@ -1,12 +1,21 @@
-from sqlalchemy import create_engine, Column, Integer, Float, DateTime, String, Boolean, ForeignKey, Text, CheckConstraint, Index
+from sqlalchemy import create_engine, Column, Integer, Float, DateTime, String, Boolean, ForeignKey, Text, CheckConstraint, Index, event
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship, declarative_base
 from sqlalchemy.pool import StaticPool, QueuePool, NullPool
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import os
 import logging
+import time
 
 logger = logging.getLogger(__name__)
+
+# Pool connection metrics
+pool_metrics = {
+    'checkouts': 0,
+    'checkins': 0,
+    'invalidated': 0,
+    'last_checkout_time': None,
+}
 
 
 # SQLAlchemy 1.4/2.0 compatible declarative base
@@ -47,6 +56,51 @@ else:
         pool_pre_ping=True,  # Check connection health
         poolclass=QueuePool,
     )
+
+# Pool monitoring events for PostgreSQL/Supabase connections
+if not DB_URL.startswith('sqlite'):
+    @event.listens_for(engine, "checkout")
+    def receive_checkout(dbapi_conn, connection_record, connection_proxy):
+        """Track when a connection is checked out from the pool."""
+        pool_metrics['checkouts'] += 1
+        pool_metrics['last_checkout_time'] = time.time()
+        logger.debug(f"Connection checked out from pool (total: {pool_metrics['checkouts']})")
+
+    @event.listens_for(engine, "checkin")
+    def receive_checkin(dbapi_conn, connection_record):
+        """Track when a connection is returned to the pool."""
+        pool_metrics['checkins'] += 1
+        logger.debug(f"Connection checked in to pool (total: {pool_metrics['checkins']})")
+
+    @event.listens_for(engine, "invalidate")
+    def receive_invalidate(dbapi_conn, connection_record, exception):
+        """Track when a connection is invalidated."""
+        pool_metrics['invalidated'] += 1
+        if exception:
+            logger.warning(f"Connection invalidated due to: {exception}")
+        else:
+            logger.debug(f"Connection invalidated (total: {pool_metrics['invalidated']})")
+
+    @event.listens_for(engine, "connect")
+    def receive_connect(dbapi_conn, connection_record):
+        """Log new database connections."""
+        logger.info("New database connection established")
+
+
+def get_pool_status():
+    """Get current connection pool status and metrics."""
+    if DB_URL.startswith('sqlite'):
+        return {'status': 'sqlite_static_pool', 'metrics': None}
+    
+    pool = engine.pool
+    return {
+        'pool_size': pool.size(),
+        'checked_out': pool.checkedout(),
+        'overflow': pool.overflow(),
+        'checked_in': pool.checkedin(),
+        'metrics': pool_metrics.copy(),
+    }
+
 
 Session = sessionmaker(bind=engine)
 # Use scoped_session for thread-safe session management
@@ -119,6 +173,10 @@ class WeatherData(Base):
     predictions = relationship('Prediction', back_populates='weather_data', cascade='all, delete-orphan')
     
     # Table constraints
+    # Soft delete support
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    
     __table_args__ = (
         CheckConstraint('temperature >= 173.15 AND temperature <= 333.15', name='valid_temperature'),
         CheckConstraint('humidity >= 0 AND humidity <= 100', name='valid_humidity'),
@@ -129,8 +187,10 @@ class WeatherData(Base):
         CheckConstraint('location_lon IS NULL OR (location_lon >= -180 AND location_lon <= 180)', name='valid_longitude'),
         Index('idx_weather_timestamp', 'timestamp'),
         Index('idx_weather_location', 'location_lat', 'location_lon'),
+        Index('idx_weather_location_time', 'location_lat', 'location_lon', 'timestamp'),  # Composite index for common query patterns
         Index('idx_weather_created', 'created_at'),
         Index('idx_weather_source', 'source'),
+        Index('idx_weather_active', 'is_deleted'),  # Index for filtering active records
         {'comment': 'Weather data measurements from various sources including Meteostat'}
     )
     
@@ -151,8 +211,19 @@ class WeatherData(Base):
             'source': self.source,
             'station_id': self.station_id,
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'is_deleted': self.is_deleted,
         }
+    
+    def soft_delete(self):
+        """Mark record as deleted without removing from database."""
+        self.is_deleted = True
+        self.deleted_at = datetime.now(timezone.utc)
+    
+    def restore(self):
+        """Restore a soft-deleted record."""
+        self.is_deleted = False
+        self.deleted_at = None
 
 
 class Prediction(Base):
@@ -179,17 +250,32 @@ class Prediction(Base):
     weather_data = relationship('WeatherData', back_populates='predictions')
     alerts = relationship('AlertHistory', back_populates='prediction', cascade='all, delete-orphan')
     
+    # Soft delete support
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    
     __table_args__ = (
         CheckConstraint('prediction IN (0, 1)', name='valid_prediction'),
         CheckConstraint('risk_level IS NULL OR risk_level IN (0, 1, 2)', name='valid_risk_level'),
         CheckConstraint('confidence IS NULL OR (confidence >= 0 AND confidence <= 1)', name='valid_confidence'),
         Index('idx_prediction_risk', 'risk_level'),
         Index('idx_prediction_model', 'model_version'),
+        Index('idx_prediction_active', 'is_deleted'),
         {'comment': 'Flood prediction history for analytics and audit'}
     )
     
     def __repr__(self):
         return f"<Prediction(id={self.id}, prediction={self.prediction}, risk={self.risk_label})>"
+    
+    def soft_delete(self):
+        """Mark record as deleted without removing from database."""
+        self.is_deleted = True
+        self.deleted_at = datetime.now(timezone.utc)
+    
+    def restore(self):
+        """Restore a soft-deleted record."""
+        self.is_deleted = False
+        self.deleted_at = None
 
 
 class AlertHistory(Base):
@@ -218,14 +304,29 @@ class AlertHistory(Base):
     # Relationships
     prediction = relationship('Prediction', back_populates='alerts')
     
+    # Soft delete support
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    deleted_at_field = Column('deleted_at', DateTime(timezone=True), nullable=True)
+    
     __table_args__ = (
         Index('idx_alert_risk', 'risk_level'),
         Index('idx_alert_status', 'delivery_status'),
+        Index('idx_alert_active', 'is_deleted'),
         {'comment': 'Alert delivery tracking and history'}
     )
     
     def __repr__(self):
         return f"<AlertHistory(id={self.id}, risk={self.risk_label}, status={self.delivery_status})>"
+    
+    def soft_delete(self):
+        """Mark record as deleted without removing from database."""
+        self.is_deleted = True
+        self.deleted_at_field = datetime.now(timezone.utc)
+    
+    def restore(self):
+        """Restore a soft-deleted record."""
+        self.is_deleted = False
+        self.deleted_at_field = None
 
 
 class ModelRegistry(Base):
