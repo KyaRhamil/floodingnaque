@@ -66,12 +66,15 @@ python scripts/train.py
 python main.py
 ```
 
-**Production:**
+**Production (Linux/macOS/Docker):**
 ```bash
 gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 main:app
 ```
-cd c:\floodingnaque\backend
+
+**Production (Windows):**
+```bash
 waitress-serve --host=0.0.0.0 --port=5000 --threads=4 main:app
+```
 
 ## API Endpoints
 
@@ -147,6 +150,7 @@ The API is CORS-enabled and ready for frontend integration. All endpoints return
 - Complete guide: See `docs/BACKEND_COMPLETE.md`
 - Model management: See `docs/MODEL_MANAGEMENT.md`
 - PowerShell API examples: See `docs/POWERSHELL_API_EXAMPLES.md`
+- Sentry error tracking: See `docs/SENTRY_SETUP.md`
 
 ## Project Structure
 
@@ -263,6 +267,7 @@ backend/
 - ✅ CORS support for frontend
 - ✅ Comprehensive error handling
 - ✅ Production-ready configuration
+- ✅ Sentry error tracking and performance monitoring
 
 ## License
 

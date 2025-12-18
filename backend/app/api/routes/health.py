@@ -10,6 +10,7 @@ from app.services.predict import get_current_model_info
 from app.services.scheduler import scheduler
 from app.api.middleware.rate_limit import limiter, get_endpoint_limit
 from app.models.db import engine, get_db_session, get_pool_status
+from app.utils.sentry import is_sentry_enabled
 from sqlalchemy import text
 import logging
 import time
@@ -134,7 +135,7 @@ def root():
     """Root endpoint - API information."""
     return jsonify({
         'name': 'Floodingnaque API',
-        'version': '1.0.0',
+        'version': '2.0.0',
         'description': 'Flood prediction API with weather data ingestion',
         'endpoints': {
             'status': '/status',
@@ -212,7 +213,8 @@ def health():
             'cache': cache_health,
             'model_available': model_available,
             'scheduler_running': scheduler.running if hasattr(scheduler, 'running') else False,
-            'external_apis': external_apis
+            'external_apis': external_apis,
+            'sentry_enabled': is_sentry_enabled()
         },
         'system': {
             'python_version': sys.version.split()[0],

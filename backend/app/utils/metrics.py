@@ -49,7 +49,7 @@ def init_prometheus_metrics(app: Flask) -> Optional[object]:
             group_by='endpoint',  # Group metrics by endpoint
             default_labels={
                 'application': 'floodingnaque',
-                'version': os.getenv('APP_VERSION', '1.0.0')
+                'version': os.getenv('APP_VERSION', '2.0.0')
             },
             export_defaults=True,  # Export default Flask metrics
             defaults_prefix='floodingnaque'

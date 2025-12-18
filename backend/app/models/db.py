@@ -66,10 +66,17 @@ else:
     # Use QueuePool for production with configurable settings
     is_supabase = 'supabase' in DB_URL.lower()
     
-    # Adjust pool size for Supabase free tier
-    pool_size = 1 if is_supabase else DB_POOL_SIZE
-    max_overflow = 2 if is_supabase else DB_MAX_OVERFLOW
-    pool_recycle = 300 if is_supabase else DB_POOL_RECYCLE
+    # Respect environment variables, but provide conservative defaults for Supabase free tier
+    # Users can override these in .env for paid tiers
+    if is_supabase and DB_POOL_SIZE == 20:  # Only use conservative defaults if user hasn't customized
+        pool_size = 1
+        max_overflow = 2
+        pool_recycle = 300
+        logger.info("Using conservative pool settings for Supabase free tier (override with DB_POOL_SIZE in .env)")
+    else:
+        pool_size = DB_POOL_SIZE
+        max_overflow = DB_MAX_OVERFLOW
+        pool_recycle = DB_POOL_RECYCLE
     
     engine = create_engine(
         DB_URL,
@@ -331,7 +338,7 @@ class AlertHistory(Base):
     
     # Soft delete support
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    deleted_at_field = Column('deleted_at', DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     
     __table_args__ = (
         Index('idx_alert_risk', 'risk_level'),
@@ -346,12 +353,12 @@ class AlertHistory(Base):
     def soft_delete(self):
         """Mark record as deleted without removing from database."""
         self.is_deleted = True
-        self.deleted_at_field = datetime.now(timezone.utc)
+        self.deleted_at = datetime.now(timezone.utc)
     
     def restore(self):
         """Restore a soft-deleted record."""
         self.is_deleted = False
-        self.deleted_at_field = None
+        self.deleted_at = None
 
 
 class ModelRegistry(Base):
@@ -399,6 +406,62 @@ class ModelRegistry(Base):
     
     def __repr__(self):
         return f"<ModelRegistry(version={self.version}, accuracy={self.accuracy}, active={self.is_active})>"
+
+
+class APIRequest(Base):
+    """API request logging for analytics and debugging."""
+    __tablename__ = 'api_requests'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    request_id = Column(String(36), unique=True, nullable=False, index=True)
+    endpoint = Column(String(255), nullable=False, index=True)
+    method = Column(String(10), nullable=False)
+    status_code = Column(Integer, nullable=False, index=True)
+    response_time_ms = Column(Float, nullable=False)
+    user_agent = Column(String(500))
+    ip_address = Column(String(45), index=True)
+    api_version = Column(String(10), default='v1')
+    error_message = Column(Text)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True))
+    
+    __table_args__ = (
+        Index('idx_api_request_endpoint_status', 'endpoint', 'status_code'),
+        Index('idx_api_request_created', 'created_at'),
+        Index('idx_api_request_active', 'is_deleted'),
+        {'comment': 'API request logs for analytics and monitoring'}
+    )
+    
+    def __repr__(self):
+        return f"<APIRequest(id={self.id}, endpoint={self.endpoint}, status={self.status_code})>"
+
+
+class Webhook(Base):
+    """Webhook registrations for external system notifications."""
+    __tablename__ = 'webhooks'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url = Column(String(500), nullable=False)
+    events = Column(Text, nullable=False)
+    secret = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    last_triggered_at = Column(DateTime(timezone=True))
+    failure_count = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True))
+    
+    __table_args__ = (
+        Index('idx_webhook_active', 'is_active', 'is_deleted'),
+        {'comment': 'Webhook configurations for external notifications'}
+    )
+    
+    def __repr__(self):
+        return f"<Webhook(id={self.id}, url={self.url}, active={self.is_active})>"
 
 
 def init_db():

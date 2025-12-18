@@ -15,13 +15,18 @@ from app.core.exceptions import AppException
 from app.models.db import init_db
 from app.utils.utils import setup_logging
 from app.utils.metrics import init_prometheus_metrics
+from app.utils.sentry import init_sentry
 from app.api.middleware import (
     init_rate_limiter,
     setup_security_headers,
     setup_request_logging,
     get_cors_origins
 )
+from app.api.middleware.request_logger import setup_request_logging_middleware
 from app.api.routes import health_bp, ingest_bp, predict_bp, data_bp, models_bp
+from app.api.routes.webhooks import webhooks_bp
+from app.api.routes.batch import batch_bp
+from app.api.routes.export import export_bp
 import logging
 import os
 
@@ -46,6 +51,10 @@ def create_app(config_class=None):
     
     # Load environment variables
     load_env()
+    
+    # Initialize Sentry early (before other components)
+    # This ensures all errors are captured from the start
+    init_sentry(app)
     
     # Get configuration
     config = get_config()
@@ -81,6 +90,9 @@ def create_app(config_class=None):
     
     # Setup request logging
     setup_request_logging(app)
+    
+    # Setup database request logging
+    setup_request_logging_middleware(app)
     
     # Initialize response compression
     compress.init_app(app)
@@ -176,6 +188,16 @@ def _register_error_handlers(app: Flask):
             'request_id': request_id
         }), 404
     
+    @app.errorhandler(405)
+    def handle_method_not_allowed(error):
+        """Handle method not allowed."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        return jsonify({
+            'error': 'Method not allowed',
+            'message': f'The {request.method} method is not allowed for this endpoint',
+            'request_id': request_id
+        }), 405
+    
     @app.errorhandler(413)
     def handle_request_too_large(error):
         """Handle request entity too large."""
@@ -186,6 +208,26 @@ def _register_error_handlers(app: Flask):
             'message': f'Request body exceeds maximum size of {max_mb}MB',
             'request_id': request_id
         }), 413
+    
+    @app.errorhandler(415)
+    def handle_unsupported_media_type(error):
+        """Handle unsupported media type."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        return jsonify({
+            'error': 'Unsupported media type',
+            'message': 'Content-Type must be application/json',
+            'request_id': request_id
+        }), 415
+    
+    @app.errorhandler(422)
+    def handle_unprocessable_entity(error):
+        """Handle unprocessable entity."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        return jsonify({
+            'error': 'Unprocessable entity',
+            'message': 'The request was well-formed but contains semantic errors',
+            'request_id': request_id
+        }), 422
     
     @app.errorhandler(429)
     def handle_rate_limit(error):
@@ -230,14 +272,20 @@ def _register_error_handlers(app: Flask):
 
 
 def _register_blueprints(app: Flask):
-    """Register all route blueprints."""
+    """Register all route blueprints with API versioning."""
+    # Register core endpoints (they already have their own url_prefix from blueprint definition)
     app.register_blueprint(health_bp)
     app.register_blueprint(ingest_bp)
     app.register_blueprint(predict_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(models_bp)
     
-    logger.info("Registered blueprints: health, ingest, predict, data, models")
+    # Register new feature endpoints
+    app.register_blueprint(webhooks_bp)
+    app.register_blueprint(batch_bp)
+    app.register_blueprint(export_bp)
+    
+    logger.info("Registered blueprints: health, ingest, predict, data, models, webhooks, batch, export")
 
 
 def _start_scheduler():

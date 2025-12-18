@@ -175,7 +175,7 @@ Get API documentation.
     "POST /ingest": {...},
     ...
   },
-  "version": "1.0.0",
+  "version": "2.0.0",
   "base_url": "http://localhost:5000"
 }
 ```

@@ -18,7 +18,7 @@ models_bp = Blueprint('models', __name__)
 def api_version():
     """API version endpoint."""
     return jsonify({
-        'version': '1.0.0',
+        'version': '2.0.0',
         'name': 'Floodingnaque API',
         'base_url': request.url_root.rstrip('/')
     }), 200
@@ -143,7 +143,7 @@ def api_docs():
                 }
             }
         },
-        'version': '1.0.0',
+        'version': '2.0.0',
         'base_url': request.url_root.rstrip('/')
     }
     return jsonify(docs), 200

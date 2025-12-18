@@ -166,7 +166,7 @@ class SystemEvaluator:
         """
         report = {
             'evaluation_date': datetime.now().isoformat(),
-            'system_version': '1.0.0',
+            'system_version': '2.0.0',
             'research_objectives_alignment': {
                 'specific': 'Focused on real-time flood detection with Weather API integration and Random Forest',
                 'measurable': {

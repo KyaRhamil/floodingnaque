@@ -5,7 +5,7 @@ Centralized constants for the Floodingnaque API.
 """
 
 # API Version
-API_VERSION = "1.0.0"
+API_VERSION = "2.0.0"
 API_NAME = "Floodingnaque API"
 
 # Default Location (Parañaque City)

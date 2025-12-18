@@ -25,6 +25,15 @@ from app.utils.metrics import (
     record_external_api_call,
     record_alert_sent
 )
+from app.utils.sentry import (
+    init_sentry,
+    capture_exception,
+    capture_message,
+    add_breadcrumb,
+    set_user_context,
+    set_tag,
+    is_sentry_enabled
+)
 
 __all__ = [
     # Circuit breaker
@@ -50,5 +59,13 @@ __all__ = [
     'get_metrics',
     'record_prediction',
     'record_external_api_call',
-    'record_alert_sent'
+    'record_alert_sent',
+    # Sentry
+    'init_sentry',
+    'capture_exception',
+    'capture_message',
+    'add_breadcrumb',
+    'set_user_context',
+    'set_tag',
+    'is_sentry_enabled'
 ]

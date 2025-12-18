@@ -21,7 +21,7 @@ urllib3>=2.0.0,<3.0.0  # Explicit for security
 # Core scientific stack - version ranges for compatibility
 numpy>=2.1.0
 pandas>=2.1.0,<3.0.0
-scikit-learn==1.5.2  # Pinned for model consistency
+scikit-learn==1.8.0  # Pinned for model consistency
 joblib==1.4.2
 
 # ============================================================================
@@ -40,7 +40,9 @@ python-dotenv==1.0.1
 SQLAlchemy==2.0.35
 alembic==1.13.3
 pg8000==1.31.2  # Pure Python PostgreSQL driver (Supabase/Windows compatible)
-# psycopg2-binary==2.9.10  # Uncomment for Linux/Docker if you need faster C-based driver
+# psycopg2-binary==2.9.10  # Alternative: Faster C-based driver for Linux/Docker
+                           # Commented out by default due to Windows compilation issues
+                           # Uncomment if deploying to Linux and need better performance
 
 # ============================================================================
 # DATA VISUALIZATION
@@ -81,7 +83,9 @@ Flask-Caching==2.3.0  # Response caching
 # ============================================================================
 python-json-logger==3.2.1
 prometheus-flask-exporter>=0.23.0  # Prometheus metrics (kept from original)
-sentry-sdk[flask]==2.18.0  # Uncomment for production error tracking
+sentry-sdk[flask]==2.18.0  # Installed but not yet configured
+                           # To enable: Set SENTRY_DSN in .env and initialize in app.py
+                           # See: https://docs.sentry.io/platforms/python/guides/flask/
 
 # ============================================================================
 # PROGRESS TRACKING
@@ -94,7 +98,9 @@ tqdm==4.67.1
 meteostat==1.6.8
 
 # Model Explainability (Large dependency ~500MB)
-#shap==0.46.0 Will install after building the backend
+# shap==0.46.0  # Optional: Uncomment for model explainability features
+                # Note: Large download (~500MB), install separately if needed:
+                # pip install shap==0.46.0
 
 # Geospatial (for flood mapping features)
 geopandas==1.0.1

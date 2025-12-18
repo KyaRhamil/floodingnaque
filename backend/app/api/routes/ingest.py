@@ -40,7 +40,7 @@ def ingest():
                     'lat': 'float (optional, -90 to 90) - Latitude',
                     'lon': 'float (optional, -180 to 180) - Longitude'
                 },
-                'note': 'If lat/lon are not provided, defaults to New York City (40.7128, -74.0060)'
+                'note': 'If lat/lon are not provided, defaults to Parañaque City (14.4793, 121.0198)'
             },
             'response_example': {
                 'message': 'Data ingested successfully',

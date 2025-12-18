@@ -1,2 +1,0 @@
-db.sqlite3	# Local SQLite DB (gitignored)
-synthetic_dataset.csv	# Generated dataset (optional)

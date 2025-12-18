@@ -1471,3 +1471,87 @@ FROM weather_data) AS anon_1]
 2025-12-18 11:50:11,112 - INFO - ML model preloaded successfully on startup
 2025-12-18 11:50:11,125 - WARNING -  * Debugger is active!
 2025-12-18 11:50:11,129 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 16:54:02,227 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 16:54:02,227 - INFO - Security headers middleware enabled
+2025-12-18 16:54:02,227 - INFO - Request logging middleware enabled
+2025-12-18 16:54:02,350 - INFO - Prometheus metrics enabled at /metrics
+2025-12-18 16:54:02,355 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 16:54:02,355 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 16:54:02,355 - INFO - Scheduler started
+2025-12-18 16:54:02,356 - INFO - Background scheduler started successfully.
+2025-12-18 16:54:08,756 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 16:54:08,757 - INFO - Model version: 1
+2025-12-18 16:54:08,758 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 16:54:08,758 - INFO - ML model preloaded successfully on startup
+2025-12-18 16:54:08,791 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-18 16:54:08,791 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-18 16:54:08,793 - INFO -  * Restarting with stat
+2025-12-18 16:54:11,074 - INFO - Rate limiting is disabled
+2025-12-18 16:54:11,074 - INFO - Security headers middleware enabled
+2025-12-18 16:54:11,075 - INFO - Request logging middleware enabled
+2025-12-18 16:54:11,102 - DEBUG - Metrics are disabled when run in the Flask development server with reload enabled. Set the environment variable DEBUG_METRICS=1 to enable them anyway.
+2025-12-18 16:54:11,103 - INFO - Prometheus metrics enabled at /metrics
+2025-12-18 16:54:11,110 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 16:54:11,111 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 16:54:11,111 - INFO - Scheduler started
+2025-12-18 16:54:11,113 - INFO - Background scheduler started successfully.
+2025-12-18 16:54:12,150 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 16:54:12,150 - INFO - Model version: 1
+2025-12-18 16:54:12,151 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 16:54:12,151 - INFO - ML model preloaded successfully on startup
+2025-12-18 16:54:12,167 - WARNING -  * Debugger is active!
+2025-12-18 16:54:12,172 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 16:56:19,377 - INFO -  * Detected change in 'C:\\floodingnaque\\venv\\Lib\\site-packages\\sklearn\\base.py', reloading
+2025-12-18 16:56:19,821 - INFO -  * Restarting with stat
+2025-12-18 16:56:24,913 - INFO - Rate limiting is disabled
+2025-12-18 16:56:24,913 - INFO - Security headers middleware enabled
+2025-12-18 16:56:24,913 - INFO - Request logging middleware enabled
+2025-12-18 16:56:24,947 - DEBUG - Metrics are disabled when run in the Flask development server with reload enabled. Set the environment variable DEBUG_METRICS=1 to enable them anyway.
+2025-12-18 16:56:24,948 - INFO - Prometheus metrics enabled at /metrics
+2025-12-18 16:56:24,956 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 16:56:24,957 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 16:56:24,958 - INFO - Scheduler started
+2025-12-18 16:56:24,959 - INFO - Background scheduler started successfully.
+2025-12-18 16:56:30,339 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 16:56:30,340 - INFO - Model version: 1
+2025-12-18 16:56:30,341 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 16:56:30,341 - INFO - ML model preloaded successfully on startup
+2025-12-18 16:56:30,356 - WARNING -  * Debugger is active!
+2025-12-18 16:56:30,362 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 16:56:50,568 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 16:56:50,568 - INFO - Security headers middleware enabled
+2025-12-18 16:56:50,569 - INFO - Request logging middleware enabled
+2025-12-18 16:56:50,602 - INFO - Prometheus metrics enabled at /metrics
+2025-12-18 16:56:50,608 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 16:56:50,609 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 16:56:50,609 - INFO - Scheduler started
+2025-12-18 16:56:50,610 - INFO - Background scheduler started successfully.
+2025-12-18 16:56:51,645 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 16:56:51,645 - INFO - Model version: 1
+2025-12-18 16:56:51,646 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 16:56:51,646 - INFO - ML model preloaded successfully on startup
+2025-12-18 16:56:51,663 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-18 16:56:51,663 - INFO - [33mPress CTRL+C to quit[0m
+2025-12-18 16:56:51,665 - INFO -  * Restarting with stat
+2025-12-18 16:56:53,819 - INFO - Rate limiting is disabled
+2025-12-18 16:56:53,819 - INFO - Security headers middleware enabled
+2025-12-18 16:56:53,819 - INFO - Request logging middleware enabled
+2025-12-18 16:56:53,849 - DEBUG - Metrics are disabled when run in the Flask development server with reload enabled. Set the environment variable DEBUG_METRICS=1 to enable them anyway.
+2025-12-18 16:56:53,850 - INFO - Prometheus metrics enabled at /metrics
+2025-12-18 16:56:53,856 - INFO - Registered blueprints: health, ingest, predict, data, models
+2025-12-18 16:56:53,857 - INFO - Scheduler is disabled via SCHEDULER_ENABLED=False
+2025-12-18 16:56:53,857 - INFO - Scheduler started
+2025-12-18 16:56:53,858 - INFO - Background scheduler started successfully.
+2025-12-18 16:56:54,912 - INFO - Model loaded successfully from models\flood_rf_model.joblib
+2025-12-18 16:56:54,912 - INFO - Model version: 1
+2025-12-18 16:56:54,913 - INFO - Model checksum: ecafe3de9ef9ec60...
+2025-12-18 16:56:54,913 - INFO - ML model preloaded successfully on startup
+2025-12-18 16:56:54,924 - WARNING -  * Debugger is active!
+2025-12-18 16:56:54,927 - INFO -  * Debugger PIN: 105-142-505
+2025-12-18 17:18:54,960 - INFO - Rate limiting enabled: 100 requests per 3600s (storage: Memory)
+2025-12-18 17:18:54,961 - INFO - Security headers middleware enabled
+2025-12-18 17:18:54,961 - INFO - Request logging middleware enabled
+2025-12-18 17:18:54,961 - INFO - Request logging middleware enabled
+2025-12-18 17:18:54,996 - INFO - Prometheus metrics enabled at /metrics

@@ -18,6 +18,7 @@ import hashlib
 import logging
 from typing import Optional, Set, Dict
 from app.core.config import is_debug_mode
+from app.core.constants import MIN_API_KEY_LENGTH
 
 try:
     import bcrypt
@@ -77,13 +78,30 @@ def get_valid_api_keys() -> Set[str]:
     """
     Get valid API keys from environment variables.
     
+    Validates that keys meet minimum length requirement (MIN_API_KEY_LENGTH).
+    Keys shorter than the minimum are rejected with a warning.
+    
     Returns:
         set: Set of valid API keys (empty set if none configured)
     """
     keys_str = os.getenv('VALID_API_KEYS', '')
     if not keys_str:
         return set()
-    return set(key.strip() for key in keys_str.split(',') if key.strip())
+    
+    valid_keys = set()
+    for key in keys_str.split(','):
+        key = key.strip()
+        if not key:
+            continue
+        if len(key) < MIN_API_KEY_LENGTH:
+            logger.warning(
+                f"API key rejected: length {len(key)} is below minimum {MIN_API_KEY_LENGTH} characters. "
+                f"Generate secure keys with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            )
+            continue
+        valid_keys.add(key)
+    
+    return valid_keys
 
 
 def get_hashed_api_keys() -> Dict[str, bytes]:

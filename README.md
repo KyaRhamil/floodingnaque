@@ -4,14 +4,28 @@
 
 **🆕 Now with Official Flood Records Training!** Train models with 3,700+ real flood events from 2022-2025!
 
----
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/yourusername/floodingnaque)](LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/yourusername/floodingnaque)](#)
 
+---
 ## 🎓 Thesis Defense Ready!
 
 This project implements a **Random Forest machine learning model** to predict flood risks in Parañaque City with a **3-level risk classification system** (Safe/Alert/Critical).
 
-### ⚡ Quick Start Guide
+### 🆕 NEW: Official Flood Records Training (2022-2025)
 
+**Train your models with 3,700+ real flood events** from the Parañaque City Disaster Risk Reduction and Management Office (DRRMO):
+
+- **Real-world data** from official government sources
+- **4 years of historical records** (2022-2025)
+- **Progressive training** showing model evolution over time
+- **Comprehensive preprocessing** of diverse CSV formats
+- **Publication-ready visualizations** for thesis presentations
+
+This enhancement makes your thesis significantly stronger compared to projects using synthetic data!
+
+### ⚡ Quick Start Guide
 **See: [OFFICIAL_RECORDS_QUICK_START.md](OFFICIAL_RECORDS_QUICK_START.md)** for training with real flood data!
 
 **See: [RANDOM_FOREST_THESIS_READY.md](RANDOM_FOREST_THESIS_READY.md)** for complete thesis preparation guide!
@@ -26,6 +40,7 @@ This project implements a **Random Forest machine learning model** to predict fl
    - Use 3,700+ real flood events from Parañaque City (2022-2025)
    - Progressive training shows model evolution
    - Automated preprocessing of official CSVs
+   - Year-specific training options
 2. **Enhanced Training Script** - Hyperparameter tuning with GridSearchCV
 3. **Thesis Report Generator** - Publication-ready visualizations (300 DPI)
 4. **Dataset Merger Tool** - Combine multiple CSV files easily
@@ -33,8 +48,12 @@ This project implements a **Random Forest machine learning model** to predict fl
 6. **Automatic Versioning** - Track all model improvements
 7. **Comprehensive Documentation** - Complete guides and references
 
----
+### 📈 Model Evolution Visualization
 
+Track your model's improvement over time with:
+- **Metrics Evolution Charts** - See accuracy, precision, recall improvement
+- **Parameters Evolution** - Track hyperparameter changes
+- **Feature Importance Comparison** - Understand what drives predictions
 ## 📋 Your Questions - Answered
 
 ### Q1: Can I add new CSV files for training?
@@ -57,6 +76,15 @@ python scripts/train.py --data data/merged_dataset.csv
 
 **✅ Automatic Version Control!**
 
+With Official Records (Progressive Training):
+```
+Model v1: Trained on 2022 data only          (~100 records)
+Model v2: Trained on 2022 + 2023 data       (~270 records)
+Model v3: Trained on 2022 + 2023 + 2024     (~1,100 records)
+Model v4: Trained on ALL data (2022-2025)   (~3,700 records) ← BEST!
+```
+
+With Custom Data:
 ```
 Training #1 → flood_rf_model_v1.joblib + metadata
 Training #2 → flood_rf_model_v2.joblib + metadata
@@ -66,7 +94,6 @@ Training #3 → flood_rf_model_v3.joblib + metadata
 Each version stores:
 - Model file (.joblib)
 - Metadata (.json) with training date, dataset, parameters, metrics, feature importance
-
 ---
 
 ## 🚀 Best Workflow for Thesis
@@ -132,16 +159,17 @@ python scripts/validate_model.py
 - Version comparison charts
 
 **All ready for PowerPoint and thesis document!**
-
 ---
 
 ## 📊 System Architecture
 
 ```
-Weather Data (CSV) → Data Merger → Training Script → Random Forest Model
+Official Flood Records (2022-2025) → Preprocessing → Progressive Training → Random Forest Models
+                                           ↓              (v1, v2, v3, v4)
+                                    Custom CSV Files → Data Merger → Training Script  
                                           ↓
                                    Model Versions
-                                   (v1, v2, v3...)
+                                   (v1, v2, v3, v4...)
                                           ↓
                                     Flask API
                                           ↓
@@ -152,7 +180,7 @@ Weather Data (CSV) → Data Merger → Training Script → Random Forest Model
                                   (SMS / Email)
 ```
 
----
+------
 
 ## 🎯 Random Forest Model Features
 
@@ -192,6 +220,12 @@ python scripts/train.py --grid-search --cv-folds 10
 
 # Merge multiple datasets during training
 python scripts/train.py --data "data/*.csv" --merge-datasets
+
+# Progressive training with official records (RECOMMENDED for thesis)
+python scripts/progressive_train.py --grid-search --cv-folds 10
+
+# Year-specific training
+python scripts/progressive_train.py --year-specific
 ```
 
 ### Analysis
@@ -205,6 +239,9 @@ python scripts/compare_models.py
 
 # Merge datasets
 python scripts/merge_datasets.py
+
+# Preprocess official flood records
+python scripts/preprocess_official_flood_records.py
 ```
 
 ### API
@@ -219,26 +256,24 @@ curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -
 # List models
 curl http://localhost:5000/api/models
 ```
-
----
-
 ## 📚 Documentation
 
 ### Quick References
 
 - **[RANDOM_FOREST_THESIS_READY.md](RANDOM_FOREST_THESIS_READY.md)** - Quick start for thesis
+- **[OFFICIAL_RECORDS_QUICK_START.md](OFFICIAL_RECORDS_QUICK_START.md)** - Training with official flood records
 - **[backend/docs/QUICK_REFERENCE.md](backend/docs/QUICK_REFERENCE.md)** - Command cheat sheet
 - **[backend/docs/THESIS_GUIDE.md](backend/docs/THESIS_GUIDE.md)** - Complete thesis guide
 
 ### Detailed Guides
 
+- **[backend/docs/OFFICIAL_FLOOD_RECORDS_GUIDE.md](backend/docs/OFFICIAL_FLOOD_RECORDS_GUIDE.md)** - Complete guide for official records training
 - **[backend/docs/IMPROVEMENTS_SUMMARY.md](backend/docs/IMPROVEMENTS_SUMMARY.md)** - All improvements explained
 - **[backend/docs/SYSTEM_OVERVIEW.md](backend/docs/SYSTEM_OVERVIEW.md)** - System architecture
 - **[backend/docs/MODEL_MANAGEMENT.md](backend/docs/MODEL_MANAGEMENT.md)** - Model versioning
 - **[backend/docs/BACKEND_COMPLETE.md](backend/docs/BACKEND_COMPLETE.md)** - Full documentation
 
 ---
-
 ## 🎓 For Thesis Defense
 
 ### Key Talking Points
@@ -255,6 +290,8 @@ curl http://localhost:5000/api/models
 - Hyperparameter optimization
 - 3-level risk classification (Safe/Alert/Critical)
 - Real-time predictions via API
+- **Progressive training with 3,700+ real flood events**
+- **Model evolution demonstrating improvement over time**
 
 ### Presentation Materials
 
@@ -264,7 +301,8 @@ Generated automatically in `reports/`:
 - ✅ ROC curve (model performance)
 - ✅ Learning curves (no overfitting proof)
 - ✅ Metrics evolution (improvement over time)
-
+- ✅ Parameters evolution (hyperparameter changes)
+- ✅ Model comparison charts (side-by-side performance)
 ---
 
 ## 🔧 Installation
@@ -311,7 +349,7 @@ python main.py
 - Temperature: 20%
 - Wind Speed: 5%
 
----
+------
 
 ## 🌟 Key Features
 
@@ -320,27 +358,28 @@ python main.py
 - ✅ Multi-dataset merging
 - ✅ Duplicate removal
 - ✅ Column validation
+- ✅ **Official flood records preprocessing (2022-2025)**
 
 ### Model Training
 - ✅ Random Forest Classifier
 - ✅ Hyperparameter tuning (GridSearchCV)
 - ✅ Cross-validation (k-fold)
 - ✅ Automatic versioning
+- ✅ **Progressive training with model evolution**
+- ✅ **Year-specific training options**
 
 ### Evaluation
 - ✅ Comprehensive metrics
 - ✅ Publication-quality charts
 - ✅ Feature importance analysis
 - ✅ Model comparison tools
+- ✅ **Metrics evolution visualization**
 
 ### Deployment
 - ✅ Flask REST API
 - ✅ 3-level risk classification
 - ✅ Real-time predictions
 - ✅ Alert delivery system
-
----
-
 ## 📞 Support
 
 For detailed instructions, see the documentation in `backend/docs/`.
@@ -361,5 +400,6 @@ Your Random Forest flood prediction model is now fully equipped with:
 - ✅ Model versioning and comparison
 - ✅ Comprehensive documentation
 - ✅ Easy dataset integration
-
-**Good luck with your thesis defense! 🚀🎓**
+- ✅ **3,700+ real flood events from official records**
+- ✅ **Progressive training showing model evolution**
+- ✅ **Professional ML development practices****Good luck with your thesis defense! 🚀🎓**
