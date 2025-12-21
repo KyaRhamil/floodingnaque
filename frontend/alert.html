@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Flood Alerts - Floodingnaque Alert History">
+    <title>Flood Alerts - Floodingnaque</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Vercel Speed Insights for performance monitoring -->
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+</head>
+<body>
+    <div id="app" class="alerts-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-content">
+                <h1 class="logo">🌊 Floodingnaque</h1>
+                <ul class="nav-links">
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="alert.html" class="active">Alerts</a></li>
+                    <li><a href="#about">About</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header Section -->
+            <section class="header-section">
+                <h2>Alert History</h2>
+                <p>View flood alerts and notifications for Parañaque City</p>
+            </section>
+
+            <!-- Alert Summary Section -->
+            <section class="summary-section">
+                <div class="summary-card">
+                    <h3>Total Alerts</h3>
+                    <span class="summary-value" id="totalAlerts">0</span>
+                </div>
+                <div class="summary-card">
+                    <h3>Critical Alerts</h3>
+                    <span class="summary-value critical" id="criticalAlerts">0</span>
+                </div>
+                <div class="summary-card">
+                    <h3>Warning Alerts</h3>
+                    <span class="summary-value warning" id="warningAlerts">0</span>
+                </div>
+                <div class="summary-card">
+                    <h3>Safe Alerts</h3>
+                    <span class="summary-value safe" id="safeAlerts">0</span>
+                </div>
+            </section>
+
+            <!-- Filter Section -->
+            <section class="filter-section">
+                <div class="filter-group">
+                    <label for="filterLevel">Filter by Risk Level:</label>
+                    <select id="filterLevel" class="filter-select">
+                        <option value="all">All</option>
+                        <option value="critical">Critical</option>
+                        <option value="alert">Alert/Warning</option>
+                        <option value="safe">Safe</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterDate">Filter by Date:</label>
+                    <input type="date" id="filterDate" class="filter-input">
+                </div>
+                <button id="clearFilters" class="btn-secondary">Clear Filters</button>
+            </section>
+
+            <!-- Alerts List Section -->
+            <section class="alerts-section">
+                <h3>Flood Alerts</h3>
+                <div id="alertsList" class="alerts-list">
+                    <div class="loading-message">Loading alerts...</div>
+                </div>
+            </section>
+
+            <!-- Pagination Section -->
+            <section class="pagination-section">
+                <button id="prevBtn" class="btn-secondary" disabled>Previous</button>
+                <span id="pageInfo" class="page-info">Page 1</span>
+                <button id="nextBtn" class="btn-secondary">Next</button>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Floodingnaque - Flood Prediction System. All rights reserved.</p>
+            <p>Performance monitoring powered by <a href="https://vercel.com/speed-insights">Vercel Speed Insights</a></p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    
+    <!-- Vercel Speed Insights Performance Tracking -->
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+</body>
+</html>

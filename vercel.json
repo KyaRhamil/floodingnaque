@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "name": "floodingnaque",
+  "public": false,
+  "env": {
+    "FLASK_ENV": "production"
+  },
+  "builds": [
+    {
+      "src": "backend/main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/**/*.{html,css,js}",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/main.py"
+    },
+    {
+      "src": "/alert.html",
+      "dest": "/frontend/alert.html"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/frontend/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/frontend/js/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/index.html"
+    }
+  ],
+  "functions": {
+    "backend/main.py": {
+      "runtime": "python3.11",
+      "memory": 3008,
+      "maxDuration": 60
+    }
+  }
+}
