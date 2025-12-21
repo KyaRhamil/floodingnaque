@@ -1,0 +1,518 @@
+/* Floodingnaque Dashboard Styles */
+
+:root {
+    --primary-color: #0066cc;
+    --secondary-color: #00a86b;
+    --danger-color: #ff4444;
+    --warning-color: #ffaa00;
+    --safe-color: #00cc44;
+    --background-color: #f5f5f5;
+    --text-color: #333;
+    --border-color: #ddd;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* Layout */
+#app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 2rem;
+}
+
+/* Navigation */
+.navbar {
+    background-color: white;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color);
+}
+
+/* Header Section */
+.header-section {
+    margin-bottom: 2rem;
+}
+
+.header-section h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-section p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Risk Section */
+.risk-section {
+    margin-bottom: 2rem;
+}
+
+.risk-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.risk-level {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+}
+
+.risk-level.safe {
+    color: white;
+    background-color: var(--safe-color);
+}
+
+.risk-level.alert {
+    color: white;
+    background-color: var(--warning-color);
+}
+
+.risk-level.critical {
+    color: white;
+    background-color: var(--danger-color);
+}
+
+.risk-description {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Weather Section */
+.weather-section {
+    margin-bottom: 2rem;
+}
+
+.weather-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.weather-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.weather-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.weather-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.weather-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.weather-unit {
+    font-size: 1rem;
+    color: #666;
+    margin-left: 0.25rem;
+}
+
+/* Map Section */
+.map-section {
+    margin-bottom: 2rem;
+}
+
+.map-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.map-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    height: 400px;
+}
+
+/* Chart Section */
+.chart-section {
+    margin-bottom: 2rem;
+}
+
+.chart-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.chart-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    max-height: 400px;
+}
+
+/* Summary Section (for alerts page) */
+.summary-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.summary-card h3 {
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.summary-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.summary-value.critical {
+    color: var(--danger-color);
+}
+
+.summary-value.warning {
+    color: var(--warning-color);
+}
+
+.summary-value.safe {
+    color: var(--safe-color);
+}
+
+/* Filter Section */
+.filter-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.filter-select,
+.filter-input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    min-width: 200px;
+}
+
+/* Alerts List */
+.alerts-section {
+    margin-bottom: 2rem;
+}
+
+.alerts-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.alert-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary-color);
+}
+
+.alert-item.critical {
+    border-left-color: var(--danger-color);
+}
+
+.alert-item.alert {
+    border-left-color: var(--warning-color);
+}
+
+.alert-item.safe {
+    border-left-color: var(--safe-color);
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.alert-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.alert-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.alert-badge.critical {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.alert-badge.alert {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.alert-badge.safe {
+    background-color: var(--safe-color);
+    color: white;
+}
+
+.alert-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.alert-description {
+    color: #555;
+    margin-top: 0.5rem;
+}
+
+.loading-message {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+}
+
+/* Pagination */
+.pagination-section {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.page-info {
+    color: #666;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Buttons */
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--background-color);
+    border-color: var(--primary-color);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Footer */
+.footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
+
+    .nav-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .header-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .risk-level {
+        font-size: 2rem;
+    }
+
+    .weather-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .map-container {
+        height: 300px;
+    }
+
+    .filter-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-select,
+    .filter-input {
+        min-width: 100%;
+    }
+
+    .alert-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .pagination-section {
+        flex-wrap: wrap;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navbar,
+    .footer,
+    .filter-section,
+    .pagination-section {
+        display: none;
+    }
+
+    .main-content {
+        padding: 0;
+    }
+}
