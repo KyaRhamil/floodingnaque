@@ -2181,3 +2181,61 @@ FROM weather_data) AS anon_1]
  * Running on http://127.0.0.1:5000
  * Running on http://192.168.254.104:5000"}
 {"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp":"2025-12-22T23:03:22+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T23:03:22+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T23:03:24+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, satellite_weather_cache, tide_data_cache, api_requests, earth_engine_requests, webhooks"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T23:03:25+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] ml_model: Model loaded with 1 version warnings"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 876ms"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"WARNING","logger":"app.utils.startup_health","message":"Startup completed with warnings - review configuration"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"WARNING","logger":"app.api.app","message":"Startup completed with warnings: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 20044)"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"werkzeug","message":"[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000"}
+{"timestamp":"2025-12-22T23:03:26+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp":"2025-12-22T23:03:28+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request a82f2940-e296-4c46-aade-d64df16db0b4: GET /"}
+{"timestamp":"2025-12-22T23:03:28+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response a82f2940-e296-4c46-aade-d64df16db0b4: 200 (0.063s)"}
+{"timestamp":"2025-12-22T23:03:28+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [22/Dec/2025 23:03:28] "GET / HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-22T23:03:44+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request bdae341c-e73c-4bad-8019-1124dd9fd988: GET /health"}
+{"timestamp":"2025-12-22T23:03:45+0800","level":"INFO","logger":"app.utils.cache","message":"Redis caching enabled: redis-11050.c53.west-us.azure.cloud.redislabs.com:11050"}
+{"timestamp":"2025-12-22T23:03:46+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response bdae341c-e73c-4bad-8019-1124dd9fd988: 200 (1.654s)"}
+{"timestamp":"2025-12-22T23:03:46+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [22/Dec/2025 23:03:46] "GET /health HTTP/1.1" 200 -"}
