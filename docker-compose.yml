@@ -1,0 +1,88 @@
+# =====================================================
+# Floodingnaque - Development Docker Compose
+# =====================================================
+# Usage:
+#   docker-compose up -d --build
+#   docker-compose logs -f backend
+#   docker-compose down
+# =====================================================
+
+services:
+  # ===================
+  # Backend API Service
+  # ===================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: floodingnaque-api-dev
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - APP_ENV=development
+      - FLASK_DEBUG=True
+      - PORT=5000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://postgres:password@db:5432/floodingnaque
+      - RATE_LIMIT_ENABLED=False
+      - SCHEDULER_ENABLED=True
+      - LOG_LEVEL=DEBUG
+    env_file:
+      - ./backend/.env
+    volumes:
+      # Mount code for development hot-reload
+      - ./backend/app:/app/app:ro
+      - ./backend/main.py:/app/main.py:ro
+      # Persistent data
+      - ./backend/models:/app/models
+      - ./backend/data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - floodingnaque-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ===================
+  # PostgreSQL Database
+  # ===================
+  db:
+    image: postgres:15-alpine
+    container_name: floodingnaque-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: floodingnaque
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - floodingnaque-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d floodingnaque"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# ===================
+# Networks
+# ===================
+networks:
+  floodingnaque-dev:
+    driver: bridge
+
+# ===================
+# Volumes
+# ===================
+volumes:
+  postgres_data_dev:
