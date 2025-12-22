@@ -40,6 +40,8 @@ from app.api.routes.celery import celery_bp
 from app.api.routes.rate_limits import rate_limits_bp
 from app.api.routes.tides import tides_bp
 from app.api.routes.graphql import graphql_bp, init_graphql_route
+from app.api.routes.security_txt import security_txt_bp
+from app.api.routes.csp_report import csp_report_bp
 from app.api.swagger_config import init_swagger
 
 # Initialize module-level logger
@@ -168,6 +170,8 @@ def create_app(config_override: dict = None) -> Flask:
     # Core routes (no prefix)
     app.register_blueprint(health_bp)
     app.register_blueprint(health_k8s_bp)
+    app.register_blueprint(security_txt_bp)
+    app.register_blueprint(csp_report_bp)
     
     # API routes
     app.register_blueprint(ingest_bp)

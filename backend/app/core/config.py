@@ -73,8 +73,8 @@ def _get_database_url() -> str:
     """
     Get DATABASE_URL with environment-specific validation.
     
-    - Production: Requires Supabase PostgreSQL (fails if not set or using SQLite)
-    - Staging: Requires PostgreSQL (fails if using SQLite)
+    - Production: Requires Supabase PostgreSQL with SSL (fails if not set or using SQLite)
+    - Staging: Requires PostgreSQL with SSL (fails if using SQLite)
     - Development: Allows SQLite fallback with warning
     
     Returns:
@@ -93,13 +93,23 @@ def _get_database_url() -> str:
             raise ValueError(
                 f"CRITICAL: DATABASE_URL must be set for {app_env}! "
                 "Configure a Supabase PostgreSQL connection string in your .env file. "
-                "Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"
+                "Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?sslmode=require"
             )
         if url.startswith('sqlite'):
             raise ValueError(
                 f"CRITICAL: SQLite is not allowed in {app_env}! "
                 "Configure a Supabase PostgreSQL connection string."
             )
+        
+        # Enforce SSL mode for production PostgreSQL connections
+        if url.startswith('postgresql') and 'sslmode=' not in url:
+            logger.warning(
+                "DATABASE_URL does not specify sslmode. "
+                "Automatically adding sslmode=require for security."
+            )
+            separator = '&' if '?' in url else '?'
+            url = f"{url}{separator}sslmode=require"
+        
         return url
     
     # Development mode - allow SQLite fallback with warning

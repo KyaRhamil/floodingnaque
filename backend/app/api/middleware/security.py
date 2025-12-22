@@ -97,6 +97,10 @@ def add_security_headers(response):
     
     # CSP - adjust based on your needs
     # This is a restrictive policy; you may need to relax it for your frontend
+    # CSP Reporting endpoint for monitoring policy violations
+    csp_report_uri = os.getenv('CSP_REPORT_URI', '')
+    csp_report_to = os.getenv('CSP_REPORT_TO', '')
+    
     default_csp = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -108,6 +112,15 @@ def add_security_headers(response):
         "base-uri 'self'; "
         "form-action 'self'"
     )
+    
+    # Add reporting directives if configured
+    if csp_report_uri:
+        default_csp += f"; report-uri {csp_report_uri}"
+    if csp_report_to:
+        default_csp += f"; report-to {csp_report_to}"
+        # Also add Report-To header for newer browsers
+        response.headers['Report-To'] = csp_report_to
+    
     csp_policy = os.getenv('CSP_POLICY', default_csp)
     response.headers['Content-Security-Policy'] = csp_policy
     

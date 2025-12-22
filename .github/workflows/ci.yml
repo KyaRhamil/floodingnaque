@@ -22,8 +22,8 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Install pip-audit
-      run: pip install pip-audit
+    - name: Install pip-audit and safety
+      run: pip install pip-audit safety
     
     - name: Run pip-audit on requirements
       run: |
@@ -39,6 +39,73 @@ jobs:
         cd backend
         pip-audit -r requirements-dev.txt --desc on || true
       continue-on-error: true
+    
+    - name: Run safety check (additional vulnerability scanner)
+      run: |
+        cd backend
+        safety check -r requirements.txt --full-report || true
+      continue-on-error: true
+
+  # ==========================================================================
+  # Container Image Security Scanning with Trivy
+  # ==========================================================================
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    needs: security-scan
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image for scanning
+      run: |
+        cd backend
+        docker build -t floodingnaque-api:scan-${{ github.sha }} --target production .
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'floodingnaque-api:scan-${{ github.sha }}'
+        format: 'table'
+        exit-code: '0'  # Don't fail build, report only
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
+        output: 'trivy-results.txt'
+    
+    - name: Run Trivy scanner (SARIF output)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'floodingnaque-api:scan-${{ github.sha }}'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Display Trivy scan results
+      if: always()
+      run: |
+        echo "=== Trivy Scan Results ==="
+        cat trivy-results.txt || echo "No results file found"
+    
+    - name: Check for critical vulnerabilities
+      run: |
+        # Fail if CRITICAL vulnerabilities found
+        if grep -q "CRITICAL" trivy-results.txt 2>/dev/null; then
+          echo "::error::Critical vulnerabilities found in container image!"
+          exit 1
+        fi
+      continue-on-error: true  # Set to false to enforce blocking
 
   # ==========================================================================
   # Code Quality & Testing

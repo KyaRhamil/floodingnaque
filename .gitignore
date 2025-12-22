@@ -159,6 +159,15 @@ models/confusion_matrix.png
 models/feature_importance.png
 data/*.csv
 
+# Security logs (CSP violations, etc.)
+csp_violations.log
+backend/logs/csp_violations.log
+
+# Docker secrets (NEVER commit!)
+secrets/
+*.secret
+*.secret.txt
+
 # Evaluation results
 evaluation_results/
 

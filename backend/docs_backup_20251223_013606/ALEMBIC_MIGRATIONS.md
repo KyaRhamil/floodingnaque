@@ -440,8 +440,6 @@ alembic upgrade head
 
 - **Alembic Docs:** https://alembic.sqlalchemy.org/
 - **SQLAlchemy Docs:** https://docs.sqlalchemy.org/
-- **Backend Architecture:** `docs/BACKEND_ARCHITECTURE.md`
-- **Database Guide:** `docs/DATABASE_GUIDE.md`
-- **Getting Started:** `docs/GETTING_STARTED.md`
+- **Floodingnaque Backend:** `docs/BACKEND_COMPLETE.md`
 
 Happy migrating! 🚀

@@ -14,6 +14,9 @@
 #
 # With both Nginx and monitoring:
 #   docker-compose -f docker-compose-production.yml --profile nginx --profile monitoring up -d
+#
+# With Docker Secrets (recommended for production):
+#   docker-compose -f docker-compose-production.yml --profile secrets up -d
 # =====================================================
 # NOTE: This configuration uses:
 #   - Supabase PostgreSQL for database
@@ -21,6 +24,12 @@
 #   - Datadog Agent for APM and infrastructure monitoring
 #   - Nginx reverse proxy with Let's Encrypt (optional, use --profile nginx)
 #   Ensure .env.production is properly configured with DD_API_KEY.
+# =====================================================
+# SECURITY NOTES:
+#   - Backend port bound to localhost (127.0.0.1:5000) - only accessible via Nginx
+#   - Network segmentation: frontend, backend, monitoring networks
+#   - All containers run with no-new-privileges security option
+#   - For production secrets, consider using Docker Swarm secrets or HashiCorp Vault
 # =====================================================
 
 services:
@@ -38,7 +47,8 @@ services:
     container_name: floodingnaque-api-prod
     restart: always
     ports:
-      - "5000:5000"
+      # Bind to localhost only - Nginx reverse proxy handles external traffic
+      - "127.0.0.1:5000:5000"
     environment:
       # Application
       - APP_ENV=production
@@ -115,7 +125,8 @@ services:
         condition: service_started
         required: false
     networks:
-      - floodingnaque-prod
+      - floodingnaque-backend
+      - floodingnaque-monitoring
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -199,7 +210,8 @@ services:
         condition: service_healthy
         required: false
     networks:
-      - floodingnaque-prod
+      - floodingnaque-backend
+      - floodingnaque-monitoring
     healthcheck:
       test: ["CMD", "celery", "-A", "app.services.celery_app", "inspect", "ping"]
       interval: 60s
@@ -270,7 +282,13 @@ services:
         condition: service_healthy
         required: false
     networks:
-      - floodingnaque-prod
+      - floodingnaque-backend
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/celerybeat.pid && ps -p $(cat /tmp/celerybeat.pid) > /dev/null"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -317,7 +335,8 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     networks:
-      - floodingnaque-prod
+      - floodingnaque-backend
+      - floodingnaque-monitoring
     healthcheck:
       test: ["CMD", "agent", "health"]
       interval: 30s
@@ -344,7 +363,7 @@ services:
   # Prometheus Monitoring
   # ===================
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.48.0
     container_name: floodingnaque-prometheus-prod
     restart: always
     command:
@@ -360,11 +379,18 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data_prod:/prometheus
     networks:
-      - floodingnaque-prod
+      - floodingnaque-monitoring
+      - floodingnaque-backend
     depends_on:
       - backend
     profiles:
       - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -400,7 +426,8 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - floodingnaque-prod
+      - floodingnaque-frontend
+      - floodingnaque-backend
     profiles:
       - nginx
     healthcheck:
@@ -440,7 +467,7 @@ services:
       - certbot_conf_prod:/etc/letsencrypt
       - certbot_www_prod:/var/www/certbot
     networks:
-      - floodingnaque-prod
+      - floodingnaque-frontend
     profiles:
       - nginx
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
@@ -456,15 +483,35 @@ services:
         max-file: "2"
 
 # ===================
-# Networks
+# Networks (Segmented for Security)
 # ===================
 networks:
-  floodingnaque-prod:
+  # Frontend network - Nginx and external-facing services
+  floodingnaque-frontend:
     driver: bridge
-    name: floodingnaque-production
+    name: floodingnaque-frontend-production
     driver_opts:
       com.docker.network.bridge.enable_icc: "true"
       com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: "1500"
+  
+  # Backend network - API, Celery workers, and internal services
+  floodingnaque-backend:
+    driver: bridge
+    name: floodingnaque-backend-production
+    internal: false  # Set to true if no external access needed
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: "1500"
+  
+  # Monitoring network - Prometheus, Datadog, and observability tools
+  floodingnaque-monitoring:
+    driver: bridge
+    name: floodingnaque-monitoring-production
+    internal: true  # No external access for monitoring network
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
       com.docker.network.driver.mtu: "1500"
 
 # ===================
@@ -495,3 +542,36 @@ volumes:
   certbot_www_prod:
     name: floodingnaque-certbot-www-production
     driver: local
+
+# ===================
+# Docker Secrets (Optional - for Docker Swarm mode)
+# ===================
+# To use secrets instead of environment variables:
+# 1. Create secrets: docker secret create secret_key ./secrets/secret_key.txt
+# 2. Deploy with: docker stack deploy -c docker-compose-production.yml floodingnaque
+#
+# For docker-compose (non-Swarm), use file-based secrets:
+# secrets:
+#   secret_key:
+#     file: ./secrets/secret_key.txt
+#   jwt_secret_key:
+#     file: ./secrets/jwt_secret_key.txt
+#   database_url:
+#     file: ./secrets/database_url.txt
+#   redis_url:
+#     file: ./secrets/redis_url.txt
+#   dd_api_key:
+#     file: ./secrets/dd_api_key.txt
+#
+# Then reference in services:
+#   backend:
+#     secrets:
+#       - secret_key
+#       - jwt_secret_key
+#       - database_url
+#     environment:
+#       - SECRET_KEY_FILE=/run/secrets/secret_key
+#       - JWT_SECRET_KEY_FILE=/run/secrets/jwt_secret_key
+#       - DATABASE_URL_FILE=/run/secrets/database_url
+#
+# See docs/DOCKER_SECRETS_SETUP.md for detailed instructions.

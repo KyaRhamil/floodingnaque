@@ -30,7 +30,7 @@ A Flask-based REST API for flood prediction using machine learning and weather d
 - ✅ Production deployment ready
 - ✅ Thesis-defense ready
 
-**See**: [docs/BACKEND_ENHANCEMENTS_COMPLETE.md](docs/BACKEND_ENHANCEMENTS_COMPLETE.md) for full details
+**See**: [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md) for full details
 
 ## Quick Start
 
@@ -146,8 +146,9 @@ The API is CORS-enabled and ready for frontend integration. All endpoints return
 ## Documentation
 
 - Full API documentation: `http://localhost:5000/api/docs`
-- Database setup: See `docs/DATABASE_SETUP.md`
-- Complete guide: See `docs/BACKEND_COMPLETE.md`
+- Getting started: See `docs/GETTING_STARTED.md`
+- Backend architecture: See `docs/BACKEND_ARCHITECTURE.md`
+- Database guide: See `docs/DATABASE_GUIDE.md`
 - Model management: See `docs/MODEL_MANAGEMENT.md`
 - PowerShell API examples: See `docs/POWERSHELL_API_EXAMPLES.md`
 - Sentry error tracking: See `docs/SENTRY_SETUP.md`
@@ -225,25 +226,14 @@ backend/
 │       ├── __init__.py
 │       └── test_auth.py
 ├── docs/                    # Documentation
-│   ├── BACKEND_COMPLETE.md
-│   ├── BACKEND_ENHANCEMENTS_COMPLETE.md
-│   ├── CODE_QUALITY_IMPROVEMENTS.md
-│   ├── DATABASE_IMPROVEMENTS.md
-│   ├── DATABASE_SETUP.md
-│   ├── FRONTEND_INTEGRATION.md
-│   ├── IMPROVEMENTS_SUMMARY.md
+│   ├── BACKEND_ARCHITECTURE.md   # Complete backend guide
+│   ├── DATABASE_GUIDE.md         # Database reference
+│   ├── GETTING_STARTED.md        # Quick start guide
+│   ├── ALEMBIC_MIGRATIONS.md     # Migration system
 │   ├── MODEL_MANAGEMENT.md
-│   ├── OFFICIAL_FLOOD_RECORDS_GUIDE.md
 │   ├── POWERSHELL_API_EXAMPLES.md
-│   ├── QUICK_REFERENCE.md
-│   ├── QUICK_START_v2.md
-│   ├── RESEARCH_ALIGNMENT.md
-│   ├── SETUP_COMPLETE.md
-│   ├── SYSTEM_OVERVIEW.md
-│   ├── TEST_3LEVEL_CLASSIFICATION.md
 │   ├── THESIS_GUIDE.md
-│   ├── UPGRADE_SUMMARY.md
-│   └── WINDOWS_INSTALL_GUIDE.md
+│   └── ... (other guides)
 ├── data/                    # Data files
 │   ├── Floodingnaque_Paranaque_Official_Flood_Records_*.csv
 │   └── synthetic_dataset.csv

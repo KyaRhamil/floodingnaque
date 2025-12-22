@@ -104,6 +104,38 @@ def rate_limit_strict():
     return limiter.limit("30 per hour;5 per minute")
 
 
+def rate_limit_auth():
+    """
+    Very strict rate limit for authentication/login endpoints.
+    
+    Provides protection against brute force attacks:
+    - 5 attempts per minute
+    - 20 attempts per hour
+    - 100 attempts per day
+    
+    Uses IP-only limiting to prevent credential stuffing attacks.
+    """
+    return limiter.limit(
+        "5 per minute;20 per hour;100 per day",
+        key_func=get_rate_limit_key_ip_only
+    )
+
+
+def rate_limit_password_reset():
+    """
+    Very strict rate limit for password reset endpoints.
+    
+    Prevents abuse of password reset functionality:
+    - 3 attempts per minute
+    - 10 attempts per hour
+    - 50 attempts per day
+    """
+    return limiter.limit(
+        "3 per minute;10 per hour;50 per day",
+        key_func=get_rate_limit_key_ip_only
+    )
+
+
 def rate_limit_relaxed():
     """Relaxed rate limit for public endpoints: 200 per hour, 50 per minute."""
     return limiter.limit("200 per hour;50 per minute")
@@ -139,7 +171,12 @@ ENDPOINT_LIMITS = {
     'data': "120 per hour;30 per minute",         # Data retrieval
     'data_auth': "240 per hour;60 per minute",    # Authenticated data limit
     'status': "300 per hour;60 per minute",       # Health checks (relaxed)
-    'docs': "200 per hour;40 per minute"          # Documentation
+    'docs': "200 per hour;40 per minute",         # Documentation
+    # Auth-specific limits (very strict for security)
+    'auth_login': "5 per minute;20 per hour;100 per day",
+    'auth_register': "3 per minute;10 per hour;30 per day",
+    'auth_reset': "3 per minute;10 per hour;50 per day",
+    'auth_token': "10 per minute;30 per hour",
 }
 
 
