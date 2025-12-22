@@ -5,14 +5,14 @@ Defines background tasks for async processing.
 """
 
 import logging
+import os
 import time
 from datetime import datetime, timedelta
 from celery import current_task
 from app.services.celery_app import celery_app
 from app.utils.logging import get_logger
-from app.utils.database import get_db_session
-from app.models.predictions import FloodPrediction
-from app.models.weather import WeatherData
+from app.models.db import get_db_session
+from app.models.db import Prediction as FloodPrediction, WeatherData
 
 logger = get_logger(__name__)
 

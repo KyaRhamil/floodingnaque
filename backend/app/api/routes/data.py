@@ -7,15 +7,14 @@ Provides endpoints for retrieving historical weather data.
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import desc
-from app.models.weather import WeatherData
-from app.models.predictions import FloodPrediction
-from app.utils.database import get_db_session
+from app.models.db import WeatherData, Prediction as FloodPrediction
+from app.models.db import get_db_session
 from app.utils.api_responses import api_success, api_error
 from app.utils.api_errors import AppException, ValidationError, NotFoundError
 from app.utils.rate_limit import limiter, get_endpoint_limit
 from app.utils.logging import get_logger
-from app.services.meteostat import MeteostatService
-from app.utils.config import get_config
+from app.services.meteostat_service import MeteostatService
+from app.core.config import get_config
 from app.utils.cache import cached
 from app.utils.api_constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_SERVICE_UNAVAILABLE
 import logging

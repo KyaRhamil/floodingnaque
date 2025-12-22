@@ -180,8 +180,9 @@ def evaluate_model_performance(model, data_file='data/synthetic_dataset.csv'):
         if y_pred_proba is not None and y_pred_proba.shape[1] > 1:
             try:
                 metrics['roc_auc'] = float(roc_auc_score(y, y_pred_proba[:, 1]))
-            except:
-                pass
+            except (ValueError, TypeError) as e:
+                # ROC-AUC calculation failed (e.g., single class in y_true)
+                logger.debug(f"Could not calculate ROC-AUC: {e}")
         
         logger.info("Performance Metrics:")
         logger.info(f"  Accuracy:  {metrics['accuracy']:.4f}")

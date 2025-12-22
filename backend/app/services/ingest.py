@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Lazy import for meteostat to avoid import errors if not installed
 _meteostat_service = None
+_worldtides_service = None
 
 def _get_meteostat_service():
     """Lazy load meteostat service."""
@@ -27,6 +28,19 @@ def _get_meteostat_service():
             logger.warning("Meteostat is not installed. Install with: pip install meteostat")
             _meteostat_service = False  # Mark as unavailable
     return _meteostat_service if _meteostat_service else None
+
+
+def _get_worldtides_service():
+    """Lazy load WorldTides service."""
+    global _worldtides_service
+    if _worldtides_service is None:
+        try:
+            from app.services.worldtides_service import get_worldtides_service
+            _worldtides_service = get_worldtides_service()
+        except ImportError:
+            logger.warning("WorldTides service not available")
+            _worldtides_service = False  # Mark as unavailable
+    return _worldtides_service if _worldtides_service else None
 
 # Regex pattern for redacting API keys in URLs/logs
 _API_KEY_PATTERNS = [
@@ -177,6 +191,23 @@ def ingest_data(lat=None, lon=None):
                     logger.info(f"Got precipitation from Meteostat fallback: {precipitation} mm")
             except Exception as e:
                 logger.debug(f"Meteostat fallback failed: {e}")
+
+    # Fetch tide data from WorldTides API (for coastal flood prediction)
+    if os.getenv('WORLDTIDES_ENABLED', 'True').lower() == 'true':
+        worldtides_svc = _get_worldtides_service()
+        if worldtides_svc and worldtides_svc.is_available():
+            try:
+                tide_data = worldtides_svc.get_tide_data_for_prediction(lat, lon)
+                if tide_data:
+                    data['tide_height'] = tide_data.get('tide_height')
+                    data['tide_trend'] = tide_data.get('tide_trend')
+                    data['tide_risk_factor'] = tide_data.get('tide_risk_factor')
+                    data['hours_until_high_tide'] = tide_data.get('hours_until_high_tide')
+                    logger.info(f"Got tide data: height={tide_data.get('tide_height'):.2f}m, "
+                               f"trend={tide_data.get('tide_trend')}, "
+                               f"risk_factor={tide_data.get('tide_risk_factor'):.2f}")
+            except Exception as e:
+                logger.warning(f"Failed to fetch tide data: {e}")
 
     # Save to DB
     try:

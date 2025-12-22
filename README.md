@@ -5,8 +5,8 @@
 **🆕 Now with Official Flood Records Training!** Train models with 3,700+ real flood events from 2022-2025!
 
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/github/license/yourusername/floodingnaque)](LICENSE)
-[![Last Updated](https://img.shields.io/github/last-commit/yourusername/floodingnaque)](#)
+[![License](https://img.shields.io/github/license/KyaRhamil/floodingnaque)](LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/KyaRhamil/floodingnaque)](#)
 
 ---
 ## 🎓 Thesis Defense Ready!
@@ -316,7 +316,7 @@ Generated automatically in `reports/`:
 
 ```powershell
 # Clone repository
-git clone https://github.com/yourusername/floodingnaque.git
+git clone https://github.com/KyaRhamil/floodingnaque.git
 cd floodingnaque/backend
 
 # Install dependencies

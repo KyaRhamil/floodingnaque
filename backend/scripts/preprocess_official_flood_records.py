@@ -40,8 +40,33 @@ FLOOD_DEPTH_MAP = {
     'half waist': 0.75,
 }
 
+# 3-Level Risk Classification based on flood depth
+# LOW: 0-0.3m (gutter, ankle) - passable with caution
+# MODERATE: 0.3-0.6m (half-knee, knee) - difficult to pass
+# HIGH: >0.6m (waist, chest, above chest) - dangerous, impassable
+RISK_LEVEL_MAP = {
+    'gutter': 0,      # LOW
+    'ankle': 0,       # LOW
+    'half-knee': 1,   # MODERATE
+    'knee': 1,        # MODERATE
+    'below knee': 1,  # MODERATE
+    'half waist': 2,  # HIGH
+    'waist': 2,       # HIGH
+    'chest': 2,       # HIGH
+    'above chest': 2, # HIGH
+}
+
+RISK_LEVEL_NAMES = {0: 'LOW', 1: 'MODERATE', 2: 'HIGH'}
+
 # Binary flood classification thresholds
 FLOOD_THRESHOLD = 0.3  # Above 30cm is considered flood (1), below is no-flood (0)
+
+# Month to season mapping for Philippines
+MONTH_TO_SEASON = {
+    1: 'dry', 2: 'dry', 3: 'dry', 4: 'dry', 5: 'dry',
+    6: 'wet', 7: 'wet', 8: 'wet', 9: 'wet', 10: 'wet', 11: 'wet',
+    12: 'dry'
+}
 
 # Weather pattern extraction
 WEATHER_PATTERNS = {
@@ -83,6 +108,107 @@ def extract_flood_binary(depth_value):
     if depth_value is None or pd.isna(depth_value):
         return None
     return 1 if depth_value >= FLOOD_THRESHOLD else 0
+
+
+def extract_risk_level(depth_str):
+    """
+    Extract 3-level risk classification from flood depth description.
+    Returns: 0 (LOW), 1 (MODERATE), 2 (HIGH)
+    """
+    if pd.isna(depth_str) or depth_str == '':
+        return None
+    
+    depth_str = str(depth_str).lower().strip()
+    
+    # Try exact match first
+    for key, level in RISK_LEVEL_MAP.items():
+        if key in depth_str:
+            return level
+    
+    # If numeric measurement found, classify by depth
+    match = re.search(r'(\d+)\s*["\']', depth_str)
+    if match:
+        inches = float(match.group(1))
+        meters = inches * 0.0254
+        if meters < 0.3:
+            return 0  # LOW
+        elif meters < 0.6:
+            return 1  # MODERATE
+        else:
+            return 2  # HIGH
+    
+    return None
+
+
+def extract_month_from_description(desc_str, year):
+    """
+    Extract month from description string.
+    Returns month number (1-12) or None.
+    """
+    if pd.isna(desc_str) or desc_str == '':
+        return None
+    
+    desc_str = str(desc_str).lower()
+    
+    month_map = {
+        'january': 1, 'jan': 1,
+        'february': 2, 'feb': 2,
+        'march': 3, 'mar': 3,
+        'april': 4, 'apr': 4,
+        'may': 5,
+        'june': 6, 'jun': 6,
+        'july': 7, 'jul': 7,
+        'august': 8, 'aug': 8,
+        'september': 9, 'sep': 9, 'sept': 9,
+        'october': 10, 'oct': 10,
+        'november': 11, 'nov': 11,
+        'december': 12, 'dec': 12
+    }
+    
+    for month_name, month_num in month_map.items():
+        if month_name in desc_str:
+            return month_num
+    
+    return None
+
+
+def get_season(month):
+    """Get season based on month for Philippines."""
+    if month is None:
+        return 'unknown'
+    return MONTH_TO_SEASON.get(month, 'unknown')
+
+
+def is_monsoon_season(month):
+    """Check if month is in monsoon (wet) season."""
+    if month is None:
+        return 0
+    return 1 if month in [6, 7, 8, 9, 10, 11] else 0
+
+
+def extract_coordinates(row):
+    """
+    Extract latitude and longitude from row data.
+    Returns (latitude, longitude) tuple or (None, None).
+    """
+    lat, lon = None, None
+    
+    for col in row.index:
+        val = str(row[col]) if not pd.isna(row[col]) else ''
+        
+        # Look for coordinate patterns like "14.461084" or "121.02733"
+        coord_matches = re.findall(r'(\d{1,3}\.\d{5,})', val)
+        
+        for coord in coord_matches:
+            coord_val = float(coord)
+            # Parañaque latitude is around 14.4-14.5
+            if 14.0 <= coord_val <= 15.0 and lat is None:
+                lat = coord_val
+            # Parañaque longitude is around 120.9-121.1
+            elif 120.0 <= coord_val <= 122.0 and lon is None:
+                lon = coord_val
+    
+    return lat, lon
 
 
 def extract_weather_type(weather_str):
@@ -159,11 +285,13 @@ def parse_datetime_flexible(date_str, time_str=None):
                         dt = dt.replace(hour=hour, minute=minute)
                 
                 return dt
-            except:
+            except (ValueError, TypeError, AttributeError) as e:
+                # Date format didn't match, try next pattern
                 continue
         
         return None
-    except:
+    except Exception as e:
+        logger.debug(f"Date parsing failed: {e}")
         return None
 
 
@@ -186,10 +314,10 @@ def preprocess_flood_records(input_csv, output_csv, year):
         # Read CSV (handle different encodings)
         try:
             df = pd.read_csv(input_csv, encoding='utf-8')
-        except:
+        except UnicodeDecodeError:
             try:
                 df = pd.read_csv(input_csv, encoding='latin-1')
-            except:
+            except UnicodeDecodeError:
                 df = pd.read_csv(input_csv, encoding='cp1252')
         
         logger.info(f"Loaded {len(df)} rows")
@@ -235,6 +363,7 @@ def preprocess_flood_records(input_csv, output_csv, year):
                     if flood_depth is not None:
                         record['flood_depth_m'] = flood_depth
                         record['flood'] = extract_flood_binary(flood_depth)
+                        record['risk_level'] = extract_risk_level(depth_str)
                         record['flood_depth_category'] = depth_str
                 
                 # Extract weather
@@ -259,18 +388,27 @@ def preprocess_flood_records(input_csv, output_csv, year):
                 if location_str:
                     record['location'] = location_str[:100]
                 
-                # Extract coordinates
+                # Extract coordinates from any column data
+                lat, lon = extract_coordinates(row)
+                if lat is not None:
+                    record['latitude'] = lat
+                if lon is not None:
+                    record['longitude'] = lon
+                
+                # Also check explicit coordinate columns
                 for col in df.columns:
                     col_lower = str(col).lower()
-                    if 'latit' in col_lower:
+                    if 'latit' in col_lower and 'latitude' not in record:
                         try:
                             record['latitude'] = float(row[col])
-                        except:
+                        except (ValueError, TypeError):
+                            # Could not parse latitude value
                             pass
-                    elif 'longit' in col_lower:
+                    elif 'longit' in col_lower and 'longitude' not in record:
                         try:
                             record['longitude'] = float(row[col])
-                        except:
+                        except (ValueError, TypeError):
+                            # Could not parse longitude value
                             pass
                 
                 # Extract temperature if available
@@ -283,6 +421,24 @@ def preprocess_flood_records(input_csv, output_csv, year):
                 
                 # Add year
                 record['year'] = year
+                
+                # Extract month from any text field containing month names
+                month = None
+                for col in df.columns:
+                    val = str(row[col]) if not pd.isna(row[col]) else ''
+                    month = extract_month_from_description(val, year)
+                    if month is not None:
+                        break
+                
+                if month is not None:
+                    record['month'] = month
+                    record['is_monsoon_season'] = is_monsoon_season(month)
+                    record['season'] = get_season(month)
+                else:
+                    # Default to wet season for flood records
+                    record['month'] = 7  # July as default
+                    record['is_monsoon_season'] = 1
+                    record['season'] = 'wet'
                 
                 # Only add if we have flood depth (minimum requirement)
                 if 'flood_depth_m' in record and 'flood' in record:
@@ -332,12 +488,22 @@ def preprocess_flood_records(input_csv, output_csv, year):
             result_df['humidity'] = result_df['weather_type'].map(humidity_map).fillna(75)
         
         # Reorder columns for ML training
-        ml_columns = ['temperature', 'humidity', 'precipitation', 'flood']
-        optional_columns = ['flood_depth_m', 'weather_type', 'year', 'latitude', 'longitude', 
-                          'location', 'flood_depth_category', 'weather_description']
+        # Core features for model training
+        ml_columns = ['temperature', 'humidity', 'precipitation', 'flood', 'risk_level']
+        # Temporal features
+        temporal_columns = ['month', 'is_monsoon_season', 'season', 'year']
+        # Spatial features
+        spatial_columns = ['latitude', 'longitude']
+        # Metadata columns (for analysis, not training)
+        meta_columns = ['flood_depth_m', 'weather_type', 'location', 'flood_depth_category', 'weather_description']
         
         # Keep only columns that exist
-        final_columns = ml_columns + [col for col in optional_columns if col in result_df.columns]
+        final_columns = []
+        for col_list in [ml_columns, temporal_columns, spatial_columns, meta_columns]:
+            for col in col_list:
+                if col in result_df.columns:
+                    final_columns.append(col)
+        
         result_df = result_df[final_columns]
         
         # Summary statistics
@@ -345,12 +511,25 @@ def preprocess_flood_records(input_csv, output_csv, year):
         logger.info(f"PROCESSING SUMMARY")
         logger.info(f"{'='*80}")
         logger.info(f"Total records extracted: {len(result_df)}")
-        logger.info(f"\nFlood Classification Distribution:")
+        logger.info(f"\nFlood Classification Distribution (Binary):")
         logger.info(result_df['flood'].value_counts())
+        if 'risk_level' in result_df.columns:
+            logger.info(f"\nRisk Level Distribution (3-Level):")
+            risk_counts = result_df['risk_level'].value_counts().sort_index()
+            for level, count in risk_counts.items():
+                level_name = RISK_LEVEL_NAMES.get(level, 'Unknown')
+                logger.info(f"  {level_name} ({level}): {count}")
         logger.info(f"\nFlood Depth Statistics:")
         logger.info(result_df['flood_depth_m'].describe())
         logger.info(f"\nWeather Type Distribution:")
         logger.info(result_df['weather_type'].value_counts())
+        if 'month' in result_df.columns:
+            logger.info(f"\nMonth Distribution:")
+            logger.info(result_df['month'].value_counts().sort_index())
+        if 'latitude' in result_df.columns:
+            logger.info(f"\nCoordinate Coverage:")
+            valid_coords = result_df['latitude'].notna().sum()
+            logger.info(f"  Records with coordinates: {valid_coords}/{len(result_df)} ({valid_coords/len(result_df)*100:.1f}%)")
         logger.info(f"\nTemperature: {result_df['temperature'].mean():.1f}°C (avg)")
         logger.info(f"Humidity: {result_df['humidity'].mean():.1f}% (avg)")
         logger.info(f"Precipitation: {result_df['precipitation'].mean():.1f}mm (avg)")

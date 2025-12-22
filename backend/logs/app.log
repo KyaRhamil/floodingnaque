@@ -1588,3 +1588,596 @@ FROM weather_data) AS anon_1]
 2025-12-18 17:22:54,343 - INFO - ML model preloaded successfully on startup
 2025-12-18 17:22:54,352 - WARNING -  * Debugger is active!
 2025-12-18 17:22:54,358 - INFO -  * Debugger PIN: 105-142-505
+{"timestamp":"2025-12-20T15:23:02+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-21T15:13:38+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-21T15:13:39+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-21T15:20:18+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-21T15:20:18+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-21T15:35:07+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-21T15:35:07+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-21T15:36:45+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL is disabled (set GRAPHQL_ENABLED=true to enable)"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 3676)"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"werkzeug","message":"[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000"}
+{"timestamp":"2025-12-21T15:36:46+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp":"2025-12-21T15:37:13+0800","level":"ERROR","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:37:13] code 400, message Bad request version ('\x02h2\x08http/1.1\x00\x12\x00\x00\x00\x1b\x00\x03\x02\x00\x02\x00#\x00\x00\x00')"}
+{"timestamp":"2025-12-21T15:37:13+0800","level":"INFO","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:37:13] "[31m[1m\x16\x03\x01\x06à\x01\x00\x06Ü\x03\x03\x80\x94C\x01.\x06G_I7ñÑO³\x82\x1cÕIc\x02çä_é¡%¹?rØi\x18 jg\x13]xµ\x14\x9f¿g¨QW³\x0cö^\x11z°þC·\x15\x91_ªiíå\x19q\x00 êê\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06sÚÚ\x00\x00\x00+\x00\x07\x06ºº\x03\x04\x03\x03\x00-\x00\x02\x01\x01\x00\x0b\x00\x02\x01\x00þ\x0d\x00ú\x00\x00\x01\x00\x01«\x00 KS\x19\x01gap\x1fX\x94·íiþÔÁð\x17¤NióÆJ¹]\x83*UÖú\x05\x00Ð6ÑH½÷¦\x91á¤yt\x15Ø\x1c#\x11ª\x81¾ã>\x8az)Uù\x14æ!Q\x18\x9eJ;\x86KLU\x9dÅH)\x04­î\x04ÀÈÑ'õkÊ\x92dW";L{~í2\x13Z\x07<­l´qE\x9c¢\x1c¾\x06\x19,{\x88H~z×\x9bÿÍÿ9Ú_az\x08IT>\x0e³ }L\x13\x96wÍ0Ê$Ï\x081ló8ëV¥\x15zC(\x0bÐ\x14\x1a7{¸;¿dßSi\x0dv\x84Úz\x97\x941ìµñWÙñjãGOØ\x12S\x06±\x8cWØQ«\x9b¾eÅ»(¾×;R$\x92­^Ó\x8aÊË\x9a\x08}à*¯P¿QO0\x99ÆÉçbüíeÙ{\x82\x04\x9f'/\x00\x17\x00\x00\x00\x0d\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00\x10\x00\x0e\x00\x0c\x02h2\x08http/1.1\x00\x12\x00\x00\x00\x1b\x00\x03\x02\x00\x02\x00#\x00\x00\x00[0m" 400 -"}
+{"timestamp":"2025-12-21T15:37:13+0800","level":"ERROR","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:37:13] code 400, message Bad request version ('\x02h2\x08http/1.1ÿ\x01\x00\x01\x00DÍ\x00\x05\x00\x03\x02h2\x00')"}
+{"timestamp":"2025-12-21T15:37:13+0800","level":"INFO","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:37:13] "[31m[1m\x16\x03\x01\x06à\x01\x00\x06Ü\x03\x03Ô&\x14ä&Pû\x88\x16ì\x83\x19\x15E\x95ÅÇ\x1d³G\x86°=\x0eÛÎ¡/ÅÑ\x00÷ TáÀë\x1b"ekõKx\x9a?g\x82æ È÷\x93¨^pg%Úæ\x84\x9d»;\x8e\x00 ÊÊ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06sêê\x00\x00\x00\x0d\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00+\x00\x07\x06ZZ\x03\x04\x03\x03\x00\x1b\x00\x03\x02\x00\x02\x00\x17\x00\x00\x00#\x00\x00\x00-\x00\x02\x01\x01\x00\x10\x00\x0e\x00\x0c\x02h2\x08http/1.1ÿ\x01\x00\x01\x00DÍ\x00\x05\x00\x03\x02h2\x00[0m" 400 -"}
+{"timestamp":"2025-12-21T15:37:15+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 3889a16e-040f-4fbd-b6e2-dfa3a2d6eb55: GET /"}
+{"timestamp":"2025-12-21T15:37:15+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 3889a16e-040f-4fbd-b6e2-dfa3a2d6eb55: 200 (0.036s)"}
+{"timestamp":"2025-12-21T15:37:15+0800","level":"INFO","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:37:15] "GET / HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-21T15:37:15+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 858db330-6455-4f4c-9b6a-3ea544344401: GET /favicon.ico"}
+{"timestamp":"2025-12-21T15:37:15+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 858db330-6455-4f4c-9b6a-3ea544344401: 404 (0.076s)"}
+{"timestamp":"2025-12-21T15:37:15+0800","level":"INFO","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:37:15] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -"}
+{"timestamp":"2025-12-21T15:37:38+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 811df5b2-e745-4d5c-a55d-bf3687474748: GET /"}
+{"timestamp":"2025-12-21T15:37:38+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 811df5b2-e745-4d5c-a55d-bf3687474748: 200 (0.032s)"}
+{"timestamp":"2025-12-21T15:37:38+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [21/Dec/2025 15:37:38] "GET / HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-21T15:37:38+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 0f8c7825-10df-4b5e-a20b-d54d294e1ed6: GET /favicon.ico"}
+{"timestamp":"2025-12-21T15:37:38+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 0f8c7825-10df-4b5e-a20b-d54d294e1ed6: 404 (0.058s)"}
+{"timestamp":"2025-12-21T15:37:38+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [21/Dec/2025 15:37:38] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -"}
+{"timestamp":"2025-12-21T15:38:01+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 5c5ea486-ce25-48cd-ae16-f82556ee7bb7: GET /status"}
+{"timestamp":"2025-12-21T15:38:01+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-21T15:38:02+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-21T15:38:02+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-21T15:38:02+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-21T15:38:02+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 5c5ea486-ce25-48cd-ae16-f82556ee7bb7: 200 (1.045s)"}
+{"timestamp":"2025-12-21T15:38:02+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [21/Dec/2025 15:38:02] "GET /status HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-21T15:41:22+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-21T15:41:22+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 1628)"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-21T15:41:23+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-21T15:41:24+0800","level":"INFO","logger":"werkzeug","message":"[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000"}
+{"timestamp":"2025-12-21T15:41:24+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp":"2025-12-21T15:41:27+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 7033e04b-3b46-474b-b50d-ba5bdeec42fc: GET /"}
+{"timestamp":"2025-12-21T15:41:27+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 7033e04b-3b46-474b-b50d-ba5bdeec42fc: 200 (0.055s)"}
+{"timestamp":"2025-12-21T15:41:27+0800","level":"INFO","logger":"werkzeug","message":"192.168.254.104 - - [21/Dec/2025 15:41:27] "GET / HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-21T15:41:28+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request d1d52091-a3fd-4d59-973b-f63b6534112d: GET /status"}
+{"timestamp":"2025-12-21T15:41:28+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-21T15:41:30+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-21T15:41:30+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-21T15:41:30+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-21T15:41:30+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response d1d52091-a3fd-4d59-973b-f63b6534112d: 200 (1.285s)"}
+{"timestamp":"2025-12-21T15:41:30+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [21/Dec/2025 15:41:30] "GET /status HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-22T14:40:41+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T14:40:42+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T14:40:43+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 5ms"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T14:40:44+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: ML module import error: cannot import name 'ensure_model_loaded' from 'app.services.predict' (D:\floodingnaque\backend\app\services\predict.py)"}
+{"timestamp":"2025-12-22T15:01:42+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T15:01:42+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T15:01:44+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T15:01:45+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T15:01:46+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] ml_model: Model loaded successfully: 4"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 4/5 healthy, 0 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 2086ms"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"WARNING","logger":"app.utils.startup_health","message":"Startup completed with warnings - review configuration"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"WARNING","logger":"app.api.app","message":"Startup completed with warnings: 4/5 healthy, 0 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 14704)"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-22T15:01:47+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-22T15:20:35+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T15:20:35+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T15:20:37+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 567ms"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T15:20:38+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T16:32:37+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T16:32:38+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T16:32:39+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T16:32:41+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: Unexpected error during model check: module 'numpy.random.bit_generator' has no attribute 'SeedlessSequence'"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 1686ms"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T16:32:42+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: Unexpected error during model check: module 'numpy.random.bit_generator' has no attribute 'SeedlessSequence'"}
+{"timestamp":"2025-12-22T16:44:59+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T16:45:00+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T16:45:01+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T16:45:02+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 614ms"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T16:45:03+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T17:13:06+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T17:13:06+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T17:13:08+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T17:13:09+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 746ms"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T17:13:10+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T18:00:07+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T18:00:07+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T18:00:09+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: Unexpected error during model check: module 'numpy.random.bit_generator' has no attribute 'SeedlessSequence'"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 543ms"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T18:00:10+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: Unexpected error during model check: module 'numpy.random.bit_generator' has no attribute 'SeedlessSequence'"}
+{"timestamp":"2025-12-22T18:20:47+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T18:20:47+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T18:20:49+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 1 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 598ms"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T18:20:50+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 1 critical issues:
+  - ml_model: ML stack version mismatch: 1 critical issues"}
+{"timestamp":"2025-12-22T18:36:54+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T18:36:54+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T18:36:56+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T18:36:57+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] ml_model: Model loaded with 1 version warnings"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 841ms"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"WARNING","logger":"app.utils.startup_health","message":"Startup completed with warnings - review configuration"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"WARNING","logger":"app.api.app","message":"Startup completed with warnings: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 19720)"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"werkzeug","message":"[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000"}
+{"timestamp":"2025-12-22T18:36:58+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp":"2025-12-22T18:40:22+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request ef69038f-df01-4d46-9f28-aa26a230001d: GET /"}
+{"timestamp":"2025-12-22T18:40:22+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response ef69038f-df01-4d46-9f28-aa26a230001d: 200 (0.097s)"}
+{"timestamp":"2025-12-22T18:40:22+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [22/Dec/2025 18:40:22] "GET / HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-22T18:40:22+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request aec8ea90-3885-4ea6-a8cf-63271d0cffda: GET /favicon.ico"}
+{"timestamp":"2025-12-22T18:40:22+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response aec8ea90-3885-4ea6-a8cf-63271d0cffda: 404 (0.027s)"}
+{"timestamp":"2025-12-22T18:40:22+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [22/Dec/2025 18:40:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -"}
+{"timestamp":"2025-12-22T18:41:00+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 589ad0c9-188b-4fbf-88f1-4d0aa1df33eb: GET /health"}
+{"timestamp":"2025-12-22T18:41:02+0800","level":"INFO","logger":"app.utils.cache","message":"Redis caching enabled: redis-11050.c53.west-us.azure.cloud.redislabs.com:11050"}
+{"timestamp":"2025-12-22T18:41:03+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 589ad0c9-188b-4fbf-88f1-4d0aa1df33eb: 200 (2.828s)"}
+{"timestamp":"2025-12-22T18:41:03+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [22/Dec/2025 18:41:03] "GET /health HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-22T18:45:10+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request 3d742e2a-27e0-4f8f-ab26-35f6f8df1749: GET /health"}
+{"timestamp":"2025-12-22T18:45:11+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Response 3d742e2a-27e0-4f8f-ab26-35f6f8df1749: 200 (0.430s)"}
+{"timestamp":"2025-12-22T18:45:11+0800","level":"INFO","logger":"werkzeug","message":"127.0.0.1 - - [22/Dec/2025 18:45:11] "GET /health HTTP/1.1" 200 -"}
+{"timestamp":"2025-12-22T19:32:28+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T19:32:28+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T19:32:31+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, api_requests, webhooks"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T19:32:32+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T19:32:33+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-22T19:32:33+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-22T19:32:33+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-22T19:32:33+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] ml_model: Model loaded with 1 version warnings"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 1378ms"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"WARNING","logger":"app.utils.startup_health","message":"Startup completed with warnings - review configuration"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"WARNING","logger":"app.api.app","message":"Startup completed with warnings: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 11056)"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"werkzeug","message":"[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000"}
+{"timestamp":"2025-12-22T19:32:34+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp":"2025-12-22T20:14:35+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T20:15:53+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T20:15:53+0800","level":"WARNING","logger":"app.services.worldtides_service","message":"WorldTidesService disabled - no WORLDTIDES_API_KEY configured"}
+{"timestamp":"2025-12-22T20:15:59+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T20:23:16+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T20:24:23+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T22:52:17+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T22:52:17+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T22:52:19+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, satellite_weather_cache, tide_data_cache, api_requests, earth_engine_requests, webhooks"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T22:52:21+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"WARNING","logger":"app.services.predict","message":"Could not load model for info: Model file not found: models\flood_rf_model.joblib. Please train the model first using train.py"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] model_directory: No .joblib model files found"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"ERROR","logger":"app.utils.startup_health","message":"  [FAIL] ml_model: Failed to load ML model: Model could not be loaded"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 2/5 healthy, 2 critical failures, 1 warnings"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 1992ms"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"ERROR","logger":"app.utils.startup_health","message":"STARTUP VALIDATION FAILED - Application may not function correctly"}
+{"timestamp":"2025-12-22T22:52:23+0800","level":"CRITICAL","logger":"app.api.app","message":"CRITICAL: Application startup blocked - Startup health validation failed with 2 critical issues:
+  - model_directory: No .joblib model files found
+  - ml_model: Failed to load ML model: Model could not be loaded"}
+{"timestamp":"2025-12-22T23:03:00+0800","level":"INFO","logger":"app.utils.rate_limit_tiers","message":"Rate limiting tier configuration is valid"}
+{"timestamp":"2025-12-22T23:03:00+0800","level":"INFO","logger":"app.services.celery_app","message":"Celery tasks module loaded"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.core.config","message":"Loading environment from: .env.production"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.app","message":"Response compression enabled"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.app","message":"CORS configured for: ['https://floodingnaque.vercel.app', 'https://floodingnaque.tech', 'https://www.floodingnaque.tech']"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.middleware.rate_limit","message":"Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.app","message":"Rate limiting enabled"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.middleware.security","message":"Security headers middleware enabled"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.middleware.logging","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T23:03:03+0800","level":"INFO","logger":"app.api.middleware.request_logger","message":"Request logging middleware enabled"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.utils.sentry","message":"Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.api.app","message":"Sentry error tracking initialized"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.utils.metrics","message":"Prometheus metrics enabled at /metrics"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.models.db","message":"Database tables initialized successfully"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.models.db","message":"Created tables: weather_data, predictions, alert_history, model_registry, satellite_weather_cache, tide_data_cache, api_requests, earth_engine_requests, webhooks"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.api.app","message":"Database initialized"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.api.app","message":"All blueprints registered"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"INFO","logger":"app.api.routes.graphql","message":"GraphQL endpoint initialized at /graphql"}
+{"timestamp":"2025-12-22T23:03:04+0800","level":"WARNING","logger":"app.services.predict","message":"No checksum in metadata for models\flood_rf_model.joblib. Consider re-training with checksum enabled."}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.services.predict","message":"Model loaded successfully from models\flood_rf_model.joblib"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.services.predict","message":"Model version: 4"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.services.predict","message":"Model checksum: b4b63b1b867c3f53..."}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"STARTUP HEALTH VALIDATION"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] environment_variables: Some recommended variables not set: RATE_LIMIT_STORAGE_URL, OPENWEATHERMAP_API_KEY"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] model_directory: Found 11 model file(s)"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"WARNING","logger":"app.utils.startup_health","message":"  [WARN] ml_model: Model loaded with 1 version warnings"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [OK] database: Database connection successful"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"  [SKIP] redis: Redis not configured (using memory storage)"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"------------------------------------------------------------"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"Summary: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"Total validation time: 1092ms"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.utils.startup_health","message":"============================================================"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"WARNING","logger":"app.utils.startup_health","message":"Startup completed with warnings - review configuration"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"WARNING","logger":"app.api.app","message":"Startup completed with warnings: 3/5 healthy, 0 critical failures, 2 warnings"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.api.app","message":"Floodingnaque API initialized - Environment: production"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.api.app","message":"Debug mode: False"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.services.scheduler","message":"Acquired scheduler lock (PID: 8788)"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Adding job tentatively -- it will be properly scheduled when the scheduler starts"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.services.scheduler","message":"Scheduler initialized with ingestion interval: 1 hour(s)"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Added job "Weather Data Ingestion" to job store "default""}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"apscheduler.scheduler","message":"Scheduler started"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.services.scheduler","message":"Background scheduler started successfully."}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"app.api.app","message":"Background scheduler started"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"werkzeug","message":"[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.254.104:5000"}
+{"timestamp":"2025-12-22T23:03:05+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}

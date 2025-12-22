@@ -8,6 +8,11 @@ Alerts are persisted to database to prevent data loss on restart.
 
 import json
 import logging
+import os
+import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from app.services.risk_classifier import format_alert_message, RISK_LEVELS
@@ -190,36 +195,294 @@ class AlertSystem:
     
     def _send_sms(self, recipients: List[str], message: str) -> str:
         """
-        Send SMS notification (placeholder for SMS gateway integration).
+        Send SMS notification via configured SMS provider.
+        
+        Supports:
+        - Semaphore (Philippines - affordable local provider)
+        - Twilio (International)
         
         Args:
-            recipients: List of phone numbers
+            recipients: List of phone numbers (Philippine format: 09XXXXXXXXX or +639XXXXXXXXX)
+            message: Alert message
+        
+        Returns:
+            str: Delivery status ('delivered', 'failed', 'sandbox', 'not_configured')
+        """
+        provider = os.getenv('SMS_PROVIDER', 'semaphore').lower()
+        sandbox_mode = os.getenv('SMS_SANDBOX_MODE', 'True').lower() == 'true'
+        
+        if sandbox_mode:
+            logger.info(f"[SANDBOX] SMS would be sent to {recipients}: {message[:50]}...")
+            return 'sandbox'
+        
+        if provider == 'semaphore':
+            return self._send_sms_semaphore(recipients, message)
+        elif provider == 'twilio':
+            return self._send_sms_twilio(recipients, message)
+        else:
+            logger.warning(f"Unknown SMS provider: {provider}")
+            return 'not_configured'
+    
+    def _send_sms_semaphore(self, recipients: List[str], message: str) -> str:
+        """
+        Send SMS via Semaphore API (Philippines).
+        
+        Semaphore is an affordable SMS gateway for the Philippines.
+        API docs: https://semaphore.co/docs
+        
+        Args:
+            recipients: List of Philippine phone numbers
+            message: Alert message (max 160 chars for 1 credit)
+        
+        Returns:
+            str: Delivery status
+        """
+        api_key = os.getenv('SEMAPHORE_API_KEY')
+        sender_name = os.getenv('SEMAPHORE_SENDER_NAME', 'FloodAlert')
+        
+        if not api_key:
+            logger.error("SEMAPHORE_API_KEY not configured")
+            return 'not_configured'
+        
+        api_url = 'https://api.semaphore.co/api/v4/messages'
+        success_count = 0
+        fail_count = 0
+        
+        for recipient in recipients:
+            # Normalize Philippine phone number format
+            phone = self._normalize_ph_number(recipient)
+            
+            try:
+                payload = {
+                    'apikey': api_key,
+                    'number': phone,
+                    'message': message,
+                    'sendername': sender_name
+                }
+                
+                response = requests.post(api_url, data=payload, timeout=30)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if isinstance(result, list) and len(result) > 0:
+                        logger.info(f"SMS sent to {phone} via Semaphore: {result[0].get('message_id', 'OK')}")
+                        success_count += 1
+                    else:
+                        logger.warning(f"Semaphore response unexpected: {result}")
+                        success_count += 1  # Still count as success if 200
+                else:
+                    logger.error(f"Semaphore SMS failed for {phone}: {response.status_code} - {response.text}")
+                    fail_count += 1
+                    
+            except requests.exceptions.Timeout:
+                logger.error(f"Semaphore SMS timeout for {phone}")
+                fail_count += 1
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Semaphore SMS error for {phone}: {str(e)}")
+                fail_count += 1
+        
+        if fail_count == 0:
+            return 'delivered'
+        elif success_count > 0:
+            return 'partial'
+        else:
+            return 'failed'
+    
+    def _normalize_ph_number(self, phone: str) -> str:
+        """
+        Normalize Philippine phone number to format required by Semaphore.
+        
+        Accepts: 09XXXXXXXXX, +639XXXXXXXXX, 639XXXXXXXXX
+        Returns: 09XXXXXXXXX format
+        """
+        phone = phone.strip().replace(' ', '').replace('-', '')
+        
+        if phone.startswith('+63'):
+            phone = '0' + phone[3:]
+        elif phone.startswith('63'):
+            phone = '0' + phone[2:]
+        elif phone.startswith('9') and len(phone) == 10:
+            phone = '0' + phone
+        
+        return phone
+    
+    def _send_sms_twilio(self, recipients: List[str], message: str) -> str:
+        """
+        Send SMS via Twilio API (International).
+        
+        Args:
+            recipients: List of phone numbers in E.164 format
             message: Alert message
         
         Returns:
             str: Delivery status
         """
-        # TODO: Integrate with SMS gateway (e.g., Twilio, Nexmo, local provider)
-        # For now, log the message
-        logger.info(f"SMS would be sent to {recipients}: {message[:50]}...")
-        return 'not_implemented'
+        account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        from_number = os.getenv('TWILIO_FROM_NUMBER')
+        
+        if not all([account_sid, auth_token, from_number]):
+            logger.error("Twilio credentials not fully configured")
+            return 'not_configured'
+        
+        api_url = f'https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json'
+        success_count = 0
+        fail_count = 0
+        
+        for recipient in recipients:
+            try:
+                payload = {
+                    'To': recipient,
+                    'From': from_number,
+                    'Body': message
+                }
+                
+                response = requests.post(
+                    api_url,
+                    data=payload,
+                    auth=(account_sid, auth_token),
+                    timeout=30
+                )
+                
+                if response.status_code in [200, 201]:
+                    result = response.json()
+                    logger.info(f"SMS sent to {recipient} via Twilio: {result.get('sid', 'OK')}")
+                    success_count += 1
+                else:
+                    logger.error(f"Twilio SMS failed for {recipient}: {response.status_code} - {response.text}")
+                    fail_count += 1
+                    
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Twilio SMS error for {recipient}: {str(e)}")
+                fail_count += 1
+        
+        if fail_count == 0:
+            return 'delivered'
+        elif success_count > 0:
+            return 'partial'
+        else:
+            return 'failed'
     
     def _send_email(self, recipients: List[str], subject: str, message: str) -> str:
         """
-        Send email notification (placeholder for SMTP integration).
+        Send email notification via SMTP (Brevo/SendGrid/other).
         
         Args:
             recipients: List of email addresses
-            subject: Email subject
+            subject: Email subject (risk label)
             message: Alert message
         
         Returns:
-            str: Delivery status
+            str: Delivery status ('delivered', 'failed', 'sandbox', 'not_configured')
         """
-        # TODO: Integrate with SMTP server
-        # For now, log the message
-        logger.info(f"Email would be sent to {recipients}: {subject}")
-        return 'not_implemented'
+        sandbox_mode = os.getenv('EMAIL_SANDBOX_MODE', 'True').lower() == 'true'
+        
+        if sandbox_mode:
+            logger.info(f"[SANDBOX] Email would be sent to {recipients}: {subject}")
+            return 'sandbox'
+        
+        # Get SMTP configuration
+        smtp_host = os.getenv('SMTP_HOST')
+        smtp_port = int(os.getenv('SMTP_PORT', '587'))
+        smtp_username = os.getenv('SMTP_USERNAME')
+        smtp_password = os.getenv('SMTP_PASSWORD')
+        smtp_from = os.getenv('SMTP_FROM_EMAIL', 'alerts@floodingnaque.com')
+        use_tls = os.getenv('SMTP_USE_TLS', 'True').lower() == 'true'
+        
+        if not all([smtp_host, smtp_username, smtp_password]):
+            logger.error("SMTP credentials not fully configured")
+            return 'not_configured'
+        
+        success_count = 0
+        fail_count = 0
+        
+        for recipient in recipients:
+            try:
+                # Create email message
+                msg = MIMEMultipart('alternative')
+                msg['Subject'] = f"[Floodingnaque Alert] {subject}"
+                msg['From'] = smtp_from
+                msg['To'] = recipient
+                
+                # Plain text version
+                text_part = MIMEText(message, 'plain', 'utf-8')
+                msg.attach(text_part)
+                
+                # HTML version with styling
+                html_message = self._format_html_email(subject, message)
+                html_part = MIMEText(html_message, 'html', 'utf-8')
+                msg.attach(html_part)
+                
+                # Connect and send
+                with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+                    if use_tls:
+                        server.starttls()
+                    server.login(smtp_username, smtp_password)
+                    server.sendmail(smtp_from, recipient, msg.as_string())
+                
+                logger.info(f"Email sent to {recipient}: {subject}")
+                success_count += 1
+                
+            except smtplib.SMTPAuthenticationError as e:
+                logger.error(f"SMTP authentication failed: {str(e)}")
+                fail_count += 1
+            except smtplib.SMTPException as e:
+                logger.error(f"SMTP error for {recipient}: {str(e)}")
+                fail_count += 1
+            except Exception as e:
+                logger.error(f"Email error for {recipient}: {str(e)}")
+                fail_count += 1
+        
+        if fail_count == 0:
+            return 'delivered'
+        elif success_count > 0:
+            return 'partial'
+        else:
+            return 'failed'
+    
+    def _format_html_email(self, risk_label: str, message: str) -> str:
+        """
+        Format alert message as HTML email.
+        
+        Args:
+            risk_label: Risk level label (Safe, Alert, Critical)
+            message: Plain text message
+        
+        Returns:
+            str: HTML formatted email
+        """
+        # Determine color based on risk level
+        color_map = {
+            'Safe': '#28a745',
+            'Alert': '#ffc107', 
+            'Critical': '#dc3545'
+        }
+        color = color_map.get(risk_label, '#6c757d')
+        
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="background-color: {color}; color: white; padding: 20px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px;">Flood Risk Alert: {risk_label}</h1>
+                </div>
+                <div style="padding: 20px;">
+                    <pre style="white-space: pre-wrap; font-family: Arial, sans-serif; line-height: 1.6; margin: 0;">{message}</pre>
+                </div>
+                <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d;">
+                    <p style="margin: 0;">Floodingnaque Early Warning System</p>
+                    <p style="margin: 5px 0 0 0;">Parañaque City, Philippines</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return html
     
     def get_alert_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent alert history from database."""

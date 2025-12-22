@@ -7,10 +7,10 @@ Supports multiple backends (memory, Redis) and API key-based limits.
 
 from app.utils.logging import get_logger
 from app.utils.rate_limit_tiers import get_rate_limit_for_key, get_anonymous_limits
+from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask import request, g
+from flask import request, g, has_request_context
 import os
-import logging
 
 logger = get_logger(__name__)
 
@@ -143,31 +143,35 @@ ENDPOINT_LIMITS = {
 }
 
 
-def get_endpoint_limit(endpoint_name):
+def get_endpoint_limit(endpoint_name, *, as_callable: bool = True):
     """
-    Get the rate limit string for a specific endpoint.
-    
-    Returns dynamic limits based on API key tier or anonymous limits.
-    
-    Args:
-        endpoint_name: Name of the endpoint
-    
-    Returns:
-        str: Rate limit string for the endpoint
+    Get the rate limit for an endpoint.
+
+    Returns a callable (default) so Flask-Limiter evaluates within a request
+    context. When a plain string is needed (e.g., for introspection), set
+    as_callable=False.
     """
-    # Check if authenticated with API key
-    api_key_hash = getattr(g, 'api_key_hash', None)
-    
-    if api_key_hash:
-        # Get tier-based limits for authenticated users
-        try:
-            return get_rate_limit_for_key(api_key_hash, 'per_minute')
-        except Exception:
-            # Fallback to default if tier system fails
-            return ENDPOINT_LIMITS.get(f"{endpoint_name}_auth", f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds")
-    else:
-        # Anonymous user limits
+
+    def _resolve_limit():
+        # If no request context (module import), fall back to default limit
+        if not has_request_context():
+            return ENDPOINT_LIMITS.get(
+                f"{endpoint_name}_auth", f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds"
+            )
+
+        api_key_hash = getattr(g, 'api_key_hash', None)
+
+        if api_key_hash:
+            try:
+                return get_rate_limit_for_key(api_key_hash, 'per_minute')
+            except Exception:
+                return ENDPOINT_LIMITS.get(
+                    f"{endpoint_name}_auth", f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds"
+                )
+
         return get_anonymous_limits()
+
+    return _resolve_limit if as_callable else _resolve_limit()
 
 
 def get_current_rate_limit_info():

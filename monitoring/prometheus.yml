@@ -1,0 +1,42 @@
+# =====================================================
+# Prometheus Configuration for Floodingnaque
+# =====================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'floodingnaque-monitor'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Rule files (optional)
+# rule_files:
+#   - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Floodingnaque Backend API
+  - job_name: 'floodingnaque-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['backend:5000']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'floodingnaque-api'
+
+  # Redis (if redis_exporter is enabled)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']

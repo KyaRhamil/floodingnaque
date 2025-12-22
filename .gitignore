@@ -165,3 +165,26 @@ evaluation_results/
 # Temporary files
 tmp/
 temp/
+
+# ===================
+# Google Cloud Credentials (NEVER commit these!)
+# ===================
+# OAuth credentials
+google_oauth_credentials.json
+client_secret*.json
+*-oauth-*.json
+
+# Service account keys
+*-service-account.json
+*-sa-key.json
+floodingnaque-googe-cloud-*.json
+floodingnaque-google-cloud-*.json
+*.iam.gserviceaccount.com.json
+backend/*-service-account*.json
+backend/floodingnaque-*.json
+backend/google_oauth*.json
+
+# Earth Engine credentials
+.ee-credentials
+ee-credentials.json
+earthengine-*.json

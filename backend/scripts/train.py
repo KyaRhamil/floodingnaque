@@ -431,6 +431,15 @@ def train_model(version=None, models_dir='models', data_file='data/synthetic_dat
         X = data.drop('flood', axis=1)
         y = data['flood']
         
+        # Keep only numeric columns for training (drop non-numeric columns like weather_type, etc.)
+        non_numeric_cols = X.select_dtypes(include=['object', 'category']).columns.tolist()
+        if non_numeric_cols:
+            logger.info(f"Dropping non-numeric columns: {non_numeric_cols}")
+            X = X.drop(columns=non_numeric_cols)
+        
+        # Ensure all features are numeric
+        X = X.select_dtypes(include=[np.number])
+        
         # Store data info for metadata
         data_info = {
             'file': data_file,

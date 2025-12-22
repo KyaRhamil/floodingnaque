@@ -6,7 +6,7 @@ Provides GraphQL endpoint behind feature flag.
 
 import os
 from flask import Blueprint, request, jsonify, g
-from flask_graphql import GraphQLView
+from graphql import graphql_sync
 from app.utils.api_responses import api_error
 from app.utils.api_constants import HTTP_BAD_REQUEST, HTTP_SERVICE_UNAVAILABLE
 from app.utils.logging import get_logger
@@ -16,6 +16,30 @@ from app.api.graphql.schema import get_graphql_schema, GRAPHQL_ENABLED
 logger = get_logger(__name__)
 
 graphql_bp = Blueprint('graphql', __name__)
+
+# GraphiQL HTML template for interactive IDE
+GRAPHIQL_HTML = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GraphiQL - Floodingnaque API</title>
+    <link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
+</head>
+<body style="margin: 0;">
+    <div id="graphiql" style="height: 100vh;"></div>
+    <script crossorigin src="https://unpkg.com/react/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/graphiql/graphiql.min.js"></script>
+    <script>
+        const fetcher = GraphiQL.createFetcher({ url: '/graphql' });
+        ReactDOM.render(
+            React.createElement(GraphiQL, { fetcher: fetcher }),
+            document.getElementById('graphiql'),
+        );
+    </script>
+</body>
+</html>
+'''
 
 
 def init_graphql_route(app):
@@ -35,34 +59,42 @@ def init_graphql_route(app):
             logger.error("GraphQL schema is not available")
             return
         
-        # Add GraphQL endpoint
-        app.add_url_rule(
-            '/graphql',
-            view_func=GraphQLView.as_view(
-                'graphql',
-                schema=schema,
-                graphiql=True,  # Enable GraphiQL IDE in development
-                context={'session': {}}
-            ),
-            methods=['GET', 'POST']
-        )
-        
-        # Add GraphQL endpoint without GraphiQL for production
-        app.add_url_rule(
-            '/graphql/raw',
-            view_func=GraphQLView.as_view(
-                'graphql_raw',
-                schema=schema,
-                graphiql=False,
-                context={'session': {}}
-            ),
-            methods=['POST']
-        )
+        @app.route('/graphql', methods=['GET', 'POST'])
+        def graphql_endpoint():
+            """Handle GraphQL requests."""
+            # Return GraphiQL IDE for GET requests
+            if request.method == 'GET':
+                return GRAPHIQL_HTML, 200, {'Content-Type': 'text/html'}
+            
+            # Handle POST requests with GraphQL queries
+            data = request.get_json()
+            if not data:
+                return jsonify({'errors': [{'message': 'No GraphQL query provided'}]}), 400
+            
+            query = data.get('query', '')
+            variables = data.get('variables')
+            operation_name = data.get('operationName')
+            
+            result = graphql_sync(
+                schema,
+                query,
+                variable_values=variables,
+                operation_name=operation_name,
+                context_value={'request': request}
+            )
+            
+            response = {}
+            if result.data:
+                response['data'] = result.data
+            if result.errors:
+                response['errors'] = [{'message': str(e)} for e in result.errors]
+            
+            return jsonify(response)
         
         logger.info("GraphQL endpoint initialized at /graphql")
         
-    except ImportError:
-        logger.warning("Flask-GraphQL not installed - GraphQL endpoint not available")
+    except ImportError as e:
+        logger.warning(f"GraphQL dependencies not available: {e}")
     except Exception as e:
         logger.error(f"Failed to initialize GraphQL: {str(e)}")
 

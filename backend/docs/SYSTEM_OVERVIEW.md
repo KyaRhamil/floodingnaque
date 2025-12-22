@@ -46,14 +46,11 @@
 │                      MODEL STORAGE                                   │
 ├─────────────────────────────────────────────────────────────────────┤
 │  models/                                                            │
-│  ├── flood_rf_model_v1.joblib  ← Version 1                         │
-│  ├── flood_rf_model_v1.json    ← Metadata                          │
-│  ├── flood_rf_model_v2.joblib  ← Version 2                         │
-│  ├── flood_rf_model_v2.json    ← Metadata                          │
-│  ├── flood_rf_model_v3.joblib  ← Version 3                         │
-│  ├── flood_rf_model_v3.json    ← Metadata                          │
+│  ├── flood_rf_model_v*.joblib  ← Standard Random Forest models     │
+│  ├── flood_enhanced_v*.joblib  ← Enhanced models (official data)   │
+│  ├── flood_multilevel_v*.joblib ← Multi-level classification       │
 │  ├── flood_rf_model.joblib     ← Latest (symlink-like)             │
-│  └── flood_rf_model.json       ← Latest metadata                   │
+│  └── *.json                    ← Model metadata files              │
 └────────────────────────┬────────────────────────────────────────────┘
                          │
                          ▼

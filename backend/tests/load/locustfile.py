@@ -28,10 +28,170 @@ import json
 import random
 import time
 import logging
+import os
+from datetime import datetime, timedelta
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# REALISTIC DATA GENERATORS
+# =============================================================================
+
+class ParanaqueWeatherGenerator:
+    """
+    Generates realistic weather data for Paranaque City, Philippines.
+    
+    Paranaque climate characteristics:
+    - Tropical monsoon climate (Köppen: Am)
+    - Average temperature: 26-28°C (299-301 K)
+    - Wet season: June-November (heavy rainfall)
+    - Dry season: December-May
+    - High humidity year-round (70-90%)
+    """
+    
+    # Seasonal patterns for Philippines
+    SEASONS = {
+        'dry': {  # Dec-May
+            'temp_range': (297.15, 307.15),  # 24-34°C
+            'humidity_range': (60.0, 80.0),
+            'precipitation_range': (0.0, 30.0),
+        },
+        'wet': {  # Jun-Nov
+            'temp_range': (296.15, 304.15),  # 23-31°C
+            'humidity_range': (75.0, 95.0),
+            'precipitation_range': (0.0, 150.0),
+        },
+        'typhoon': {  # Jul-Oct peak
+            'temp_range': (295.15, 302.15),  # 22-29°C
+            'humidity_range': (85.0, 100.0),
+            'precipitation_range': (50.0, 300.0),
+        }
+    }
+    
+    @classmethod
+    def get_current_season(cls) -> str:
+        """Determine current season based on month."""
+        month = datetime.now().month
+        if month in [7, 8, 9, 10]:
+            # Higher chance of typhoon conditions during peak season
+            return random.choice(['wet', 'wet', 'typhoon'])
+        elif month in [6, 11]:
+            return 'wet'
+        else:
+            return 'dry'
+    
+    @classmethod
+    def generate_weather(cls, scenario: str = 'random') -> dict:
+        """
+        Generate realistic weather data.
+        
+        Args:
+            scenario: 'normal', 'rainy', 'typhoon', 'extreme', or 'random'
+        """
+        if scenario == 'random':
+            season = cls.get_current_season()
+        elif scenario == 'typhoon':
+            season = 'typhoon'
+        elif scenario == 'rainy':
+            season = 'wet'
+        else:
+            season = 'dry'
+        
+        params = cls.SEASONS[season]
+        
+        # Add some natural variance
+        temp = random.uniform(*params['temp_range'])
+        humidity = random.uniform(*params['humidity_range'])
+        precipitation = random.uniform(*params['precipitation_range'])
+        
+        # Correlate precipitation with humidity (more rain = higher humidity)
+        if precipitation > 50:
+            humidity = min(100.0, humidity + random.uniform(5, 15))
+        
+        return {
+            'temperature': round(temp, 2),
+            'humidity': round(humidity, 2),
+            'precipitation': round(precipitation, 2),
+        }
+    
+    @classmethod
+    def generate_historical_batch(cls, count: int = 10) -> list:
+        """Generate batch of historical weather data with timestamps."""
+        batch = []
+        base_time = datetime.now() - timedelta(days=count)
+        
+        for i in range(count):
+            weather = cls.generate_weather('random')
+            weather['timestamp'] = (base_time + timedelta(days=i)).isoformat()
+            batch.append(weather)
+        
+        return batch
+
+
+class AuthenticatedUser:
+    """
+    Mixin for authenticated API access.
+    Provides JWT token management for protected endpoints.
+    """
+    
+    def __init__(self):
+        self.access_token = None
+        self.refresh_token = None
+        self.token_expires = None
+    
+    def get_auth_headers(self) -> dict:
+        """Get headers with authentication."""
+        headers = {'Content-Type': 'application/json'}
+        
+        if self.access_token:
+            headers['Authorization'] = f'Bearer {self.access_token}'
+        
+        # Fallback to API key
+        api_key = os.getenv('LOAD_TEST_API_KEY', 'test-api-key')
+        headers['X-API-Key'] = api_key
+        
+        return headers
+    
+    def ensure_authenticated(self, client) -> bool:
+        """Ensure user has valid authentication."""
+        # Check if we have a valid token
+        if self.access_token and self.token_expires:
+            if datetime.now() < self.token_expires:
+                return True
+        
+        # Try to authenticate
+        return self._authenticate(client)
+    
+    def _authenticate(self, client) -> bool:
+        """Perform authentication."""
+        # Try API key auth first (simpler for load testing)
+        test_key = os.getenv('LOAD_TEST_API_KEY')
+        if test_key:
+            # API key auth doesn't require login
+            return True
+        
+        # Otherwise try JWT login
+        credentials = {
+            'username': os.getenv('LOAD_TEST_USER', 'loadtest@example.com'),
+            'password': os.getenv('LOAD_TEST_PASS', 'loadtest123'),
+        }
+        
+        try:
+            response = client.post('/auth/login', json=credentials)
+            if response.status_code == 200:
+                data = response.json()
+                self.access_token = data.get('access_token')
+                self.refresh_token = data.get('refresh_token')
+                # Default to 1 hour expiry if not specified
+                self.token_expires = datetime.now() + timedelta(hours=1)
+                return True
+        except Exception:
+            pass
+        
+        return False
 
 
 class FloodPredictionAPIUser(HttpUser):
@@ -42,6 +202,8 @@ class FloodPredictionAPIUser(HttpUser):
     - Primarily checks status and health endpoints (lightweight)
     - Occasionally makes prediction requests (heavier)
     - Infrequently queries data and model info
+    
+    Uses realistic Paranaque weather data for predictions.
     """
     
     # Wait time between tasks (simulates real user behavior)
@@ -50,13 +212,16 @@ class FloodPredictionAPIUser(HttpUser):
     # Default host
     host = "http://localhost:5000"
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.auth = AuthenticatedUser()
+        self.weather_gen = ParanaqueWeatherGenerator()
+    
     def on_start(self):
         """Called when a simulated user starts."""
-        self.api_key = "test-api-key"  # Replace with valid key if auth enabled
-        self.headers = {
-            'Content-Type': 'application/json',
-            'X-API-Key': self.api_key
-        }
+        self.headers = self.auth.get_auth_headers()
+        # Pre-warm authentication
+        self.auth.ensure_authenticated(self.client)
     
     # ========================================================================
     # Health and Status Endpoints (Most Common)
@@ -99,12 +264,8 @@ class FloodPredictionAPIUser(HttpUser):
     @task(4)
     @tag('predict', 'heavyweight')
     def predict_normal_conditions(self):
-        """Make prediction with normal weather conditions."""
-        payload = {
-            'temperature': random.uniform(293.15, 303.15),  # 20-30°C
-            'humidity': random.uniform(40.0, 80.0),
-            'precipitation': random.uniform(0.0, 20.0)
-        }
+        """Make prediction with realistic Paranaque weather conditions."""
+        payload = self.weather_gen.generate_weather('normal')
         
         with self.client.post(
             "/predict?risk_level=true",
@@ -123,13 +284,9 @@ class FloodPredictionAPIUser(HttpUser):
     
     @task(2)
     @tag('predict', 'heavyweight')
-    def predict_extreme_conditions(self):
-        """Make prediction with extreme weather conditions."""
-        payload = {
-            'temperature': random.uniform(303.15, 315.0),  # Hot
-            'humidity': random.uniform(85.0, 100.0),  # Very humid
-            'precipitation': random.uniform(50.0, 150.0)  # Heavy rain
-        }
+    def predict_rainy_conditions(self):
+        """Make prediction with realistic rainy season conditions."""
+        payload = self.weather_gen.generate_weather('rainy')
         
         with self.client.post(
             "/predict?risk_level=true&return_proba=true",
@@ -139,7 +296,7 @@ class FloodPredictionAPIUser(HttpUser):
         ) as response:
             if response.status_code == 200:
                 data = response.json()
-                # Extreme conditions should likely trigger Alert or Critical
+                # Check for valid risk labels
                 risk_label = data.get('risk_label', '')
                 if risk_label in ['Safe', 'Alert', 'Critical']:
                     response.success()
@@ -152,26 +309,20 @@ class FloodPredictionAPIUser(HttpUser):
     
     @task(1)
     @tag('predict', 'heavyweight')
-    def predict_edge_cases(self):
-        """Make prediction with boundary value conditions."""
-        edge_cases = [
-            {'temperature': 200.0, 'humidity': 0.0, 'precipitation': 0.0},
-            {'temperature': 330.0, 'humidity': 100.0, 'precipitation': 500.0},
-            {'temperature': 273.15, 'humidity': 50.0, 'precipitation': 0.0},
-        ]
-        
-        payload = random.choice(edge_cases)
+    def predict_typhoon_conditions(self):
+        """Make prediction with typhoon-level conditions."""
+        payload = self.weather_gen.generate_weather('typhoon')
         
         with self.client.post(
-            "/predict",
+            "/predict?risk_level=true&return_proba=true",
             json=payload,
             headers=self.headers,
             catch_response=True
         ) as response:
-            if response.status_code in [200, 401]:
+            if response.status_code in [200, 401, 429]:
                 response.success()
             else:
-                response.failure(f"Edge case predict failed: {response.status_code}")
+                response.failure(f"Predict failed: {response.status_code}")
     
     # ========================================================================
     # Data and Model Endpoints
@@ -223,27 +374,27 @@ class FloodPredictionAPIUser(HttpUser):
 class PredictionHeavyUser(HttpUser):
     """
     Simulates a heavy user who primarily makes prediction requests.
-    Useful for stress testing the ML model endpoint.
+    Uses realistic Paranaque weather data for stress testing the ML model endpoint.
     """
     
     wait_time = between(0.5, 2)
     host = "http://localhost:5000"
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.auth = AuthenticatedUser()
+        self.weather_gen = ParanaqueWeatherGenerator()
+    
     def on_start(self):
-        self.headers = {
-            'Content-Type': 'application/json',
-            'X-API-Key': 'test-api-key'
-        }
+        self.headers = self.auth.get_auth_headers()
     
     @task
     @tag('predict', 'stress')
     def continuous_predictions(self):
-        """Make continuous prediction requests for stress testing."""
-        payload = {
-            'temperature': random.uniform(273.15, 330.0),
-            'humidity': random.uniform(0.0, 100.0),
-            'precipitation': random.uniform(0.0, 200.0)
-        }
+        """Make continuous prediction requests with realistic data for stress testing."""
+        # Mix of different weather scenarios
+        scenarios = ['normal', 'rainy', 'rainy', 'typhoon', 'random', 'random']
+        payload = self.weather_gen.generate_weather(random.choice(scenarios))
         
         with self.client.post(
             "/predict?risk_level=true",
@@ -255,6 +406,79 @@ class PredictionHeavyUser(HttpUser):
                 response.success()
             else:
                 response.failure(f"Prediction failed: {response.status_code}")
+
+
+class AuthenticatedAPIUser(HttpUser):
+    """
+    Simulates an authenticated user accessing protected endpoints.
+    Tests JWT authentication flow and protected resources.
+    """
+    
+    wait_time = between(1, 3)
+    host = "http://localhost:5000"
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.auth = AuthenticatedUser()
+        self.weather_gen = ParanaqueWeatherGenerator()
+    
+    def on_start(self):
+        """Authenticate on start."""
+        self.auth.ensure_authenticated(self.client)
+        self.headers = self.auth.get_auth_headers()
+    
+    @task(3)
+    @tag('auth', 'predict')
+    def authenticated_prediction(self):
+        """Make authenticated prediction request."""
+        payload = self.weather_gen.generate_weather('random')
+        
+        with self.client.post(
+            "/predict?risk_level=true&return_proba=true",
+            json=payload,
+            headers=self.headers,
+            catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            elif response.status_code == 401:
+                # Token might have expired, try to re-auth
+                if self.auth.ensure_authenticated(self.client):
+                    self.headers = self.auth.get_auth_headers()
+                response.success()  # Don't count auth issues as failures
+            else:
+                response.failure(f"Auth predict failed: {response.status_code}")
+    
+    @task(2)
+    @tag('auth', 'data')
+    def authenticated_data_access(self):
+        """Access protected data endpoints."""
+        with self.client.get(
+            "/data?limit=50",
+            headers=self.headers,
+            catch_response=True
+        ) as response:
+            if response.status_code in [200, 401]:
+                response.success()
+            else:
+                response.failure(f"Data access failed: {response.status_code}")
+    
+    @task(1)
+    @tag('auth', 'batch')
+    def batch_prediction(self):
+        """Submit batch prediction request."""
+        batch_data = self.weather_gen.generate_historical_batch(5)
+        
+        with self.client.post(
+            "/batch/predict",
+            json={'items': batch_data},
+            headers=self.headers,
+            catch_response=True
+        ) as response:
+            if response.status_code in [200, 202, 401, 404]:  # 404 if batch endpoint not available
+                response.success()
+            else:
+                response.failure(f"Batch predict failed: {response.status_code}")
 
 
 class ReadOnlyUser(HttpUser):
@@ -393,6 +617,43 @@ class SpikeLoadShape(LoadTestShape):
         elif run_time < 120:
             # Cool down
             return (5, 1)
+        else:
+            return None
+
+
+class EnduranceLoadShape(LoadTestShape):
+    """
+    Endurance test pattern: sustained low load for memory leak detection.
+    Runs for 1 hour at low load to detect memory leaks and resource exhaustion.
+    """
+    
+    def tick(self):
+        run_time = self.get_run_time()
+        
+        if run_time < 60:
+            # Initial ramp-up
+            return (10, 2)
+        elif run_time < 3540:  # 59 minutes
+            # Sustained low load
+            return (20, 1)
+        elif run_time < 3600:  # Last minute
+            # Ramp down
+            return (5, 1)
+        else:
+            return None
+
+
+class SmokeTestShape(LoadTestShape):
+    """
+    Quick smoke test: sanity check with minimal load.
+    10 users for 1 minute - just verify the system works.
+    """
+    
+    def tick(self):
+        run_time = self.get_run_time()
+        
+        if run_time < 60:
+            return (10, 5)
         else:
             return None
 

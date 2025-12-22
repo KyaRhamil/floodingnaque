@@ -4,6 +4,77 @@
 
 The backend is fully implemented and ready for frontend integration.
 
+## ⚠️ Frontend Status: SCAFFOLDING ONLY (As of Dec 2024)
+
+The frontend folder contains **empty directory structures** with no implementation files yet.
+
+### Existing Folder Structure
+
+```
+frontend/
+└── src/
+    ├── public/              (empty)
+    ├── scripts/             (empty)
+    └── app/
+        ├── admin/           (empty)
+        ├── assets/fonts|icons|images/  (empty)
+        ├── components/charts|feedback|map|tables|ui/  (empty)
+        ├── config/          (empty)
+        ├── features/
+        │   ├── auth/        (empty - components/hooks/services)
+        │   ├── flooding/    (empty - components/hooks/services/utils)
+        │   ├── reports/     (empty - components/hooks/services)
+        │   └── settings/    (empty - components/hooks/services)
+        ├── hooks/           (empty)
+        ├── lib/             (empty)
+        ├── map/             (empty)
+        ├── reports/         (empty)
+        ├── state/stores/    (empty)
+        ├── styles/          (empty)
+        ├── tests/e2e|integration|unit/  (empty)
+        └── types/api|domain/  (empty)
+```
+
+### Required Setup Files (Not Yet Created)
+
+| File | Purpose | Priority |
+|------|---------|----------|
+| `frontend/package.json` | Dependencies & scripts | 🔴 Critical |
+| `frontend/tsconfig.json` | TypeScript configuration | 🔴 Critical |
+| `frontend/vite.config.ts` | Build configuration (if using Vite) | 🔴 Critical |
+| `frontend/index.html` | HTML entry point | 🔴 Critical |
+| `frontend/src/main.tsx` | App entry point | 🔴 Critical |
+| `frontend/src/App.tsx` | Root component | 🔴 Critical |
+| `frontend/.env.example` | Environment variables template | 🟡 High |
+| `frontend/.eslintrc.js` | Linting rules | 🟡 High |
+| `frontend/tailwind.config.js` | Styling (if using Tailwind) | 🟢 Medium |
+
+### Recommended Tech Stack
+
+- **Framework**: React 18+ with TypeScript or Next.js 14+
+- **Build Tool**: Vite
+- **State Management**: Zustand or TanStack Query (React Query)
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Maps**: Leaflet.js for flood visualization (Parañaque City)
+- **Charts**: Recharts for weather/prediction data visualization
+- **HTTP Client**: Axios or native fetch with React Query
+
+### Implementation Priority
+
+| Order | Feature | Target Folder |
+|-------|---------|---------------|
+| 1️⃣ | Project setup & configs | `frontend/` root |
+| 2️⃣ | API types & client | `types/api/`, `lib/` |
+| 3️⃣ | UI components | `components/ui/` |
+| 4️⃣ | Authentication | `features/auth/` |
+| 5️⃣ | Flood prediction form | `features/flooding/` |
+| 6️⃣ | Map visualization | `components/map/` |
+| 7️⃣ | Charts & dashboard | `components/charts/` |
+| 8️⃣ | Historical data tables | `components/tables/` |
+| 9️⃣ | Reports generation | `features/reports/` |
+
+---
+
 ## API Base URL
 
 ```
@@ -206,26 +277,29 @@ curl -X POST http://localhost:5000/predict \
 
 ### Weather Data Record
 ```typescript
+// Location: frontend/src/app/types/api/weather.ts
 interface WeatherData {
   id: number;
   temperature: number;      // Kelvin
   humidity: number;         // Percentage
-  precipitation: number;     // mm
-  timestamp: string;         // ISO datetime
+  precipitation: number;    // mm
+  timestamp: string;        // ISO datetime
 }
 ```
 
 ### Prediction Request
 ```typescript
+// Location: frontend/src/app/types/api/prediction.ts
 interface PredictionRequest {
   temperature: number;      // Required
   humidity: number;         // Required
-  precipitation: number;     // Required
+  precipitation: number;    // Required
 }
 ```
 
 ### Prediction Response
 ```typescript
+// Location: frontend/src/app/types/api/prediction.ts
 interface PredictionResponse {
   prediction: 0 | 1;        // 0 = no flood, 1 = flood
   flood_risk: 'low' | 'high';
@@ -233,13 +307,70 @@ interface PredictionResponse {
 }
 ```
 
+### API Response Wrapper
+```typescript
+// Location: frontend/src/app/types/api/common.ts
+interface ApiResponse<T> {
+  data: T;
+  request_id: string;
+}
+
+interface ApiError {
+  error: string;
+  request_id: string;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  request_id: string;
+}
+```
+
+## Environment Variables
+
+Create `frontend/.env.example`:
+```env
+VITE_API_BASE_URL=http://localhost:5000
+VITE_APP_NAME=Floodingnaque
+VITE_MAP_DEFAULT_LAT=14.4793
+VITE_MAP_DEFAULT_LNG=121.0198
+VITE_MAP_DEFAULT_ZOOM=13
+```
+
 ## Next Steps
 
-1. ✅ Backend is complete and tested
-2. ✅ CORS is enabled
-3. ✅ All endpoints are documented
-4. ✅ Error handling is consistent
-5. 🚀 **Ready to build frontend!**
+### Phase 1: Project Initialization
+1. ⬜ Create `frontend/package.json` with dependencies
+2. ⬜ Set up Vite + React + TypeScript
+3. ⬜ Configure Tailwind CSS
+4. ⬜ Create entry point files (`index.html`, `main.tsx`, `App.tsx`)
+
+### Phase 2: Core Infrastructure
+5. ⬜ Define TypeScript types in `types/api/` and `types/domain/`
+6. ⬜ Create API client in `lib/api.ts`
+7. ⬜ Set up React Query for data fetching
+8. ⬜ Build reusable UI components in `components/ui/`
+
+### Phase 3: Features
+9. ⬜ Implement flood prediction form (`features/flooding/`)
+10. ⬜ Add Leaflet map for Parañaque City (`components/map/`)
+11. ⬜ Create weather data charts (`components/charts/`)
+12. ⬜ Build historical data tables (`components/tables/`)
+
+### Phase 4: Polish
+13. ⬜ Add error boundaries and loading states
+14. ⬜ Implement responsive design
+15. ⬜ Write unit tests (`tests/unit/`)
+16. ⬜ Add E2E tests (`tests/e2e/`)
+
+### Backend Status
+- ✅ Backend is complete and tested
+- ✅ CORS is enabled for all origins
+- ✅ All endpoints are documented
+- ✅ Error handling is consistent
 
 ## Support
 

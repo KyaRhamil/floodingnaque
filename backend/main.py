@@ -12,8 +12,12 @@ from pathlib import Path
 app_dir = Path(__file__).parent / 'app'
 sys.path.insert(0, str(app_dir))
 
-from app.api.app import app
+from app.api.app import app, create_app
 from app.core.config import is_debug_mode
+
+# Create app instance for Gunicorn
+# This ensures the app is properly initialized when imported by Gunicorn
+application = create_app()
 
 if __name__ == '__main__':
     # Get configuration from environment
@@ -25,4 +29,4 @@ if __name__ == '__main__':
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         print(f"Starting Floodingnaque API on {host}:{port} (debug={debug})")
     
-    app.run(host=host, port=port, debug=debug)
+    application.run(host=host, port=port, debug=debug)

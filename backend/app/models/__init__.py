@@ -1,1 +1,38 @@
 """Data models and database schemas."""
+from app.models.db import (
+    Base,
+    engine,
+    Session,
+    db_session,
+    get_db_session,
+    init_db,
+    get_pool_status,
+    WeatherData,
+    Prediction,
+    AlertHistory,
+    ModelRegistry,
+    SatelliteWeatherCache,
+    TideDataCache,
+    APIRequest,
+    EarthEngineRequest,
+    Webhook,
+)
+
+__all__ = [
+    'Base',
+    'engine',
+    'Session',
+    'db_session',
+    'get_db_session',
+    'init_db',
+    'get_pool_status',
+    'WeatherData',
+    'Prediction',
+    'AlertHistory',
+    'ModelRegistry',
+    'SatelliteWeatherCache',
+    'TideDataCache',
+    'APIRequest',
+    'EarthEngineRequest',
+    'Webhook',
+]

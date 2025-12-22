@@ -19,6 +19,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: development
+      args:
+        PYTHON_VERSION: "3.13"
+    image: floodingnaque-api:development
     container_name: floodingnaque-api-dev
     restart: unless-stopped
     ports:
@@ -28,10 +31,15 @@ services:
       - FLASK_DEBUG=True
       - PORT=5000
       - HOST=0.0.0.0
+      - PYTHONPATH=/app
       # DATABASE_URL is loaded from .env.development file (points to Supabase)
       - RATE_LIMIT_ENABLED=False
       - SCHEDULER_ENABLED=True
       - LOG_LEVEL=DEBUG
+      # Feature flags
+      - FEATURE_API_DOCS_ENABLED=True
+      - GRAPHQL_PLAYGROUND_ENABLED=True
+      - GRAPHQL_INTROSPECTION_ENABLED=True
     env_file:
       - ./backend/.env.development
     volumes:
@@ -41,6 +49,7 @@ services:
       # Persistent data
       - ./backend/models:/app/models
       - ./backend/data:/app/data
+      - floodingnaque_logs_dev:/app/logs
     networks:
       - floodingnaque-dev
     healthcheck:
@@ -49,6 +58,46 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===================
+  # Redis (Optional for Dev)
+  # ===================
+  redis:
+    image: redis:7-alpine
+    container_name: floodingnaque-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 64mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - floodingnaque-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
 # ===================
 # Networks
@@ -56,3 +105,13 @@ services:
 networks:
   floodingnaque-dev:
     driver: bridge
+    name: floodingnaque-development
+
+# ===================
+# Volumes
+# ===================
+volumes:
+  redis_data_dev:
+    name: floodingnaque-redis-development
+  floodingnaque_logs_dev:
+    name: floodingnaque-logs-development

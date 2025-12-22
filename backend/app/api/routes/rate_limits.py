@@ -146,7 +146,7 @@ def endpoint_rate_limit_info():
             if endpoint not in common_endpoints:
                 return api_error('InvalidEndpoint', f'Unknown endpoint: {endpoint}', HTTP_BAD_REQUEST, request_id)
             
-            limit_string = get_endpoint_limit(endpoint)
+            limit_string = get_endpoint_limit(endpoint, as_callable=False)
             
             endpoint_info = {
                 'endpoint': endpoint,
@@ -157,7 +157,7 @@ def endpoint_rate_limit_info():
             # Get info for all common endpoints
             endpoint_info = {}
             for ep in common_endpoints:
-                limit_string = get_endpoint_limit(ep)
+                limit_string = get_endpoint_limit(ep, as_callable=False)
                 endpoint_info[ep] = {
                     'rate_limit': limit_string,
                     'description': _get_endpoint_description(ep)

@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "model_type": "random_forest",
+  "classification_type": "binary",
+  "model_path": "D:\\floodingnaque\\backend\\models\\flood_enhanced_v2.joblib",
+  "created_at": "2025-12-20T20:06:15.311319",
+  "training_data": {
+    "file": "D:\\floodingnaque\\backend\\data\\processed\\cumulative_up_to_2025.csv",
+    "samples": 1291,
+    "features": [
+      "temperature",
+      "humidity",
+      "precipitation",
+      "month",
+      "is_monsoon_season",
+      "year",
+      "latitude",
+      "longitude",
+      "temp_humidity_interaction",
+      "temp_precip_interaction",
+      "humidity_precip_interaction",
+      "precipitation_squared",
+      "precipitation_log",
+      "monsoon_precip_interaction",
+      "weather_type_easterlies",
+      "weather_type_monsoon",
+      "weather_type_thunderstorm",
+      "season_dry",
+      "season_wet"
+    ],
+    "feature_count": 19
+  },
+  "configuration": {
+    "use_all_features": true,
+    "create_interactions": true,
+    "exclude_leakage": true,
+    "test_size": 0.2,
+    "cv_folds": 5
+  },
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "precision_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "recall_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "f1_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        108,
+        0
+      ],
+      [
+        0,
+        151
+      ]
+    ]
+  },
+  "feature_importance": {
+    "temperature": 0.0,
+    "humidity": 8.455534733815722e-05,
+    "precipitation": 0.1981731668426886,
+    "month": 0.0003034015431585091,
+    "is_monsoon_season": 3.833905424874363e-05,
+    "year": 4.3431046279540806e-05,
+    "latitude": 0.00089433181910339,
+    "longitude": 0.0011762828980355852,
+    "temp_humidity_interaction": 0.00011831184208147069,
+    "temp_precip_interaction": 0.27982127322793604,
+    "humidity_precip_interaction": 0.11625768688628088,
+    "precipitation_squared": 0.17553334582782515,
+    "precipitation_log": 0.1726378267457749,
+    "monsoon_precip_interaction": 0.054712153095878596,
+    "weather_type_easterlies": 0.00017860687498314883,
+    "weather_type_monsoon": 2.7286948383932102e-05,
+    "weather_type_thunderstorm": 1.0177488739970999e-15,
+    "season_dry": 1.0975152144038994e-15,
+    "season_wet": 1.246675894600471e-15
+  }
+}

@@ -5,9 +5,22 @@
 #   docker-compose -f docker-compose-production.yml up -d --build
 #   docker-compose -f docker-compose-production.yml logs -f
 #   docker-compose -f docker-compose-production.yml down
+#
+# With Nginx (for VPS with TLS termination):
+#   docker-compose -f docker-compose-production.yml --profile nginx up -d --build
+#
+# With Prometheus monitoring:
+#   docker-compose -f docker-compose-production.yml --profile monitoring up -d
+#
+# With both Nginx and monitoring:
+#   docker-compose -f docker-compose-production.yml --profile nginx --profile monitoring up -d
 # =====================================================
-# NOTE: This configuration uses Supabase as the database.
-#       Ensure DATABASE_URL is set in ./backend/.env.production pointing to Supabase.
+# NOTE: This configuration uses:
+#   - Supabase PostgreSQL for database
+#   - Redis Cloud (Azure West US) for caching, rate limiting, and Celery
+#   - Datadog Agent for APM and infrastructure monitoring
+#   - Nginx reverse proxy with Let's Encrypt (optional, use --profile nginx)
+#   Ensure .env.production is properly configured with DD_API_KEY.
 # =====================================================
 
 services:
@@ -19,55 +32,96 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: production
-    container_name: floodingnaque-api
-    restart: unless-stopped
+      args:
+        PYTHON_VERSION: "3.12"
+    image: floodingnaque-api:production-v2.0.0
+    container_name: floodingnaque-api-prod
+    restart: always
     ports:
       - "5000:5000"
     environment:
+      # Application
       - APP_ENV=production
       - FLASK_DEBUG=False
       - PORT=5000
       - HOST=0.0.0.0
-      # DATABASE_URL is loaded from .env.production file (points to Supabase)
-      # Redis for rate limiting
-      - RATE_LIMIT_STORAGE_URL=redis://redis:6379/0
-      - RATE_LIMIT_ENABLED=True
-      # Security (loaded from .env.production)
+      - PYTHONPATH=/app
+      
+      # Security
       - AUTH_BYPASS_ENABLED=False
-      # CORS - Set your frontend domain
-      - CORS_ORIGINS=${CORS_ORIGINS:-https://floodingnaque.vercel.app}
+      - ENABLE_HTTPS=True
+      - VERIFY_MODEL_INTEGRITY=True
+      - REQUIRE_MODEL_SIGNATURE=True
+      
+      # Redis Cloud connections (loaded from .env.production)
+      # REDIS_URL, CACHE_REDIS_URL, RATELIMIT_STORAGE_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+      # are configured in .env.production pointing to Redis Cloud
+      
+      # Rate limiting
+      - RATE_LIMIT_ENABLED=True
+      - RATE_LIMIT_DEFAULT=100
+      - RATE_LIMIT_WINDOW_SECONDS=3600
+      
+      # CORS
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://floodingnaque.vercel.app,https://www.floodingnaque.com}
+      
       # Logging
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - LOG_FORMAT=json
-      # Weather API Keys are loaded from .env.production via env_file
+      - LOG_FILE=/app/logs/floodingnaque.log
+      
+      # Features
+      - FEATURE_SCHEDULER_ENABLED=True
+      - FEATURE_METRICS_ENABLED=True
+      - FEATURE_API_DOCS_ENABLED=False
+      - GRAPHQL_PLAYGROUND_ENABLED=False
+      - GRAPHQL_INTROSPECTION_ENABLED=False
+      
       # Scheduler
       - SCHEDULER_ENABLED=True
       - SCHEDULER_TIMEZONE=Asia/Manila
+      
+      # Gunicorn
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
+      - GUNICORN_THREADS=${GUNICORN_THREADS:-2}
+      - GUNICORN_TIMEOUT=120
+      - GUNICORN_WORKER_CLASS=sync
+      - GUNICORN_MAX_REQUESTS=1000
+      - GUNICORN_MAX_REQUESTS_JITTER=50
+      
+      # Performance
+      - DB_POOL_SIZE=20
+      - DB_MAX_OVERFLOW=10
+      - CACHE_DEFAULT_TIMEOUT=300
+      
+      # Datadog APM
+      - DD_ENV=production
+      - DD_SERVICE=floodingnaque-api
+      - DD_VERSION=2.0.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - DD_DOGSTATSD_URL=unix:///var/run/datadog/dsd.socket
+      
     env_file:
       - ./backend/.env.production
     volumes:
-      # Persistent data volumes (no code mounting in production!)
-      - floodingnaque_models:/app/models
-      - floodingnaque_logs:/app/logs
-      - floodingnaque_data:/app/data
+      - floodingnaque_models_prod:/app/models
+      - floodingnaque_logs_prod:/app/logs
+      - floodingnaque_data_prod:/app/data
+      - floodingnaque_uploads_prod:/app/uploads
+      - floodingnaque_backups_prod:/app/backups
+      - /var/run/datadog:/var/run/datadog
     depends_on:
-      redis:
-        condition: service_healthy
+      datadog-agent:
+        condition: service_started
+        required: false
     networks:
-      - floodingnaque-network
+      - floodingnaque-prod
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=5)"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Security options
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /app/temp
     deploy:
       resources:
         limits:
@@ -76,74 +130,368 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
+        max-size: "50m"
         max-file: "5"
+        compress: "true"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=200M,mode=1777
+      - /app/.cache:size=100M,mode=1777
 
   # ===================
-  # Redis (Rate Limiting & Cache)
+  # Celery Worker
   # ===================
-  redis:
-    image: redis:7-alpine
-    container_name: floodingnaque-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    ports:
-      - "6379:6379"
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        PYTHON_VERSION: "3.12"
+    image: floodingnaque-api:production-v2.0.0
+    container_name: floodingnaque-celery-prod
+    restart: always
+    command: >
+      celery -A app.services.celery_app worker
+      --loglevel=info
+      --concurrency=${CELERY_WORKERS:-2}
+      --max-tasks-per-child=100
+      --time-limit=300
+      --soft-time-limit=240
+    environment:
+      - APP_ENV=production
+      - FLASK_DEBUG=False
+      - PYTHONPATH=/app
+      # Celery config loaded from .env.production (Redis Cloud)
+      - CELERY_TASK_SERIALIZER=json
+      - CELERY_RESULT_SERIALIZER=json
+      - CELERY_ACCEPT_CONTENT=json
+      - CELERY_TIMEZONE=Asia/Manila
+      - CELERY_ENABLE_UTC=True
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # Datadog APM
+      - DD_ENV=production
+      - DD_SERVICE=floodingnaque-celery-worker
+      - DD_VERSION=2.0.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - DD_DOGSTATSD_URL=unix:///var/run/datadog/dsd.socket
+    env_file:
+      - ./backend/.env.production
     volumes:
-      - redis_data:/data
+      - floodingnaque_models_prod:/app/models:ro
+      - floodingnaque_data_prod:/app/data
+      - floodingnaque_logs_prod:/app/logs
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      backend:
+        condition: service_healthy
+      datadog-agent:
+        condition: service_healthy
+        required: false
     networks:
-      - floodingnaque-network
+      - floodingnaque-prod
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "celery", "-A", "app.services.celery_app", "inspect", "ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        compress: "true"
+    security_opt:
+      - no-new-privileges:true
+
+  # ===================
+  # Celery Beat
+  # ===================
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        PYTHON_VERSION: "3.12"
+    image: floodingnaque-api:production-v2.0.0
+    container_name: floodingnaque-celery-beat-prod
+    restart: always
+    command: >
+      celery -A app.services.celery_app beat
+      --loglevel=info
+      --schedule=/tmp/celerybeat-schedule
+      --pidfile=/tmp/celerybeat.pid
+    environment:
+      - APP_ENV=production
+      - FLASK_DEBUG=False
+      - PYTHONPATH=/app
+      # Celery config loaded from .env.production (Redis Cloud)
+      - CELERY_TIMEZONE=Asia/Manila
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # Datadog APM
+      - DD_ENV=production
+      - DD_SERVICE=floodingnaque-celery-beat
+      - DD_VERSION=2.0.0
+      - DD_TRACE_AGENT_URL=unix:///var/run/datadog/apm.socket
+      - DD_DOGSTATSD_URL=unix:///var/run/datadog/dsd.socket
+    env_file:
+      - ./backend/.env.production
+    volumes:
+      - floodingnaque_logs_prod:/app/logs
+      - /var/run/datadog:/var/run/datadog
+    depends_on:
+      backend:
+        condition: service_healthy
+      datadog-agent:
+        condition: service_healthy
+        required: false
+    networks:
+      - floodingnaque-prod
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:size=50M,mode=1777
 
   # ===================
-  # Nginx Reverse Proxy (Optional - for HTTPS)
+  # Datadog Agent
   # ===================
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    container_name: floodingnaque-datadog-agent
+    restart: always
+    environment:
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_SITE=us5.datadoghq.com
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_APM_RECEIVER_SOCKET=/var/run/datadog/apm.socket
+      - DD_DOGSTATSD_SOCKET=/var/run/datadog/dsd.socket
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_EXCLUDE="name:datadog-agent"
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_ENV=production
+      - DD_TAGS=project:floodingnaque,team:backend
+    volumes:
+      - /var/run/datadog:/var/run/datadog
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - floodingnaque-prod
+    healthcheck:
+      test: ["CMD", "agent", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  # ===================
+  # Prometheus Monitoring
+  # ===================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: floodingnaque-prometheus-prod
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_prod:/prometheus
+    networks:
+      - floodingnaque-prod
+    depends_on:
+      - backend
+    profiles:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  # ===================
+  # Nginx Reverse Proxy (TLS Termination)
+  # ===================
+  # Use with: --profile nginx
   nginx:
-    image: nginx:alpine
-    container_name: floodingnaque-nginx
-    restart: unless-stopped
+    image: nginx:1.25-alpine
+    container_name: floodingnaque-nginx-prod
+    restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/floodingnaque.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_conf_prod:/etc/letsencrypt:ro
+      - certbot_www_prod:/var/www/certbot:ro
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
-      - floodingnaque-network
+      - floodingnaque-prod
     profiles:
-      - with-nginx  # Only start when explicitly requested
+      - nginx
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  # ===================
+  # Certbot (Let's Encrypt)
+  # ===================
+  # Use with: --profile nginx
+  # Initial certificate:
+  #   docker-compose -f docker-compose-production.yml --profile nginx run --rm certbot \
+  #     certonly --webroot -w /var/www/certbot -d api.floodingnaque.com --email your@email.com --agree-tos
+  # Manual renewal:
+  #   docker-compose -f docker-compose-production.yml --profile nginx run --rm certbot renew
+  certbot:
+    image: certbot/certbot:latest
+    container_name: floodingnaque-certbot-prod
+    volumes:
+      - certbot_conf_prod:/etc/letsencrypt
+      - certbot_www_prod:/var/www/certbot
+    networks:
+      - floodingnaque-prod
+    profiles:
+      - nginx
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 # ===================
 # Networks
 # ===================
 networks:
-  floodingnaque-network:
+  floodingnaque-prod:
     driver: bridge
-    name: floodingnaque-network
+    name: floodingnaque-production
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: "1500"
 
 # ===================
 # Volumes
 # ===================
 volumes:
-  redis_data:
-    name: floodingnaque-redis-data
-  floodingnaque_models:
-    name: floodingnaque-models
-  floodingnaque_logs:
-    name: floodingnaque-logs
-  floodingnaque_data:
-    name: floodingnaque-data
+  floodingnaque_models_prod:
+    name: floodingnaque-models-production
+    driver: local
+  floodingnaque_logs_prod:
+    name: floodingnaque-logs-production
+    driver: local
+  floodingnaque_data_prod:
+    name: floodingnaque-data-production
+    driver: local
+  floodingnaque_uploads_prod:
+    name: floodingnaque-uploads-production
+    driver: local
+  floodingnaque_backups_prod:
+    name: floodingnaque-backups-production
+    driver: local
+  prometheus_data_prod:
+    name: floodingnaque-prometheus-production
+    driver: local
+  certbot_conf_prod:
+    name: floodingnaque-certbot-conf-production
+    driver: local
+  certbot_www_prod:
+    name: floodingnaque-certbot-www-production
+    driver: local

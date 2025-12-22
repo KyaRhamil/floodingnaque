@@ -6,12 +6,20 @@ Defines GraphQL types, queries, and mutations for the Floodingnaque API.
 
 import os
 from datetime import datetime
+from pathlib import Path
 import graphene
-from graphene import ObjectType, Schema, String, Int, Float, Boolean, List, Field, DateTime, JSON
+from graphene import ObjectType, Schema, String, Int, Float, Boolean, List, Field, DateTime
 from graphene.types.scalars import Scalar
+from graphene.types.json import JSONString as JSON
+from dotenv import load_dotenv
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Load environment variables before checking GRAPHQL_ENABLED
+_backend_dir = Path(__file__).resolve().parent.parent.parent.parent
+load_dotenv(_backend_dir / '.env')
+load_dotenv(_backend_dir / '.env.production', override=True)
 
 # Check if GraphQL is enabled
 GRAPHQL_ENABLED = os.getenv('GRAPHQL_ENABLED', 'false').lower() == 'true'
@@ -180,8 +188,7 @@ class Query(ObjectType):
     def resolve_weather_data(self, info, latitude, longitude, start_date=None, end_date=None, limit=100):
         """Get weather data for a location."""
         try:
-            from app.utils.database import get_db_session
-            from app.models.weather import WeatherData
+            from app.models.db import get_db_session, WeatherData
             from sqlalchemy import and_, desc
             
             with get_db_session() as session:
@@ -259,8 +266,7 @@ class Query(ObjectType):
     def resolve_predictions(self, info, latitude=None, longitude=None, start_date=None, end_date=None, limit=100):
         """Get historical flood predictions."""
         try:
-            from app.utils.database import get_db_session
-            from app.models.predictions import FloodPrediction
+            from app.models.db import get_db_session, Prediction as FloodPrediction
             from sqlalchemy import and_, desc
             
             with get_db_session() as session:

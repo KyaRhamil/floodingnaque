@@ -12,8 +12,8 @@ Use the minimal requirements file which automatically gets pre-built wheels:
 
 ```powershell
 # Make sure you're in the backend directory and venv is activated
-cd c:\floodingnaque\backend
-& c:/floodingnaque/venv/Scripts/Activate.ps1
+cd backend
+.\venv\Scripts\Activate.ps1
 
 # Install minimal requirements (no build needed!)
 pip install -r requirements-minimal.txt
@@ -69,8 +69,8 @@ pip install APScheduler python-dotenv SQLAlchemy
 
 ### **Step 1: Activate Virtual Environment**
 ```powershell
-cd c:\floodingnaque
-& c:/floodingnaque/venv/Scripts/Activate.ps1
+# From project root
+.\venv\Scripts\Activate.ps1
 cd backend
 ```
 
@@ -263,11 +263,10 @@ Once installed successfully:
 
 ### **Quick Fix Command**
 ```powershell
-# Nuclear option - fresh start
-cd c:\floodingnaque
+# Nuclear option - fresh start (from project root)
 Remove-Item -Recurse -Force venv
 python -m venv venv
-& venv/Scripts/Activate.ps1
+.\venv\Scripts\Activate.ps1
 cd backend
 pip install --upgrade pip setuptools wheel
 pip install -r requirements-minimal.txt

@@ -32,7 +32,14 @@ wheels/
 
 # Virtual environments
 .env
-.env.*
+# Note: .env.* files are excluded from the Docker image for security.
+# For docker-compose: Use env_file directive (loads at container runtime)
+# For standalone docker run: Use --env-file flag
+# Example: docker run --env-file .env.production floodingnaque-api:latest
+.env.development
+.env.staging
+.env.production
+.env.local
 !.env.example
 .venv
 venv/

@@ -16,7 +16,7 @@ Alembic is a database migration tool for SQLAlchemy that allows you to:
 
 ```powershell
 # From the backend directory
-cd c:\floodingnaque\backend
+cd backend
 
 # Generate migration from current models
 alembic revision --autogenerate -m "Initial schema"

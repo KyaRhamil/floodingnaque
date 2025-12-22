@@ -1,33 +1,12 @@
 import logging
-import os
-import sys
-from datetime import datetime
-from pathlib import Path
-from logging.handlers import RotatingFileHandler
+
 
 def setup_logging():
-    """Setup logging configuration."""
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    
-    # Ensure logs directory exists
-    logs_dir = 'logs'
-    if not os.path.exists(logs_dir):
-        os.makedirs(logs_dir)
-    
-    handler = RotatingFileHandler(
-        os.path.join(logs_dir, 'app.log'), 
-        maxBytes=10000000,  # 10MB
-        backupCount=5
-    )
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    
-    # Also log to console
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    """Setup logging configuration using the shared logging helper."""
+    from app.utils import logging as logging_utils
+
+    return logging_utils.setup_logging()
+
 
 def error_handler(func):
     """Decorator for error handling."""

@@ -10,17 +10,17 @@ All errors have been resolved. The application is ready to start.
 
 ### Option 1: Using PowerShell Script (Recommended)
 ```powershell
-cd c:\floodingnaque\backend
+cd backend
 .\start_server.ps1
 ```
 
 ### Option 2: Manual Commands
 ```powershell
 # 1. Activate virtual environment
-& c:/floodingnaque/venv/Scripts/Activate.ps1
+.\venv\Scripts\Activate.ps1
 
 # 2. Navigate to backend
-cd c:\floodingnaque\backend
+cd backend
 
 # 3. Start server
 python main.py
@@ -150,10 +150,10 @@ Invoke-RestMethod -Uri "http://localhost:5000/export/weather?format=json&limit=1
 ### Server Won't Start
 ```powershell
 # Make sure you're in the backend directory
-cd c:\floodingnaque\backend
+cd backend
 
 # Make sure venv is activated (you should see (venv) in prompt)
-& ..\venv\Scripts\Activate.ps1
+.\venv\Scripts\Activate.ps1
 
 # Try starting again
 python main.py
@@ -162,7 +162,7 @@ python main.py
 ### "No module named 'flask'" Error
 ```powershell
 # Virtual environment not activated
-& c:/floodingnaque/venv/Scripts/Activate.ps1
+.\venv\Scripts\Activate.ps1
 ```
 
 ### Port Already in Use

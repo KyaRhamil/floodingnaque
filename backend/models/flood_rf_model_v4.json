@@ -1,0 +1,77 @@
+{
+  "version": 4,
+  "model_type": "RandomForestClassifier",
+  "model_path": "models\\flood_rf_model_v4.joblib",
+  "created_at": "2025-12-20T19:23:16.808318",
+  "training_data": {
+    "file": "data\\processed\\cumulative_up_to_2025.csv",
+    "shape": [
+      1291,
+      15
+    ],
+    "features": [
+      "temperature",
+      "humidity",
+      "precipitation",
+      "risk_level",
+      "month",
+      "is_monsoon_season",
+      "year",
+      "latitude",
+      "longitude",
+      "flood_depth_m"
+    ],
+    "target_distribution": {
+      "1": 753,
+      "0": 538
+    }
+  },
+  "model_parameters": {
+    "n_estimators": 200,
+    "random_state": 42,
+    "max_depth": 20,
+    "min_samples_split": 5,
+    "min_samples_leaf": 1
+  },
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "precision_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "recall_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "f1_per_class": {
+      "0": 1.0,
+      "1": 1.0
+    },
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        108,
+        0
+      ],
+      [
+        0,
+        151
+      ]
+    ]
+  },
+  "feature_importance": {
+    "temperature": 0.0,
+    "humidity": 0.00013680624457531725,
+    "precipitation": 0.3694931045482887,
+    "risk_level": 0.2776296668137588,
+    "month": 0.0009738623918373407,
+    "is_monsoon_season": 0.00022527484831667222,
+    "year": 0.0010643427653751537,
+    "latitude": 0.0019201480822363581,
+    "longitude": 0.002861430736261253,
+    "flood_depth_m": 0.3456953635693505
+  }
+}

@@ -52,6 +52,11 @@ The training script generates:
 2. **Latest Model**: `flood_rf_model.joblib` - Symlink to latest version
 3. **Metadata File**: `flood_rf_model_v{N}.json` - Model metadata and metrics
 
+> **Note:** The project uses multiple model naming conventions:
+> - `flood_rf_model_v*` - Standard Random Forest models
+> - `flood_enhanced_v*` - Enhanced models trained with official flood records
+> - `flood_multilevel_v*` - Multi-level classification models
+
 ## Model Versioning
 
 ### Version Numbering
