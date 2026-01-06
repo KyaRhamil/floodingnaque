@@ -1,4 +1,0 @@
-architecture_diagram.png	# Thesis Chapter 3 Diagram
-system_flow.png	# System workflow
-uml_sequence_diagram.png	# UML diagrams
-ERD.png	# Database diagram
