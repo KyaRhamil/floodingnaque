@@ -1,9 +1,10 @@
 from logging.config import fileConfig
 import os
 import sys
+import re
 from pathlib import Path
 
-from sqlalchemy import engine_from_config
+from sqlalchemy import create_engine
 from sqlalchemy import pool
 
 from alembic import context
@@ -37,6 +38,58 @@ target_metadata = Base.metadata
 # ... etc.
 
 
+def _get_pg_driver():
+    """Determine the best PostgreSQL driver for the current platform."""
+    if sys.platform == 'win32':
+        return 'pg8000'
+    try:
+        import psycopg2
+        return 'psycopg2'
+    except ImportError:
+        return 'pg8000'
+
+
+def _prepare_db_url(url):
+    """
+    Prepare database URL for the current platform.
+    Handles SSL mode for pg8000 which doesn't accept sslmode in URL.
+    
+    Returns:
+        tuple: (prepared_url, connect_args)
+    """
+    if not url or url.startswith('sqlite'):
+        return url, {}
+    
+    pg_driver = _get_pg_driver()
+    connect_args = {}
+    
+    # Handle SSL mode for pg8000 (doesn't accept sslmode in URL like psycopg2)
+    if pg_driver == 'pg8000' and 'sslmode=' in url:
+        import ssl
+        sslmode_match = re.search(r'[?&]sslmode=([^&]*)', url)
+        if sslmode_match:
+            sslmode = sslmode_match.group(1)
+            # Remove sslmode parameter from URL
+            url = re.sub(r'[?&]sslmode=[^&]*', '', url)
+            # Clean up URL if we left a dangling ? or &
+            url = url.replace('?&', '?').rstrip('?')
+            
+            if sslmode in ('require', 'verify-ca', 'verify-full'):
+                ssl_context = ssl.create_default_context()
+                if sslmode == 'require':
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
+                connect_args['ssl_context'] = ssl_context
+    
+    # Add driver to URL
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', f'postgresql+{pg_driver}://', 1)
+    elif url.startswith('postgresql://') and '+' not in url.split('://')[0]:
+        url = url.replace('postgresql://', f'postgresql+{pg_driver}://', 1)
+    
+    return url, connect_args
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -51,12 +104,7 @@ def run_migrations_offline() -> None:
     """
     # Get database URL from environment variable
     url = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
-    
-    # Handle Supabase connection string format
-    if url.startswith('postgres://'):
-        url = url.replace('postgres://', 'postgresql+pg8000://', 1)
-    elif url.startswith('postgresql://') and '+' not in url.split('://')[0]:
-        url = url.replace('postgresql://', 'postgresql+pg8000://', 1)
+    url, _ = _prepare_db_url(url)
     
     context.configure(
         url=url,
@@ -78,21 +126,13 @@ def run_migrations_online() -> None:
     """
     # Get database URL from environment variable
     db_url = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
+    db_url, connect_args = _prepare_db_url(db_url)
     
-    # Handle Supabase connection string format
-    if db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql+pg8000://', 1)
-    elif db_url.startswith('postgresql://') and '+' not in db_url.split('://')[0]:
-        db_url = db_url.replace('postgresql://', 'postgresql+pg8000://', 1)
-    
-    # Override the config with environment variable
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration['sqlalchemy.url'] = db_url
-    
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    # Create engine with proper SSL handling
+    connectable = create_engine(
+        db_url,
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     with connectable.connect() as connection:

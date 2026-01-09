@@ -294,3 +294,195 @@ def get_cache_stats() -> dict:
             'connected': False,
             'error': str(e)
         }
+
+
+# ============================================================================
+# Cache Warming
+# ============================================================================
+
+_warm_cache_functions: dict = {}
+_cache_warm_stats = {
+    'last_warm_time': None,
+    'warmed_keys': 0,
+    'warm_duration_ms': 0,
+}
+
+
+def register_cache_warmer(name: str, ttl: Union[int, timedelta] = 300):
+    """
+    Decorator to register a function for cache warming.
+    
+    Args:
+        name: Unique name for this cache warmer
+        ttl: Time to live for cached values
+    
+    Usage:
+        @register_cache_warmer('recent_predictions', ttl=600)
+        def warm_recent_predictions():
+            # Return dict of {cache_key: value} pairs to cache
+            return {'prediction:recent': get_recent_predictions()}
+    """
+    def decorator(func: Callable) -> Callable:
+        _warm_cache_functions[name] = {
+            'func': func,
+            'ttl': ttl.total_seconds() if isinstance(ttl, timedelta) else ttl,
+        }
+        logger.debug(f"Registered cache warmer: {name}")
+        return func
+    return decorator
+
+
+def warm_cache(warmers: Optional[list] = None) -> dict:
+    """
+    Execute cache warming functions.
+    
+    Args:
+        warmers: List of warmer names to execute (None = all)
+    
+    Returns:
+        dict: Warming results with statistics
+    """
+    import time
+    start_time = time.time()
+    
+    results = {
+        'success': [],
+        'failed': [],
+        'skipped': [],
+    }
+    
+    warmers_to_run = warmers or list(_warm_cache_functions.keys())
+    
+    for name in warmers_to_run:
+        if name not in _warm_cache_functions:
+            results['skipped'].append({'name': name, 'reason': 'not_registered'})
+            continue
+        
+        warmer = _warm_cache_functions[name]
+        try:
+            cache_data = warmer['func']()
+            
+            if isinstance(cache_data, dict):
+                for key, value in cache_data.items():
+                    cache_set(key, value, warmer['ttl'])
+                results['success'].append({
+                    'name': name,
+                    'keys_cached': len(cache_data),
+                })
+            else:
+                results['failed'].append({
+                    'name': name,
+                    'reason': 'warmer_must_return_dict',
+                })
+        except Exception as e:
+            logger.error(f"Cache warming failed for {name}: {e}")
+            results['failed'].append({
+                'name': name,
+                'reason': str(e),
+            })
+    
+    duration_ms = (time.time() - start_time) * 1000
+    
+    # Update stats
+    _cache_warm_stats['last_warm_time'] = time.time()
+    _cache_warm_stats['warmed_keys'] = sum(
+        r.get('keys_cached', 0) for r in results['success']
+    )
+    _cache_warm_stats['warm_duration_ms'] = round(duration_ms, 2)
+    
+    results['duration_ms'] = round(duration_ms, 2)
+    results['total_keys'] = _cache_warm_stats['warmed_keys']
+    
+    logger.info(
+        f"Cache warming complete: {len(results['success'])} succeeded, "
+        f"{len(results['failed'])} failed, {results['total_keys']} keys cached "
+        f"in {duration_ms:.2f}ms"
+    )
+    
+    return results
+
+
+def get_cache_warm_stats() -> dict:
+    """Get cache warming statistics."""
+    return {
+        **_cache_warm_stats,
+        'registered_warmers': list(_warm_cache_functions.keys()),
+    }
+
+
+def schedule_cache_warming(interval_seconds: int = 300):
+    """
+    Schedule periodic cache warming (for use with APScheduler).
+    
+    Args:
+        interval_seconds: Interval between warming cycles
+    
+    Returns:
+        Callable: Function to be scheduled
+    """
+    def warm_job():
+        try:
+            warm_cache()
+        except Exception as e:
+            logger.error(f"Scheduled cache warming failed: {e}")
+    
+    return warm_job
+
+
+# ============================================================================
+# Prediction Cache Helpers
+# ============================================================================
+
+def cache_prediction_result(
+    weather_hash: str,
+    prediction: dict,
+    ttl: int = 300
+) -> bool:
+    """
+    Cache a prediction result.
+    
+    Args:
+        weather_hash: Hash of weather input data
+        prediction: Prediction result dict
+        ttl: Time to live in seconds
+    
+    Returns:
+        bool: True if cached successfully
+    """
+    key = f"prediction:{weather_hash}"
+    return cache_set(key, prediction, ttl)
+
+
+def get_cached_prediction(weather_hash: str) -> Optional[dict]:
+    """
+    Get a cached prediction result.
+    
+    Args:
+        weather_hash: Hash of weather input data
+    
+    Returns:
+        dict: Cached prediction or None
+    """
+    key = f"prediction:{weather_hash}"
+    return cache_get(key)
+
+
+def make_weather_hash(weather_data: dict) -> str:
+    """
+    Create a hash of weather input data for cache key.
+    
+    Args:
+        weather_data: Weather input dictionary
+    
+    Returns:
+        str: Hash string
+    """
+    import hashlib
+    # Round values to reduce cache misses from floating point differences
+    normalized = {
+        'temperature': round(weather_data.get('temperature', 0), 1),
+        'humidity': round(weather_data.get('humidity', 0), 1),
+        'precipitation': round(weather_data.get('precipitation', 0), 1),
+    }
+    key_str = json.dumps(normalized, sort_keys=True)
+    return hashlib.md5(key_str.encode()).hexdigest()[:16]

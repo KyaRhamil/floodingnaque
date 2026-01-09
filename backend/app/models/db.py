@@ -16,6 +16,10 @@ pool_metrics = {
     'checkins': 0,
     'invalidated': 0,
     'last_checkout_time': None,
+    'connection_errors': 0,
+    'pool_exhausted_count': 0,
+    'avg_checkout_time_ms': 0.0,
+    'total_checkout_time_ms': 0.0,
 }
 
 
@@ -56,6 +60,29 @@ def _get_pg_driver():
 pg_driver = _get_pg_driver()
 logger.info(f"Using PostgreSQL driver: {pg_driver}")
 
+# Handle SSL mode for pg8000 (doesn't accept sslmode in URL like psycopg2)
+# Extract sslmode from URL and configure via connect_args for pg8000
+ssl_context = None
+if pg_driver == 'pg8000' and 'sslmode=' in DB_URL:
+    import ssl
+    # Remove sslmode from URL for pg8000
+    import re
+    sslmode_match = re.search(r'[?&]sslmode=([^&]*)', DB_URL)
+    if sslmode_match:
+        sslmode = sslmode_match.group(1)
+        # Remove sslmode parameter from URL
+        DB_URL = re.sub(r'[?&]sslmode=[^&]*', '', DB_URL)
+        # Clean up URL if we left a dangling ? or &
+        DB_URL = DB_URL.replace('?&', '?').rstrip('?')
+        
+        if sslmode in ('require', 'verify-ca', 'verify-full'):
+            ssl_context = ssl.create_default_context()
+            if sslmode == 'require':
+                # For 'require', we don't verify the certificate
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+            logger.info(f"Configured SSL context for pg8000 (sslmode={sslmode})")
+
 if DB_URL.startswith('postgres://'):
     DB_URL = DB_URL.replace('postgres://', f'postgresql+{pg_driver}://', 1)
 elif DB_URL.startswith('postgresql://') and '+' not in DB_URL.split('://')[0]:
@@ -65,8 +92,10 @@ elif DB_URL.startswith('postgresql://') and '+' not in DB_URL.split('://')[0]:
 # Get pool settings from environment (defaults match config.py)
 DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '20'))
 DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '10'))
-DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '3600'))
+DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '1800'))  # 30 minutes for better connection freshness
 DB_POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))
+DB_POOL_PRE_PING = os.getenv('DB_POOL_PRE_PING', 'True').lower() == 'true'
+DB_ECHO_POOL = os.getenv('DB_ECHO_POOL', 'False').lower() == 'true'
 
 if DB_URL.startswith('sqlite'):
     # SQLite-specific settings
@@ -85,24 +114,39 @@ else:
     # Respect environment variables, but provide conservative defaults for Supabase free tier
     # Users can override these in .env for paid tiers
     if is_supabase and DB_POOL_SIZE == 20:  # Only use conservative defaults if user hasn't customized
-        pool_size = 1
-        max_overflow = 2
-        pool_recycle = 300
-        logger.info("Using conservative pool settings for Supabase free tier (override with DB_POOL_SIZE in .env)")
+        pool_size = 3  # Slightly higher for better concurrency
+        max_overflow = 5  # Allow more overflow connections
+        pool_recycle = 600  # 10 minutes for Supabase connections
+        logger.info("Using optimized pool settings for Supabase (override with DB_POOL_SIZE in .env)")
     else:
         pool_size = DB_POOL_SIZE
         max_overflow = DB_MAX_OVERFLOW
         pool_recycle = DB_POOL_RECYCLE
     
+    # Build engine with optimized connection pooling
+    # Configure connect_args based on driver
+    connect_args = {}
+    if pg_driver == 'pg8000' and ssl_context:
+        connect_args['ssl_context'] = ssl_context
+    
     engine = create_engine(
         DB_URL,
-        echo=False,
+        echo=DB_ECHO_POOL,  # Log SQL statements when debugging
         pool_size=pool_size,
         max_overflow=max_overflow,
         pool_recycle=pool_recycle,
-        pool_timeout=DB_POOL_TIMEOUT,  # Use configurable timeout
-        pool_pre_ping=True,  # Check connection health
+        pool_timeout=DB_POOL_TIMEOUT,
+        pool_pre_ping=DB_POOL_PRE_PING,  # Health check before using connection
         poolclass=QueuePool,
+        # Performance-oriented settings
+        pool_use_lifo=True,  # LIFO reduces latency for connections
+        pool_reset_on_return='rollback',  # Clean state on return
+        connect_args=connect_args if connect_args else {},
+    )
+    
+    logger.info(
+        f"Database pool configured: size={pool_size}, overflow={max_overflow}, "
+        f"recycle={pool_recycle}s, timeout={DB_POOL_TIMEOUT}s, pre_ping={DB_POOL_PRE_PING}"
     )
 
 # Pool monitoring events for PostgreSQL/Supabase connections
@@ -112,12 +156,20 @@ if not DB_URL.startswith('sqlite'):
         """Track when a connection is checked out from the pool."""
         pool_metrics['checkouts'] += 1
         pool_metrics['last_checkout_time'] = time.time()
+        connection_record.info['checkout_time'] = time.time()
         logger.debug(f"Connection checked out from pool (total: {pool_metrics['checkouts']})")
 
     @event.listens_for(engine, "checkin")
     def receive_checkin(dbapi_conn, connection_record):
         """Track when a connection is returned to the pool."""
         pool_metrics['checkins'] += 1
+        checkout_time = connection_record.info.get('checkout_time')
+        if checkout_time:
+            duration_ms = (time.time() - checkout_time) * 1000
+            pool_metrics['total_checkout_time_ms'] += duration_ms
+            total_checkouts = pool_metrics['checkins']
+            if total_checkouts > 0:
+                pool_metrics['avg_checkout_time_ms'] = pool_metrics['total_checkout_time_ms'] / total_checkouts
         logger.debug(f"Connection checked in to pool (total: {pool_metrics['checkins']})")
 
     @event.listens_for(engine, "invalidate")
@@ -125,6 +177,7 @@ if not DB_URL.startswith('sqlite'):
         """Track when a connection is invalidated."""
         pool_metrics['invalidated'] += 1
         if exception:
+            pool_metrics['connection_errors'] += 1
             logger.warning(f"Connection invalidated due to: {exception}")
         else:
             logger.debug(f"Connection invalidated (total: {pool_metrics['invalidated']})")
@@ -133,6 +186,16 @@ if not DB_URL.startswith('sqlite'):
     def receive_connect(dbapi_conn, connection_record):
         """Log new database connections."""
         logger.info("New database connection established")
+    
+    @event.listens_for(engine, "close")
+    def receive_close(dbapi_conn, connection_record):
+        """Log when a connection is closed."""
+        logger.debug("Database connection closed")
+    
+    @event.listens_for(engine, "detach")
+    def receive_detach(dbapi_conn, connection_record):
+        """Log when a connection is detached from pool."""
+        logger.debug("Connection detached from pool")
 
 
 def get_pool_status():
@@ -141,12 +204,38 @@ def get_pool_status():
         return {'status': 'sqlite_static_pool', 'metrics': None}
     
     pool = engine.pool
+    
+    # Calculate pool utilization percentage
+    total_capacity = pool.size() + pool.overflow()
+    active_connections = pool.checkedout()
+    utilization_percent = (active_connections / max(total_capacity, 1)) * 100 if total_capacity > 0 else 0
+    
+    # Determine pool health status
+    if utilization_percent >= 90:
+        health_status = 'critical'
+    elif utilization_percent >= 75:
+        health_status = 'warning'
+    else:
+        health_status = 'healthy'
+    
     return {
         'pool_size': pool.size(),
         'checked_out': pool.checkedout(),
         'overflow': pool.overflow(),
         'checked_in': pool.checkedin(),
-        'metrics': pool_metrics.copy(),
+        'utilization_percent': round(utilization_percent, 2),
+        'health_status': health_status,
+        'metrics': {
+            **pool_metrics,
+            'avg_checkout_time_ms': round(pool_metrics.get('avg_checkout_time_ms', 0), 2),
+        },
+        'config': {
+            'pool_size': DB_POOL_SIZE,
+            'max_overflow': DB_MAX_OVERFLOW,
+            'pool_recycle_seconds': DB_POOL_RECYCLE,
+            'pool_timeout': DB_POOL_TIMEOUT,
+            'pre_ping_enabled': DB_POOL_PRE_PING,
+        }
     }
 
 
@@ -254,6 +343,10 @@ class WeatherData(Base):
         Index('idx_weather_created', 'created_at'),
         Index('idx_weather_source', 'source'),
         Index('idx_weather_active', 'is_deleted'),  # Index for filtering active records
+        # Performance optimization indexes
+        Index('idx_weather_active_timestamp', 'is_deleted', 'timestamp'),  # Common filter: active records by time
+        Index('idx_weather_active_created', 'is_deleted', 'created_at'),  # Common filter: active records by creation
+        Index('idx_weather_source_timestamp', 'source', 'timestamp'),  # Filter by source and time
         {'comment': 'Weather data measurements from various sources including Meteostat'}
     )
     
@@ -334,6 +427,10 @@ class Prediction(Base):
         Index('idx_prediction_risk', 'risk_level'),
         Index('idx_prediction_model', 'model_version'),
         Index('idx_prediction_active', 'is_deleted'),
+        # Performance optimization indexes
+        Index('idx_prediction_active_created', 'is_deleted', 'created_at'),  # Common filter: active by time
+        Index('idx_prediction_risk_created', 'risk_level', 'created_at'),  # Filter by risk level and time
+        Index('idx_prediction_active_risk', 'is_deleted', 'risk_level', 'created_at'),  # Full filter combo
         {'comment': 'Flood prediction history for analytics and audit'}
     )
     
@@ -385,6 +482,10 @@ class AlertHistory(Base):
         Index('idx_alert_risk', 'risk_level'),
         Index('idx_alert_status', 'delivery_status'),
         Index('idx_alert_active', 'is_deleted'),
+        # Performance optimization indexes
+        Index('idx_alert_active_created', 'is_deleted', 'created_at'),  # Active alerts by time
+        Index('idx_alert_status_created', 'delivery_status', 'created_at'),  # Filter by status and time
+        Index('idx_alert_risk_status', 'risk_level', 'delivery_status'),  # Filter by risk and status
         {'comment': 'Alert delivery tracking and history'}
     )
     
@@ -632,6 +733,10 @@ class APIRequest(Base):
         Index('idx_api_request_endpoint_status', 'endpoint', 'status_code'),
         Index('idx_api_request_created', 'created_at'),
         Index('idx_api_request_active', 'is_deleted'),
+        # Performance optimization indexes
+        Index('idx_api_request_response_time', 'response_time_ms'),  # For slow query analysis
+        Index('idx_api_request_endpoint_time', 'endpoint', 'created_at'),  # Endpoint performance over time
+        Index('idx_api_request_active_created', 'is_deleted', 'created_at'),  # Active requests by time
         {'comment': 'API request logs for analytics and monitoring'}
     )
     
@@ -718,6 +823,16 @@ def init_db():
         # Log table creation
         tables = Base.metadata.tables.keys()
         logger.info(f"Created tables: {', '.join(tables)}")
+        
+        # Initialize slow query logging
+        try:
+            from app.utils.query_optimizer import setup_slow_query_logging
+            setup_slow_query_logging(engine)
+            logger.info("Slow query logging initialized")
+        except ImportError:
+            logger.debug("Query optimizer not available - slow query logging disabled")
+        except Exception as e:
+            logger.warning(f"Failed to initialize slow query logging: {e}")
         
         return True
     except Exception as e:

@@ -42,6 +42,7 @@ from app.api.routes.tides import tides_bp
 from app.api.routes.graphql import graphql_bp, init_graphql_route
 from app.api.routes.security_txt import security_txt_bp
 from app.api.routes.csp_report import csp_report_bp
+from app.api.routes.performance import performance_bp, setup_response_time_tracking
 from app.api.swagger_config import init_swagger
 
 # Initialize module-level logger
@@ -185,8 +186,17 @@ def create_app(config_override: dict = None) -> Flask:
     app.register_blueprint(rate_limits_bp)
     app.register_blueprint(tides_bp)
     app.register_blueprint(graphql_bp)
+    app.register_blueprint(performance_bp)  # Performance monitoring
     
     logger.info("All blueprints registered")
+    
+    # ==========================================
+    # Response Time Tracking
+    # ==========================================
+    
+    if os.getenv('RESPONSE_TIME_TRACKING_ENABLED', 'True').lower() == 'true':
+        setup_response_time_tracking(app)
+        logger.info("Response time tracking enabled")
     
     # ==========================================
     # Initialize GraphQL Route

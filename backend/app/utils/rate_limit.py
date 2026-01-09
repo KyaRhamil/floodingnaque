@@ -16,9 +16,15 @@ from app.api.middleware.rate_limit import (
     rate_limit_relaxed,
     rate_limit_by_ip_only,
     rate_limit_authenticated_only,
+    rate_limit_with_burst,
+    check_burst_allowance,
+    get_burst_stats,
     ENDPOINT_LIMITS,
     RATE_LIMIT_ENABLED,
-    RATE_LIMIT_STORAGE
+    RATE_LIMIT_STORAGE,
+    BURST_ENABLED,
+    BURST_MULTIPLIER,
+    BURST_WINDOW_SECONDS,
 )
 
 __all__ = [
@@ -32,7 +38,13 @@ __all__ = [
     'rate_limit_relaxed',
     'rate_limit_by_ip_only',
     'rate_limit_authenticated_only',
+    'rate_limit_with_burst',
+    'check_burst_allowance',
+    'get_burst_stats',
     'ENDPOINT_LIMITS',
     'RATE_LIMIT_ENABLED',
-    'RATE_LIMIT_STORAGE'
+    'RATE_LIMIT_STORAGE',
+    'BURST_ENABLED',
+    'BURST_MULTIPLIER',
+    'BURST_WINDOW_SECONDS',
 ]

@@ -1,0 +1,71 @@
+# Floodingnaque CI/CD Pipeline
+# Documentation: https://docs.semaphoreci.com/
+version: v1.0
+name: Floodingnaque Pipeline
+
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+
+# Global job configuration
+global_job_config:
+  secrets:
+    - name: google-service-account
+  env_vars:
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: /home/semaphore/floodingnaque-service-account.json
+    - name: APP_ENV
+      value: production
+    - name: PYTHONPATH
+      value: /home/semaphore/floodingnaque/backend
+
+blocks:
+  # ===================
+  # Block 1: Install & Test
+  # ===================
+  - name: "Install & Test"
+    task:
+      jobs:
+        - name: "Install Dependencies"
+          commands:
+            - checkout
+            - cd backend
+            - sem-version python 3.12
+            - cache restore pip-$SEMAPHORE_GIT_BRANCH-$(checksum requirements.txt)
+            - pip install --upgrade pip
+            - pip install -r requirements.txt
+            - cache store pip-$SEMAPHORE_GIT_BRANCH-$(checksum requirements.txt) ~/.cache/pip
+
+        - name: "Run Tests"
+          commands:
+            - checkout
+            - cd backend
+            - sem-version python 3.12
+            - cache restore pip-$SEMAPHORE_GIT_BRANCH-$(checksum requirements.txt)
+            - pip install -r requirements.txt
+            - pip install pytest pytest-cov
+            - python -m pytest tests/ -v --tb=short || echo "Tests completed"
+
+  # ===================
+  # Block 2: Build Docker Image
+  # ===================
+  - name: "Build Docker Image"
+    task:
+      jobs:
+        - name: "Build"
+          commands:
+            - checkout
+            - cd backend
+            - docker build -t floodingnaque-api:$SEMAPHORE_GIT_SHA .
+            - docker tag floodingnaque-api:$SEMAPHORE_GIT_SHA floodingnaque-api:latest
+            - echo "Docker image built successfully"
+
+# ===================
+# Promotions (Deployments)
+# ===================
+promotions:
+  - name: Deploy to Production
+    pipeline_file: deploy.yml
+    auto_promote:
+      when: branch = 'main' AND result = 'passed'

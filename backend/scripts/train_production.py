@@ -45,9 +45,12 @@ import logging
 import hashlib
 import sys
 import warnings
+import os
+import multiprocessing
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional, List
+from dotenv import load_dotenv
 
 # Optional imports
 try:
@@ -69,6 +72,14 @@ try:
 except ImportError:
     TQDM_AVAILABLE = False
 
+# Load environment configuration
+if Path('.env.production').exists():
+    load_dotenv('.env.production')
+    logger_init_msg = "Loaded .env.production"
+else:
+    load_dotenv()
+    logger_init_msg = "Loaded .env"
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -76,6 +87,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 warnings.filterwarnings('ignore', category=FutureWarning)
+logger.info(logger_init_msg)
 
 # Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -113,6 +125,10 @@ class ProductionModelTrainer:
         self.random_state = random_state
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Resource management from environment
+        self.n_jobs = self._get_n_jobs_from_env()
+        logger.info(f"Using n_jobs={self.n_jobs} for parallel processing")
         
         # Tracking
         self.training_history: List[Dict] = []
@@ -220,6 +236,34 @@ class ProductionModelTrainer:
         
         return X_train, X_val, X_test, y_train, y_val, y_test
     
+    def _get_n_jobs_from_env(self) -> int:
+        """Get n_jobs from environment or calculate based on available CPUs."""
+        try:
+            # Check for explicit n_jobs setting
+            n_jobs_env = os.getenv('TRAINING_N_JOBS', '').strip()
+            if n_jobs_env:
+                n_jobs = int(n_jobs_env)
+                logger.info(f"Using TRAINING_N_JOBS from .env: {n_jobs}")
+                return n_jobs
+            
+            # Check DB_POOL_SIZE as indicator of resource limits
+            pool_size = int(os.getenv('DB_POOL_SIZE', '0'))
+            if pool_size > 0 and pool_size < 20:
+                # Conservative: use half of pool size as proxy for constrained resources
+                n_jobs = max(2, pool_size // 2)
+                logger.info(f"Detected constrained resources (DB_POOL_SIZE={pool_size}), using n_jobs={n_jobs}")
+                return n_jobs
+            
+            # Default: use all CPUs minus 1 (leave one for system)
+            cpu_count = multiprocessing.cpu_count()
+            n_jobs = max(1, cpu_count - 1)
+            logger.info(f"Using default n_jobs={n_jobs} (CPUs: {cpu_count})")
+            return n_jobs
+            
+        except Exception as e:
+            logger.warning(f"Error determining n_jobs, defaulting to 2: {e}")
+            return 2
+    
     def create_model(
         self,
         model_type: str = 'random_forest',
@@ -235,7 +279,7 @@ class ProductionModelTrainer:
                 max_features='sqrt',
                 class_weight=class_weight,
                 random_state=self.random_state,
-                n_jobs=-1,
+                n_jobs=self.n_jobs,  # Use environment-aware n_jobs
                 oob_score=True
             )
         elif model_type == 'gradient_boosting':
@@ -252,7 +296,7 @@ class ProductionModelTrainer:
         elif model_type == 'ensemble':
             rf = RandomForestClassifier(
                 n_estimators=150, max_depth=12,
-                class_weight=class_weight, random_state=self.random_state, n_jobs=-1
+                class_weight=class_weight, random_state=self.random_state, n_jobs=self.n_jobs
             )
             gb = GradientBoostingClassifier(
                 n_estimators=100, max_depth=5,
@@ -261,7 +305,7 @@ class ProductionModelTrainer:
             return VotingClassifier(
                 estimators=[('rf', rf), ('gb', gb)],
                 voting='soft',
-                n_jobs=-1
+                n_jobs=self.n_jobs
             )
         else:
             raise ValueError(f"Unknown model type: {model_type}")
@@ -352,7 +396,7 @@ class ProductionModelTrainer:
         results = {}
         for metric_name, scorer in scoring.items():
             try:
-                scores = cross_val_score(model, X, y, cv=cv, scoring=scorer, n_jobs=-1)
+                scores = cross_val_score(model, X, y, cv=cv, scoring=scorer, n_jobs=self.n_jobs)
                 results[f'cv_{metric_name}_mean'] = float(scores.mean())
                 results[f'cv_{metric_name}_std'] = float(scores.std())
                 results[f'cv_{metric_name}_scores'] = scores.tolist()
@@ -380,13 +424,13 @@ class ProductionModelTrainer:
         if use_randomized:
             search = RandomizedSearchCV(
                 base_model, param_grid, n_iter=50, cv=cv,
-                scoring='f1_weighted', n_jobs=-1,
+                scoring='f1_weighted', n_jobs=self.n_jobs,
                 random_state=self.random_state, verbose=1
             )
         else:
             search = GridSearchCV(
                 base_model, param_grid, cv=cv,
-                scoring='f1_weighted', n_jobs=-1, verbose=1
+                scoring='f1_weighted', n_jobs=self.n_jobs, verbose=1
             )
         
         search.fit(X_train, y_train)
@@ -422,7 +466,7 @@ class ProductionModelTrainer:
         
         train_sizes_abs, train_scores, val_scores = learning_curve(
             model, X, y, train_sizes=train_sizes, cv=cv,
-            scoring='f1_weighted', n_jobs=-1, random_state=self.random_state
+            scoring='f1_weighted', n_jobs=self.n_jobs, random_state=self.random_state
         )
         
         train_mean = train_scores.mean(axis=1)

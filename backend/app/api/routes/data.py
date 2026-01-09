@@ -1,7 +1,8 @@
 """
 Weather Data Routes.
 
-Provides endpoints for retrieving historical weather data.
+Provides endpoints for retrieving historical weather data with
+query optimization and caching.
 """
 
 from datetime import datetime, timedelta
@@ -15,7 +16,14 @@ from app.utils.rate_limit import limiter, get_endpoint_limit
 from app.utils.logging import get_logger
 from app.services.meteostat_service import MeteostatService
 from app.core.config import get_config
-from app.utils.cache import cached
+from app.utils.cache import cached, register_cache_warmer
+from app.utils.query_optimizer import (
+    with_eager_loading,
+    cached_query,
+    query_cache_get,
+    query_cache_set,
+    _make_query_cache_key,
+)
 from app.utils.api_constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_SERVICE_UNAVAILABLE
 import logging
 import os
@@ -24,11 +32,14 @@ logger = logging.getLogger(__name__)
 
 data_bp = Blueprint('data', __name__)
 
+# Cache TTL for data queries
+DATA_CACHE_TTL = int(os.getenv('DATA_CACHE_TTL', '60'))  # 1 minute default
+
 
 @data_bp.route('/data', methods=['GET'])
 @limiter.limit(get_endpoint_limit('data'))
 def get_weather_data():
-    """Retrieve historical weather data."""
+    """Retrieve historical weather data with query caching."""
     request_id = getattr(g, 'request_id', 'unknown')
     
     try:
@@ -42,8 +53,20 @@ def get_weather_data():
         if limit < 1 or limit > 1000:
             return api_error('ValidationError', 'Limit must be between 1 and 1000', HTTP_BAD_REQUEST, request_id)
         
+        # Build cache key
+        cache_key = _make_query_cache_key(
+            f"weather_data:{limit}:{offset}:{start_date or ''}:{end_date or ''}"
+        )
+        
+        # Check cache first
+        cached_result = query_cache_get(cache_key)
+        if cached_result:
+            cached_result['request_id'] = request_id
+            cached_result['cache_hit'] = True
+            return jsonify(cached_result), HTTP_OK
+        
         with get_db_session() as session:
-            query = session.query(WeatherData)
+            query = session.query(WeatherData).filter(WeatherData.is_deleted == False)
             
             # Filter by date range if provided
             if start_date:
@@ -63,7 +86,7 @@ def get_weather_data():
             # Get total count
             total = query.count()
             
-            # Apply pagination
+            # Apply pagination with index hint (uses idx_weather_timestamp)
             query = query.order_by(WeatherData.timestamp.desc())
             query = query.offset(offset).limit(limit)
             
@@ -79,14 +102,20 @@ def get_weather_data():
                 'timestamp': r.timestamp.isoformat() if r.timestamp else None
             } for r in results]
         
-        return jsonify({
+        response_data = {
             'data': data,
             'total': total,
             'limit': limit,
             'offset': offset,
             'count': len(data),
-            'request_id': request_id
-        }), HTTP_OK
+            'cache_hit': False,
+        }
+        
+        # Cache the result
+        query_cache_set(cache_key, response_data, DATA_CACHE_TTL)
+        
+        response_data['request_id'] = request_id
+        return jsonify(response_data), HTTP_OK
     except Exception as e:
         logger.error(f"Error retrieving weather data [{request_id}]: {str(e)}")
         return api_error('DataRetrievalFailed', 'An error occurred while retrieving weather data', HTTP_INTERNAL_ERROR, request_id)
