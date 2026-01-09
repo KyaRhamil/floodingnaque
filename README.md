@@ -1,106 +1,118 @@
-# 🌊 Floodingnaque - Flood Prediction System for Parañaque City
+# Floodingnaque - Flood Prediction System for Parañaque City
 
-**Random Forest-Based Flood Detection and Alert System**
-
-**🆕 Now with Official Flood Records Training!** Train models with 3,700+ real flood events from 2022-2025!
+Random Forest-Based Flood Detection and Alert System
 
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/KyaRhamil/floodingnaque)](LICENSE)
 [![Last Updated](https://img.shields.io/github/last-commit/KyaRhamil/floodingnaque)](#)
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Official Flood Records Training](#official-flood-records-training-2022-2025)
+- [Latest Enhancements](#latest-enhancements)
+- [Frequently Asked Questions](#frequently-asked-questions)
+- [Recommended Workflows](#recommended-workflows)
+- [System Architecture](#system-architecture)
+- [Random Forest Model](#random-forest-model-features)
+- [Command Reference](#command-reference)
+- [Documentation](#documentation)
+- [Thesis Defense Materials](#thesis-defense-materials)
+- [Installation](#installation)
+- [Expected Performance](#expected-performance)
+- [Key Features](#key-features)
+- [License](#license)
+
+## Overview
+
+This project implements a **Random Forest machine learning model** to predict flood risks in Parañaque City with a **3-level risk classification system** (Safe/Alert/Critical). The system is designed for academic research and production deployment.
+
+## Official Flood Records Training (2022-2025)
+
+Train models with **3,700+ real flood events** from the Parañaque City Disaster Risk Reduction and Management Office (DRRMO).
+
+| Feature | Description |
+|---------|-------------|
+| Data Source | Official government records from DRRMO |
+| Coverage | 4 years of historical records (2022-2025) |
+| Training Method | Progressive training showing model evolution |
+| Preprocessing | Comprehensive handling of diverse CSV formats |
+| Output | Publication-ready visualizations for thesis presentations |
+
+This enhancement provides significantly stronger thesis support compared to projects using synthetic data.
+
+### Quick Start References
+
+| Guide | Description |
+|-------|-------------|
+| [OFFICIAL_RECORDS_QUICK_START.md](OFFICIAL_RECORDS_QUICK_START.md) | Training with real flood data |
+| [RANDOM_FOREST_THESIS_READY.md](RANDOM_FOREST_THESIS_READY.md) | Complete thesis preparation guide |
+
 ---
-## 🎓 Thesis Defense Ready!
 
-This project implements a **Random Forest machine learning model** to predict flood risks in Parañaque City with a **3-level risk classification system** (Safe/Alert/Critical).
+## Latest Enhancements
 
-### 🆕 NEW: Official Flood Records Training (2022-2025)
+### New Features for Thesis Defense
 
-**Train your models with 3,700+ real flood events** from the Parañaque City Disaster Risk Reduction and Management Office (DRRMO):
+| Feature | Description |
+|---------|-------------|
+| Official Flood Records Training | 3,700+ real flood events from Parañaque City (2022-2025) with progressive training |
+| Enhanced Training Script | Hyperparameter tuning with GridSearchCV |
+| Thesis Report Generator | Publication-ready visualizations (300 DPI) |
+| Dataset Merger Tool | Combine multiple CSV files easily |
+| Model Comparison | Compare performance across versions |
+| Automatic Versioning | Track all model improvements |
+| Comprehensive Documentation | Complete guides and references |
 
-- **Real-world data** from official government sources
-- **4 years of historical records** (2022-2025)
-- **Progressive training** showing model evolution over time
-- **Comprehensive preprocessing** of diverse CSV formats
-- **Publication-ready visualizations** for thesis presentations
+### Model Evolution Visualization
 
-This enhancement makes your thesis significantly stronger compared to projects using synthetic data!
+Track model improvement over time with:
 
-### ⚡ Quick Start Guide
-**See: [OFFICIAL_RECORDS_QUICK_START.md](OFFICIAL_RECORDS_QUICK_START.md)** for training with real flood data!
+| Visualization | Purpose |
+|---------------|---------|
+| Metrics Evolution Charts | View accuracy, precision, recall improvement |
+| Parameters Evolution | Track hyperparameter changes |
+| Feature Importance Comparison | Understand prediction drivers |
 
-**See: [RANDOM_FOREST_THESIS_READY.md](RANDOM_FOREST_THESIS_READY.md)** for complete thesis preparation guide!
+## Frequently Asked Questions
 
----
+### Can I add new CSV files for training?
 
-## 🆕 Latest Enhancements
-
-### ✨ New Features for Thesis Defense
-
-1. **Official Flood Records Training** ⭐ NEW!
-   - Use 3,700+ real flood events from Parañaque City (2022-2025)
-   - Progressive training shows model evolution
-   - Automated preprocessing of official CSVs
-   - Year-specific training options
-2. **Enhanced Training Script** - Hyperparameter tuning with GridSearchCV
-3. **Thesis Report Generator** - Publication-ready visualizations (300 DPI)
-4. **Dataset Merger Tool** - Combine multiple CSV files easily
-5. **Model Comparison** - Compare performance across versions
-6. **Automatic Versioning** - Track all model improvements
-7. **Comprehensive Documentation** - Complete guides and references
-
-### 📈 Model Evolution Visualization
-
-Track your model's improvement over time with:
-- **Metrics Evolution Charts** - See accuracy, precision, recall improvement
-- **Parameters Evolution** - Track hyperparameter changes
-- **Feature Importance Comparison** - Understand what drives predictions
-## 📋 Your Questions - Answered
-
-### Q1: Can I add new CSV files for training?
-
-**✅ YES! Very Easy!**
+Yes. Use the following commands:
 
 ```powershell
 cd backend
 python scripts/train.py --data data/your_new_file.csv
 ```
 
-Or merge multiple files:
+To merge multiple files:
 
 ```powershell
 python scripts/merge_datasets.py --input "data/*.csv"
 python scripts/train.py --data data/merged_dataset.csv
 ```
 
-### Q2: How does model versioning work?
+### How does model versioning work?
 
-**✅ Automatic Version Control!**
+**With Official Records (Progressive Training):**
 
-With Official Records (Progressive Training):
-```
-Model v1: Trained on 2022 data only          (~100 records)
-Model v2: Trained on 2022 + 2023 data       (~270 records)
-Model v3: Trained on 2022 + 2023 + 2024     (~1,100 records)
-Model v4: Trained on ALL data (2022-2025)   (~3,700 records) ← BEST!
-```
+| Version | Training Data | Record Count |
+|---------|---------------|--------------|
+| Model v1 | 2022 data only | ~100 records |
+| Model v2 | 2022 + 2023 data | ~270 records |
+| Model v3 | 2022 + 2023 + 2024 | ~1,100 records |
+| Model v4 | All data (2022-2025) | ~3,700 records (Best) |
 
-With Custom Data:
-```
-Training #1 → flood_rf_model_v1.joblib + metadata
-Training #2 → flood_rf_model_v2.joblib + metadata
-Training #3 → flood_rf_model_v3.joblib + metadata
-```
+**With Custom Data:**
 
-Each version stores:
+Each training session creates:
 - Model file (.joblib)
-- Metadata (.json) with training date, dataset, parameters, metrics, feature importance
----
+- Metadata (.json) with training date, dataset, parameters, metrics, and feature importance
+## Recommended Workflows
 
-## 🚀 Best Workflow for Thesis
+### Option A: Train with Official Flood Records (Recommended)
 
-### **Option A: Train with Official Flood Records** ⭐ RECOMMENDED
-
-Use **real flood data** from Parañaque City (2022-2025):
+Use real flood data from Parañaque City (2022-2025):
 
 ```powershell
 cd backend
@@ -119,13 +131,13 @@ python scripts/compare_models.py
 python scripts/validate_model.py
 ```
 
-**What you get:**
-- ✅ 4 models trained on real data (v1, v2, v3, v4)
-- ✅ 3,700+ real flood events from official records
-- ✅ Model evolution showing improvement over time
-- ✅ Publication-ready charts and reports
+**Output:**
+- 4 models trained on real data (v1, v2, v3, v4)
+- 3,700+ real flood events from official records
+- Model evolution showing improvement over time
+- Publication-ready charts and reports
 
-### **Option B: Complete Custom Training Pipeline**
+### Option B: Custom Training Pipeline
 
 Use your own CSV files:
 
@@ -148,65 +160,71 @@ python scripts/compare_models.py
 python scripts/validate_model.py
 ```
 
-**In `reports/` folder (publication quality):**
-- Feature importance chart
-- Confusion matrix
-- ROC curve
-- Precision-Recall curve
-- Metrics comparison
-- Learning curves
-- Comprehensive text report
-- Version comparison charts
+**Generated Reports (Publication Quality):**
 
-**All ready for PowerPoint and thesis document!**
----
-
-## 📊 System Architecture
+| Report | Description |
+|--------|-------------|
+| Feature importance chart | Shows prediction drivers |
+| Confusion matrix | Prediction accuracy visualization |
+| ROC curve | Model performance curve |
+| Precision-Recall curve | Classification threshold analysis |
+| Metrics comparison | Cross-version comparison |
+| Learning curves | Overfitting analysis |
+| Version comparison charts | Side-by-side model performance |
+## System Architecture
 
 ```
-Official Flood Records (2022-2025) → Preprocessing → Progressive Training → Random Forest Models
-                                           ↓              (v1, v2, v3, v4)
-                                    Custom CSV Files → Data Merger → Training Script  
-                                          ↓
-                                   Model Versions
-                                   (v1, v2, v3, v4...)
-                                          ↓
-                                    Flask API
-                                          ↓
-                              3-Level Risk Classification
-                              (Safe / Alert / Critical)
-                                          ↓
-                                  Alert Delivery
-                                  (SMS / Email)
+Official Flood Records (2022-2025)
+            |
+            v
+      Preprocessing
+            |
+            +---> Progressive Training ---> Random Forest Models (v1, v2, v3, v4)
+            |
+Custom CSV Files ---> Data Merger ---> Training Script
+                                              |
+                                              v
+                                       Model Versions
+                                              |
+                                              v
+                                         Flask API
+                                              |
+                                              v
+                                 3-Level Risk Classification
+                                   (Safe / Alert / Critical)
+                                              |
+                                              v
+                                       Alert Delivery
+                                       (SMS / Email)
 ```
 
-------
-
-## 🎯 Random Forest Model Features
+## Random Forest Model Features
 
 ### Why Random Forest?
 
-- ✅ **Ensemble Learning** - Multiple decision trees voting together
-- ✅ **Robust** - Less prone to overfitting
-- ✅ **Feature Importance** - Shows which weather factors matter most
-- ✅ **No Scaling Needed** - Works with raw weather data
-- ✅ **Interpretable** - Easy to explain
-- ✅ **Industry Standard** - Widely used in production
+| Advantage | Description |
+|-----------|-------------|
+| Ensemble Learning | Multiple decision trees voting together |
+| Robust | Less prone to overfitting |
+| Feature Importance | Shows which weather factors matter most |
+| No Scaling Needed | Works with raw weather data |
+| Interpretable | Easy to explain to stakeholders |
+| Industry Standard | Widely used in production systems |
 
 ### Model Capabilities
 
-- **Hyperparameter Tuning** - Automatic optimization with GridSearchCV
-- **Cross-Validation** - Robust k-fold validation
-- **Multi-Dataset Training** - Merge multiple CSV files
-- **Automatic Versioning** - Track improvements over time
-- **Comprehensive Metrics** - Accuracy, Precision, Recall, F1, ROC-AUC
-- **Feature Importance Analysis** - Understand model decisions
+| Capability | Description |
+|------------|-------------|
+| Hyperparameter Tuning | Automatic optimization with GridSearchCV |
+| Cross-Validation | Robust k-fold validation |
+| Multi-Dataset Training | Merge multiple CSV files |
+| Automatic Versioning | Track improvements over time |
+| Comprehensive Metrics | Accuracy, Precision, Recall, F1, ROC-AUC |
+| Feature Importance Analysis | Understand model decisions |
 
----
+## Command Reference
 
-## 💻 Quick Commands
-
-### Training
+### Training Commands
 
 ```powershell
 # Basic training
@@ -215,20 +233,20 @@ python scripts/train.py
 # With new dataset
 python scripts/train.py --data data/my_data.csv
 
-# With hyperparameter tuning (RECOMMENDED)
+# With hyperparameter tuning (Recommended)
 python scripts/train.py --grid-search --cv-folds 10
 
 # Merge multiple datasets during training
 python scripts/train.py --data "data/*.csv" --merge-datasets
 
-# Progressive training with official records (RECOMMENDED for thesis)
+# Progressive training with official records (Recommended for thesis)
 python scripts/progressive_train.py --grid-search --cv-folds 10
 
 # Year-specific training
 python scripts/progressive_train.py --year-specific
 ```
 
-### Analysis
+### Analysis Commands
 
 ```powershell
 # Generate thesis report
@@ -244,7 +262,7 @@ python scripts/merge_datasets.py
 python scripts/preprocess_official_flood_records.py
 ```
 
-### API
+### API Commands
 
 ```powershell
 # Start server
@@ -256,25 +274,29 @@ curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -
 # List models
 curl http://localhost:5000/api/models
 ```
-## 📚 Documentation
+
+## Documentation
 
 ### Quick References
 
-- **[RANDOM_FOREST_THESIS_READY.md](RANDOM_FOREST_THESIS_READY.md)** - Quick start for thesis
-- **[OFFICIAL_RECORDS_QUICK_START.md](OFFICIAL_RECORDS_QUICK_START.md)** - Training with official flood records
-- **[backend/docs/QUICK_REFERENCE.md](backend/docs/QUICK_REFERENCE.md)** - Command cheat sheet
-- **[backend/docs/THESIS_GUIDE.md](backend/docs/THESIS_GUIDE.md)** - Complete thesis guide
+| Document | Description |
+|----------|-------------|
+| [RANDOM_FOREST_THESIS_READY.md](RANDOM_FOREST_THESIS_READY.md) | Quick start for thesis |
+| [OFFICIAL_RECORDS_QUICK_START.md](OFFICIAL_RECORDS_QUICK_START.md) | Training with official flood records |
+| [backend/docs/QUICK_REFERENCE.md](backend/docs/QUICK_REFERENCE.md) | Command cheat sheet |
+| [backend/docs/THESIS_GUIDE.md](backend/docs/THESIS_GUIDE.md) | Complete thesis guide |
 
 ### Detailed Guides
 
-- **[backend/docs/OFFICIAL_FLOOD_RECORDS_GUIDE.md](backend/docs/OFFICIAL_FLOOD_RECORDS_GUIDE.md)** - Complete guide for official records training
-- **[backend/docs/IMPROVEMENTS_SUMMARY.md](backend/docs/IMPROVEMENTS_SUMMARY.md)** - All improvements explained
-- **[backend/docs/SYSTEM_OVERVIEW.md](backend/docs/SYSTEM_OVERVIEW.md)** - System architecture
-- **[backend/docs/MODEL_MANAGEMENT.md](backend/docs/MODEL_MANAGEMENT.md)** - Model versioning
-- **[backend/docs/BACKEND_COMPLETE.md](backend/docs/BACKEND_COMPLETE.md)** - Full documentation
+| Document | Description |
+|----------|-------------|
+| [backend/docs/OFFICIAL_FLOOD_RECORDS_GUIDE.md](backend/docs/OFFICIAL_FLOOD_RECORDS_GUIDE.md) | Complete guide for official records training |
+| [backend/docs/IMPROVEMENTS_SUMMARY.md](backend/docs/IMPROVEMENTS_SUMMARY.md) | All improvements explained |
+| [backend/docs/SYSTEM_OVERVIEW.md](backend/docs/SYSTEM_OVERVIEW.md) | System architecture |
+| [backend/docs/MODEL_MANAGEMENT.md](backend/docs/MODEL_MANAGEMENT.md) | Model versioning |
+| [backend/docs/BACKEND_COMPLETE.md](backend/docs/BACKEND_COMPLETE.md) | Full documentation |
 
----
-## 🎓 For Thesis Defense
+## Thesis Defense Materials
 
 ### Key Talking Points
 
@@ -284,33 +306,34 @@ curl http://localhost:5000/api/models
 - Majority decision wins
 - Feature importance shows which factors matter most
 
-**About Your System:**
+**About the System:**
 - Automatic model versioning
 - Easy dataset integration
 - Hyperparameter optimization
 - 3-level risk classification (Safe/Alert/Critical)
 - Real-time predictions via API
-- **Progressive training with 3,700+ real flood events**
-- **Model evolution demonstrating improvement over time**
+- Progressive training with 3,700+ real flood events
+- Model evolution demonstrating improvement over time
 
-### Presentation Materials
+### Generated Presentation Materials
 
-Generated automatically in `reports/`:
-- ✅ Feature importance (which weather factors matter)
-- ✅ Confusion matrix (prediction accuracy)
-- ✅ ROC curve (model performance)
-- ✅ Learning curves (no overfitting proof)
-- ✅ Metrics evolution (improvement over time)
-- ✅ Parameters evolution (hyperparameter changes)
-- ✅ Model comparison charts (side-by-side performance)
----
+All materials are automatically generated in the `reports/` directory:
 
-## 🔧 Installation
+| Material | Description |
+|----------|-------------|
+| Feature importance | Which weather factors matter |
+| Confusion matrix | Prediction accuracy |
+| ROC curve | Model performance |
+| Learning curves | Overfitting analysis |
+| Metrics evolution | Improvement over time |
+| Parameters evolution | Hyperparameter changes |
+| Model comparison charts | Side-by-side performance |
+## Installation
 
 ### Requirements
 
-- Python 3.8+
-- pip
+- Python 3.8 or higher
+- pip package manager
 
 ### Setup
 
@@ -329,77 +352,73 @@ python scripts/train.py
 python main.py
 ```
 
----
+## Expected Performance
 
-## 📊 Sample Results
+### Performance Metrics (with Grid Search Optimization)
 
-### Expected Performance
-
-**With grid search optimization:**
-- Accuracy: 95%+
-- Precision: 95%+
-- Recall: 95%+
-- F1 Score: 95%+
-- ROC-AUC: 0.98+
+| Metric | Expected Value |
+|--------|----------------|
+| Accuracy | 95%+ |
+| Precision | 95%+ |
+| Recall | 95%+ |
+| F1 Score | 95%+ |
+| ROC-AUC | 0.98+ |
 
 ### Feature Importance (Example)
 
-- Precipitation: 45%
-- Humidity: 30%
-- Temperature: 20%
-- Wind Speed: 5%
+| Feature | Importance |
+|---------|------------|
+| Precipitation | 45% |
+| Humidity | 30% |
+| Temperature | 20% |
+| Wind Speed | 5% |
 
-------
-
-## 🌟 Key Features
+## Key Features
 
 ### Data Management
-- ✅ Easy CSV integration
-- ✅ Multi-dataset merging
-- ✅ Duplicate removal
-- ✅ Column validation
-- ✅ **Official flood records preprocessing (2022-2025)**
+
+| Feature | Description |
+|---------|-------------|
+| CSV Integration | Easy import of custom datasets |
+| Multi-dataset Merging | Combine multiple CSV files |
+| Duplicate Removal | Automatic deduplication |
+| Column Validation | Schema validation |
+| Official Records Preprocessing | Support for 2022-2025 flood records |
 
 ### Model Training
-- ✅ Random Forest Classifier
-- ✅ Hyperparameter tuning (GridSearchCV)
-- ✅ Cross-validation (k-fold)
-- ✅ Automatic versioning
-- ✅ **Progressive training with model evolution**
-- ✅ **Year-specific training options**
+
+| Feature | Description |
+|---------|-------------|
+| Random Forest Classifier | Ensemble learning algorithm |
+| Hyperparameter Tuning | GridSearchCV optimization |
+| Cross-validation | K-fold validation |
+| Automatic Versioning | Version tracking |
+| Progressive Training | Model evolution visualization |
+| Year-specific Training | Train on specific date ranges |
 
 ### Evaluation
-- ✅ Comprehensive metrics
-- ✅ Publication-quality charts
-- ✅ Feature importance analysis
-- ✅ Model comparison tools
-- ✅ **Metrics evolution visualization**
+
+| Feature | Description |
+|---------|-------------|
+| Comprehensive Metrics | Full performance analysis |
+| Publication-quality Charts | 300 DPI visualizations |
+| Feature Importance Analysis | Prediction driver analysis |
+| Model Comparison Tools | Cross-version comparison |
+| Metrics Evolution | Performance tracking over time |
 
 ### Deployment
-- ✅ Flask REST API
-- ✅ 3-level risk classification
-- ✅ Real-time predictions
-- ✅ Alert delivery system
-## 📞 Support
+
+| Feature | Description |
+|---------|-------------|
+| Flask REST API | RESTful web service |
+| 3-level Risk Classification | Safe/Alert/Critical levels |
+| Real-time Predictions | Low-latency inference |
+| Alert Delivery System | SMS and email notifications |
+
+## Support
 
 For detailed instructions, see the documentation in `backend/docs/`.
 
----
+## License
 
-## 📄 License
-
-See [LICENSE](LICENSE) file for details.
-
----
-
-## 🎉 Ready for Thesis Defense!
-
-Your Random Forest flood prediction model is now fully equipped with:
-- ✅ Hyperparameter optimization
-- ✅ Publication-ready visualizations
-- ✅ Model versioning and comparison
-- ✅ Comprehensive documentation
-- ✅ Easy dataset integration
-- ✅ **3,700+ real flood events from official records**
-- ✅ **Progressive training showing model evolution**
-- ✅ **Professional ML development practices****Good luck with your thesis defense! 🚀🎓**
+See the [LICENSE](LICENSE) file for details.

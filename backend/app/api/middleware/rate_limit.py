@@ -2,15 +2,16 @@
 Rate Limiting Middleware.
 
 Provides rate limiting for API endpoints to prevent abuse and ensure fair usage.
-Supports multiple backends (memory, Redis) and API key-based limits.
+Supports multiple backends (memory, Redis), API key-based limits, and burst allowances.
 """
 
 from app.utils.logging import get_logger
-from app.utils.rate_limit_tiers import get_rate_limit_for_key, get_anonymous_limits
+from app.utils.rate_limit_tiers import get_rate_limit_for_key, get_anonymous_limits, get_tier_limits, get_api_key_tier
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import request, g, has_request_context
 import os
+import time
 
 logger = get_logger(__name__)
 
@@ -24,6 +25,14 @@ RATE_LIMIT_STORAGE = os.getenv('RATE_LIMIT_STORAGE_URL', 'memory://')
 # Default limits from environment
 DEFAULT_LIMIT = os.getenv('RATE_LIMIT_DEFAULT', '100')
 WINDOW_SECONDS = os.getenv('RATE_LIMIT_WINDOW_SECONDS', '3600')
+
+# Burst allowance configuration
+BURST_ENABLED = os.getenv('RATE_LIMIT_BURST_ENABLED', 'True').lower() == 'true'
+BURST_MULTIPLIER = float(os.getenv('RATE_LIMIT_BURST_MULTIPLIER', '2.0'))
+BURST_WINDOW_SECONDS = int(os.getenv('RATE_LIMIT_BURST_WINDOW', '10'))
+
+# Burst tracking (in-memory, for more sophisticated use Redis)
+_burst_tracker: dict = {}
 
 
 def get_rate_limit_key():
@@ -220,17 +229,158 @@ def get_current_rate_limit_info():
     """
     try:
         from flask import g
-        return {
-            'key_type': 'api_key' if getattr(g, 'api_key_hash', None) else 'ip',
+        api_key_hash = getattr(g, 'api_key_hash', None)
+        
+        info = {
+            'key_type': 'api_key' if api_key_hash else 'ip',
             'authenticated': getattr(g, 'authenticated', False),
             'storage': 'redis' if 'redis' in RATE_LIMIT_STORAGE else 'memory',
-            'enabled': RATE_LIMIT_ENABLED
+            'enabled': RATE_LIMIT_ENABLED,
+            'burst_enabled': BURST_ENABLED,
         }
+        
+        # Add tier information if authenticated
+        if api_key_hash:
+            tier_name = get_api_key_tier(api_key_hash)
+            tier = get_tier_limits(tier_name)
+            info['tier'] = tier_name
+            info['limits'] = {
+                'per_minute': tier.requests_per_minute,
+                'per_hour': tier.requests_per_hour,
+                'per_day': tier.requests_per_day,
+                'burst_capacity': tier.burst_capacity,
+            }
+        else:
+            info['tier'] = 'anonymous'
+            info['limits'] = {
+                'per_minute': 2,
+                'per_hour': 20,
+                'per_day': 100,
+                'burst_capacity': 5,
+            }
+        
+        return info
     except RuntimeError:
         # Outside of request context
         return {
             'key_type': 'unknown',
             'authenticated': False,
             'storage': 'redis' if 'redis' in RATE_LIMIT_STORAGE else 'memory',
-            'enabled': RATE_LIMIT_ENABLED
+            'enabled': RATE_LIMIT_ENABLED,
+            'burst_enabled': BURST_ENABLED,
         }
+
+
+# ============================================================================
+# Burst Allowance Implementation
+# ============================================================================
+
+def check_burst_allowance(key: str) -> bool:
+    """
+    Check if a request can use burst allowance.
+    
+    Burst allowance allows temporary spikes in traffic above the normal rate limit.
+    
+    Args:
+        key: Rate limit key (API key hash or IP)
+    
+    Returns:
+        bool: True if burst is allowed
+    """
+    if not BURST_ENABLED:
+        return False
+    
+    now = time.time()
+    
+    # Clean up old entries
+    _cleanup_burst_tracker()
+    
+    # Get or create burst tracker for this key
+    if key not in _burst_tracker:
+        _burst_tracker[key] = {
+            'requests': [],
+            'burst_used': 0,
+        }
+    
+    tracker = _burst_tracker[key]
+    
+    # Count requests in burst window
+    window_start = now - BURST_WINDOW_SECONDS
+    tracker['requests'] = [t for t in tracker['requests'] if t > window_start]
+    
+    # Get burst capacity based on tier
+    api_key_hash = getattr(g, 'api_key_hash', None) if has_request_context() else None
+    if api_key_hash:
+        tier_name = get_api_key_tier(api_key_hash)
+        tier = get_tier_limits(tier_name)
+        burst_capacity = tier.burst_capacity
+    else:
+        burst_capacity = 5  # Anonymous burst capacity
+    
+    # Check if within burst capacity
+    if len(tracker['requests']) < burst_capacity:
+        tracker['requests'].append(now)
+        return True
+    
+    return False
+
+
+def _cleanup_burst_tracker():
+    """Remove old entries from burst tracker."""
+    global _burst_tracker
+    now = time.time()
+    cutoff = now - BURST_WINDOW_SECONDS * 2
+    
+    keys_to_remove = []
+    for key, tracker in _burst_tracker.items():
+        if not tracker['requests'] or max(tracker['requests']) < cutoff:
+            keys_to_remove.append(key)
+    
+    for key in keys_to_remove:
+        del _burst_tracker[key]
+
+
+def get_burst_stats() -> dict:
+    """Get burst allowance statistics."""
+    return {
+        'enabled': BURST_ENABLED,
+        'multiplier': BURST_MULTIPLIER,
+        'window_seconds': BURST_WINDOW_SECONDS,
+        'active_trackers': len(_burst_tracker),
+    }
+
+
+# ============================================================================
+# Dynamic Rate Limit with Burst Support
+# ============================================================================
+
+def rate_limit_with_burst(base_limit: str):
+    """
+    Rate limit decorator that supports burst allowance.
+    
+    Args:
+        base_limit: Base rate limit string (e.g., "100 per hour")
+    
+    Returns:
+        Rate limit decorator
+    
+    Usage:
+        @rate_limit_with_burst("60 per hour")
+        def my_endpoint():
+            ...
+    """
+    def dynamic_limit():
+        key = get_rate_limit_key()
+        
+        # Check if burst is available
+        if check_burst_allowance(key):
+            # Parse and multiply the limit
+            parts = base_limit.split()
+            if len(parts) >= 3:
+                base_count = int(parts[0])
+                burst_count = int(base_count * BURST_MULTIPLIER)
+                return f"{burst_count} {' '.join(parts[1:])}"
+        
+        return base_limit
+    
+    return limiter.limit(dynamic_limit)
