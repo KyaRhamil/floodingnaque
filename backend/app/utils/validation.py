@@ -1,14 +1,24 @@
-"""
-Enhanced Input Validation and Sanitization Module
-Provides comprehensive validation for all API inputs.
+"""Enhanced Input Validation and Sanitization Module
+
+Provides comprehensive validation for all API inputs with security hardening.
+
+Security Features:
+- HTML/XSS sanitization with bleach
+- Path traversal prevention
+- Null byte injection protection
+- Unicode normalization
+- JSON schema validation
+- SQL injection pattern detection
 """
 
 import re
 import bleach
 import validators
 import warnings
+import unicodedata
+import json
 from functools import wraps
-from typing import Dict, Any, Optional, List, Union, Callable
+from typing import Dict, Any, Optional, List, Union, Callable, Type
 from datetime import datetime
 from flask import request, jsonify, g
 import logging
@@ -26,6 +36,53 @@ ENDPOINT_SIZE_LIMITS = {
     'models': 1 * 1024,        # 1 KB - query params only
     'default': 100 * 1024,     # 100 KB - default limit
 }
+
+# Dangerous patterns to detect in inputs
+DANGEROUS_PATTERNS = {
+    'sql_injection': [
+        r"(?:'\s*(?:OR|AND)\s*'?\d*'?\s*=\s*'?\d*)",  # OR/AND injection
+        r"(?:;\s*(?:DROP|DELETE|INSERT|UPDATE|ALTER|CREATE|TRUNCATE))",  # Statement injection
+        r"(?:UNION\s+(?:ALL\s+)?SELECT)",  # UNION injection
+        r"(?:--\s*$|/\*.*\*/)",  # Comment injection
+        r"(?:EXEC(?:UTE)?\s+|xp_)",  # Stored procedure
+        r"(?:WAITFOR\s+DELAY|BENCHMARK\s*\()",  # Time-based
+    ],
+    'xss': [
+        r"<script[^>]*>.*?</script>",  # Script tags
+        r"javascript:\s*",  # javascript: URIs
+        r"on\w+\s*=",  # Event handlers (simplified)
+        r"<iframe[^>]*>",  # iframes
+        r"<object[^>]*>",  # Object tags
+        r"<embed[^>]*>",  # Embed tags
+        r"expression\s*\(",  # CSS expressions
+    ],
+    'path_traversal': [
+        r"\.\.[/\\]",  # Directory traversal
+        r"[/\\]etc[/\\](?:passwd|shadow)",  # Unix sensitive files
+        r"[/\\](?:windows|winnt)[/\\]",  # Windows paths
+        r"%2e%2e[/\\]",  # URL-encoded traversal
+        r"%252e%252e[/\\]",  # Double URL-encoded
+    ],
+    'command_injection': [
+        r"[;&|`$]\s*(?:cat|ls|dir|rm|del|type|wget|curl|bash|sh|cmd)",
+        r"\$\(.*\)",  # Command substitution
+        r"`[^`]*`",  # Backtick execution
+        r"\|\s*\w+",  # Pipe to command
+    ],
+}
+
+# Compiled regex patterns for performance
+_compiled_patterns: Dict[str, List[re.Pattern]] = {}
+
+
+def _get_compiled_patterns(category: str) -> List[re.Pattern]:
+    """Get compiled regex patterns for a category (cached)."""
+    if category not in _compiled_patterns:
+        patterns = DANGEROUS_PATTERNS.get(category, [])
+        _compiled_patterns[category] = [
+            re.compile(p, re.IGNORECASE | re.DOTALL) for p in patterns
+        ]
+    return _compiled_patterns[category]
 
 
 def validate_request_size(max_size: Optional[int] = None, endpoint_name: Optional[str] = None):
@@ -81,6 +138,337 @@ def validate_request_size(max_size: Optional[int] = None, endpoint_name: Optiona
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+def sanitize_input(value: str, 
+                   normalize_unicode: bool = True,
+                   remove_null_bytes: bool = True,
+                   strip_html: bool = True,
+                   check_patterns: Optional[List[str]] = None) -> str:
+    """
+    Comprehensive input sanitization.
+    
+    Security measures:
+    - Unicode normalization (NFC) to prevent homoglyph attacks
+    - Null byte removal to prevent injection
+    - HTML/script stripping to prevent XSS
+    - Dangerous pattern detection
+    
+    Args:
+        value: Input string to sanitize
+        normalize_unicode: Normalize unicode to NFC form
+        remove_null_bytes: Remove null bytes and control characters
+        strip_html: Remove HTML tags and scripts
+        check_patterns: List of pattern categories to check
+        
+    Returns:
+        Sanitized string
+        
+    Raises:
+        ValidationError: If dangerous patterns detected
+    """
+    if not isinstance(value, str):
+        value = str(value)
+    
+    # Unicode normalization (prevents homoglyph attacks)
+    if normalize_unicode:
+        value = unicodedata.normalize('NFC', value)
+    
+    # Remove null bytes and control characters (except newline, tab)
+    if remove_null_bytes:
+        value = ''.join(
+            char for char in value 
+            if char in '\n\r\t' or (ord(char) >= 32 and ord(char) != 127)
+        )
+    
+    # Strip HTML/scripts
+    if strip_html:
+        value = bleach.clean(value, tags=[], strip=True)
+    
+    # Check for dangerous patterns
+    if check_patterns:
+        for category in check_patterns:
+            patterns = _get_compiled_patterns(category)
+            for pattern in patterns:
+                if pattern.search(value):
+                    logger.warning(
+                        f"Dangerous pattern detected in input: category={category}"
+                    )
+                    raise ValidationError(
+                        f"Input contains potentially dangerous content",
+                        field_errors=[{
+                            'field': 'input',
+                            'message': 'Invalid characters or patterns detected',
+                            'code': 'dangerous_content'
+                        }]
+                    )
+    
+    return value
+
+
+def check_path_traversal(path: str) -> bool:
+    """
+    Check if a path contains traversal attempts.
+    
+    Args:
+        path: Path string to check
+        
+    Returns:
+        bool: True if safe, raises ValidationError if not
+    """
+    # Normalize path separators
+    normalized = path.replace('\\', '/')
+    
+    # Check for common traversal patterns
+    patterns = _get_compiled_patterns('path_traversal')
+    for pattern in patterns:
+        if pattern.search(normalized):
+            raise ValidationError(
+                "Path traversal attempt detected",
+                field_errors=[{
+                    'field': 'path',
+                    'message': 'Invalid path characters',
+                    'code': 'path_traversal'
+                }]
+            )
+    
+    # Check for encoded characters
+    if '%' in path:
+        import urllib.parse
+        try:
+            decoded = urllib.parse.unquote(path)
+            if decoded != path:
+                # Re-check decoded path
+                return check_path_traversal(decoded)
+        except Exception:
+            raise ValidationError("Invalid URL encoding in path")
+    
+    return True
+
+
+def validate_json_schema(schema: Dict[str, Any]):
+    """
+    Decorator to validate request JSON against a schema.
+    
+    Schema format:
+    {
+        'type': 'object',
+        'properties': {
+            'field_name': {
+                'type': 'string',  # string, number, integer, boolean, array, object
+                'required': True,
+                'min_length': 1,
+                'max_length': 100,
+                'pattern': r'^[a-z]+$',
+                'min': 0,
+                'max': 100,
+                'enum': ['value1', 'value2'],
+                'sanitize': True,  # Apply sanitization
+                'check_patterns': ['sql_injection', 'xss'],  # Pattern checks
+            }
+        },
+        'additional_properties': False  # Reject unknown fields
+    }
+    
+    Args:
+        schema: JSON schema definition
+        
+    Returns:
+        Decorator function
+    """
+    def decorator(f: Callable) -> Callable:
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            try:
+                data = request.get_json(force=True)
+            except Exception:
+                return jsonify({
+                    'error': 'Invalid JSON',
+                    'message': 'Request body must be valid JSON',
+                    'request_id': getattr(g, 'request_id', 'unknown')
+                }), 400
+            
+            if data is None:
+                data = {}
+            
+            errors = []
+            validated_data = {}
+            
+            properties = schema.get('properties', {})
+            additional_allowed = schema.get('additional_properties', True)
+            
+            # Check for unknown fields
+            if not additional_allowed:
+                unknown = set(data.keys()) - set(properties.keys())
+                if unknown:
+                    errors.append({
+                        'field': ', '.join(unknown),
+                        'message': 'Unknown fields not allowed',
+                        'code': 'unknown_field'
+                    })
+            
+            # Validate each field
+            for field_name, field_schema in properties.items():
+                value = data.get(field_name)
+                required = field_schema.get('required', False)
+                
+                # Check required
+                if value is None:
+                    if required:
+                        errors.append({
+                            'field': field_name,
+                            'message': f'{field_name} is required',
+                            'code': 'required'
+                        })
+                    continue
+                
+                # Type validation
+                field_type = field_schema.get('type', 'any')
+                try:
+                    value = _validate_field_type(value, field_type, field_name)
+                except ValidationError as e:
+                    errors.append({
+                        'field': field_name,
+                        'message': str(e),
+                        'code': 'type_error'
+                    })
+                    continue
+                
+                # String-specific validations
+                if field_type == 'string' and isinstance(value, str):
+                    # Sanitize if requested
+                    if field_schema.get('sanitize', False):
+                        check_patterns = field_schema.get('check_patterns', [])
+                        try:
+                            value = sanitize_input(
+                                value, 
+                                check_patterns=check_patterns
+                            )
+                        except ValidationError as e:
+                            errors.append({
+                                'field': field_name,
+                                'message': str(e),
+                                'code': 'sanitization_failed'
+                            })
+                            continue
+                    
+                    # Length checks
+                    min_len = field_schema.get('min_length', 0)
+                    max_len = field_schema.get('max_length', float('inf'))
+                    if len(value) < min_len:
+                        errors.append({
+                            'field': field_name,
+                            'message': f'Minimum length is {min_len}',
+                            'code': 'min_length'
+                        })
+                    if len(value) > max_len:
+                        errors.append({
+                            'field': field_name,
+                            'message': f'Maximum length is {max_len}',
+                            'code': 'max_length'
+                        })
+                    
+                    # Pattern check
+                    pattern = field_schema.get('pattern')
+                    if pattern and not re.match(pattern, value):
+                        errors.append({
+                            'field': field_name,
+                            'message': 'Invalid format',
+                            'code': 'pattern'
+                        })
+                
+                # Numeric validations
+                if field_type in ('number', 'integer'):
+                    min_val = field_schema.get('min')
+                    max_val = field_schema.get('max')
+                    if min_val is not None and value < min_val:
+                        errors.append({
+                            'field': field_name,
+                            'message': f'Minimum value is {min_val}',
+                            'code': 'min_value'
+                        })
+                    if max_val is not None and value > max_val:
+                        errors.append({
+                            'field': field_name,
+                            'message': f'Maximum value is {max_val}',
+                            'code': 'max_value'
+                        })
+                
+                # Enum validation
+                enum_values = field_schema.get('enum')
+                if enum_values and value not in enum_values:
+                    errors.append({
+                        'field': field_name,
+                        'message': f'Must be one of: {enum_values}',
+                        'code': 'enum'
+                    })
+                
+                validated_data[field_name] = value
+            
+            if errors:
+                return jsonify({
+                    'success': False,
+                    'error': {
+                        'type': '/errors/validation',
+                        'title': 'Validation Failed',
+                        'status': 400,
+                        'detail': 'One or more fields failed validation',
+                        'errors': errors,
+                        'request_id': getattr(g, 'request_id', 'unknown')
+                    }
+                }), 400
+            
+            # Store validated data in request context
+            g.validated_data = validated_data
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def _validate_field_type(value: Any, expected_type: str, field_name: str) -> Any:
+    """Validate and coerce field to expected type."""
+    if expected_type == 'string':
+        if not isinstance(value, str):
+            return str(value)
+        return value
+    elif expected_type == 'integer':
+        if isinstance(value, bool):  # bool is subclass of int
+            raise ValidationError(f"{field_name} must be an integer")
+        if isinstance(value, int):
+            return value
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            raise ValidationError(f"{field_name} must be an integer")
+    elif expected_type == 'number':
+        if isinstance(value, bool):
+            raise ValidationError(f"{field_name} must be a number")
+        if isinstance(value, (int, float)):
+            return float(value)
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            raise ValidationError(f"{field_name} must be a number")
+    elif expected_type == 'boolean':
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            if value.lower() in ('true', '1', 'yes'):
+                return True
+            if value.lower() in ('false', '0', 'no'):
+                return False
+        raise ValidationError(f"{field_name} must be a boolean")
+    elif expected_type == 'array':
+        if not isinstance(value, list):
+            raise ValidationError(f"{field_name} must be an array")
+        return value
+    elif expected_type == 'object':
+        if not isinstance(value, dict):
+            raise ValidationError(f"{field_name} must be an object")
+        return value
+    else:
+        return value  # 'any' type
 
 
 class InputValidator:
@@ -373,11 +761,24 @@ class InputValidator:
     @staticmethod
     def sanitize_sql_input(value: str) -> str:
         """
-        DEPRECATED: This function provides minimal additional security.
+        DEPRECATED: This function is scheduled for removal in v3.0.
         
-        Always use parameterized queries (SQLAlchemy ORM or bound parameters)
-        instead of string sanitization. This function exists only as a
-        defense-in-depth measure and should NOT be relied upon.
+        Security Note:
+        This function provides minimal additional security and should NOT be
+        relied upon for SQL injection prevention. Always use parameterized
+        queries (SQLAlchemy ORM or bound parameters) instead.
+        
+        The function exists only as a legacy defense-in-depth measure.
+        
+        Migration Guide:
+        Instead of:
+            sanitized = InputValidator.sanitize_sql_input(user_input)
+            query = f"SELECT * FROM users WHERE name = '{sanitized}'"
+        
+        Use parameterized queries:
+            session.query(User).filter(User.name == user_input).all()
+            # OR
+            session.execute(text("SELECT * FROM users WHERE name = :name"), {"name": user_input})
         
         Args:
             value: Input string to sanitize
@@ -387,9 +788,11 @@ class InputValidator:
             
         Warning:
             This is NOT a substitute for parameterized queries!
+            Will be removed in v3.0 - migrate to parameterized queries.
         """
         warnings.warn(
-            "sanitize_sql_input is deprecated. Use parameterized queries instead.",
+            "sanitize_sql_input is deprecated and will be removed in v3.0. "
+            "Use parameterized queries instead. See function docstring for migration guide.",
             DeprecationWarning,
             stacklevel=2
         )
