@@ -159,6 +159,12 @@ models/confusion_matrix.png
 models/feature_importance.png
 data/*.csv
 
+# Database backups (keep directory, exclude backup files)
+backend/backups/*.backup.*
+backend/backups/*.sql
+backend/backups/*.gz
+*.db.backup.*
+
 # Security logs (CSP violations, etc.)
 csp_violations.log
 backend/logs/csp_violations.log

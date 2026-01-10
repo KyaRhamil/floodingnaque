@@ -2,21 +2,49 @@
 API package for Floodingnaque.
 
 Contains:
-- routes: Modular API route blueprints
+- routes: Modular API route blueprints (16 total)
 - middleware: Request processing middleware
 - schemas: Request/response data schemas
+- graphql: GraphQL schema and resolvers
 """
 
-from app.api.routes.health import health_bp
-from app.api.routes.ingest import ingest_bp
-from app.api.routes.predict import predict_bp
-from app.api.routes.data import data_bp
-from app.api.routes.models import models_bp
+# Import all route blueprints from the routes package
+from app.api.routes import (
+    health_bp,
+    health_k8s_bp,
+    ingest_bp,
+    predict_bp,
+    data_bp,
+    models_bp,
+    batch_bp,
+    export_bp,
+    webhooks_bp,
+    celery_bp,
+    rate_limits_bp,
+    tides_bp,
+    graphql_bp,
+    security_txt_bp,
+    csp_report_bp,
+    performance_bp,
+)
 
 __all__ = [
+    # Core routes
     'health_bp',
+    'health_k8s_bp',
     'ingest_bp',
     'predict_bp',
     'data_bp',
-    'models_bp'
+    'models_bp',
+    # Extended routes
+    'batch_bp',
+    'export_bp',
+    'webhooks_bp',
+    'celery_bp',
+    'rate_limits_bp',
+    'tides_bp',
+    'graphql_bp',
+    'security_txt_bp',
+    'csp_report_bp',
+    'performance_bp',
 ]

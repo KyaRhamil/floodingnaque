@@ -1,3 +1,22 @@
+# =============================================================================
+# ARCHIVED: This file is a pip freeze output from a development environment
+# DO NOT use this file for production deployments!
+# 
+# AUTHORITATIVE FILE: requirements.txt (curated with pinned versions)
+# 
+# This backup was created for reference only. The versions here may include:
+# - Development/testing packages not needed in production
+# - Transitive dependencies that are auto-installed
+# - Newer package versions that haven't been tested
+#
+# To update dependencies:
+# 1. Edit requirements.txt (the curated list)
+# 2. Run: pip install -r requirements.txt
+# 3. Test thoroughly before deploying
+#
+# Last freeze date: December 2025 (estimated)
+# =============================================================================
+
 alembic==1.13.1
 anyio==4.12.0
 APScheduler==3.11.1

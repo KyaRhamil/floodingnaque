@@ -37,8 +37,11 @@ from app.utils.sentry import (
 from app.utils.api_responses import (
     api_success,
     api_error,
+    api_error_from_exception,
     api_created,
-    api_accepted
+    api_accepted,
+    api_no_content,
+    api_paginated
 )
 from app.utils.api_errors import (
     AppException,
@@ -49,7 +52,38 @@ from app.utils.api_errors import (
     ConflictError,
     RateLimitExceededError,
     InternalServerError,
-    ServiceUnavailableError
+    ServiceUnavailableError,
+    BadRequestError,
+    ModelError,
+    ExternalServiceError,
+    # Backward compatibility aliases
+    AuthenticationError,
+    AuthorizationError,
+    RateLimitError,
+    ExternalAPIError,
+    DatabaseError,
+    ConfigurationError
+)
+from app.utils.logging import (
+    setup_logging,
+    get_logger,
+    set_request_context,
+    clear_request_context,
+    get_request_context,
+    log_with_context,
+    LogContext,
+    log_function_call
+)
+from app.utils.tracing import (
+    TraceContext,
+    Span,
+    get_current_trace,
+    set_current_trace,
+    clear_current_trace,
+    trace_operation,
+    trace_operation_async,
+    SpanContext,
+    inject_trace_headers
 )
 
 __all__ = [
@@ -88,8 +122,11 @@ __all__ = [
     # API Responses
     'api_success',
     'api_error',
+    'api_error_from_exception',
     'api_created',
     'api_accepted',
+    'api_no_content',
+    'api_paginated',
     # API Errors
     'AppException',
     'ValidationError',
@@ -99,5 +136,33 @@ __all__ = [
     'ConflictError',
     'RateLimitExceededError',
     'InternalServerError',
-    'ServiceUnavailableError'
+    'ServiceUnavailableError',
+    'BadRequestError',
+    'ModelError',
+    'ExternalServiceError',
+    'AuthenticationError',
+    'AuthorizationError',
+    'RateLimitError',
+    'ExternalAPIError',
+    'DatabaseError',
+    'ConfigurationError',
+    # Logging
+    'setup_logging',
+    'get_logger',
+    'set_request_context',
+    'clear_request_context',
+    'get_request_context',
+    'log_with_context',
+    'LogContext',
+    'log_function_call',
+    # Tracing
+    'TraceContext',
+    'Span',
+    'get_current_trace',
+    'set_current_trace',
+    'clear_current_trace',
+    'trace_operation',
+    'trace_operation_async',
+    'SpanContext',
+    'inject_trace_headers'
 ]

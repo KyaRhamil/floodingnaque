@@ -8,6 +8,7 @@ Industry-standard security hardening applied.
 import os
 import uuid
 import logging
+from datetime import datetime
 from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from flask_compress import Compress
@@ -17,6 +18,13 @@ from app.core.config import load_env, get_config, is_debug_mode
 from app.core.exceptions import AppException
 from app.models.db import init_db
 from app.utils.utils import setup_logging
+from app.utils.logging import set_request_context, clear_request_context, get_logger
+from app.utils.tracing import (
+    TraceContext, 
+    set_current_trace, 
+    clear_current_trace, 
+    get_current_trace
+)
 from app.utils.metrics import init_prometheus_metrics
 from app.utils.sentry import init_sentry
 from app.api.middleware import (
@@ -92,20 +100,76 @@ def create_app(config_override: dict = None) -> Flask:
         app.config.update(config_override)
     
     # ==========================================
-    # Request ID Middleware
+    # Request ID & Tracing Middleware
     # ==========================================
     
     @app.before_request
-    def add_request_id():
-        """Add a unique request ID to each request."""
-        g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+    def setup_request_tracing():
+        """Setup request ID and distributed tracing."""
+        import time
+        g.request_start_time = time.perf_counter()
+        
+        # Extract or create trace context from headers
+        trace_ctx = TraceContext.from_headers(dict(request.headers))
+        g.request_id = trace_ctx.request_id
+        g.trace_id = trace_ctx.trace_id
+        
+        # Set up tracing
+        set_current_trace(trace_ctx)
+        set_request_context(
+            request_id=trace_ctx.request_id,
+            trace_id=trace_ctx.trace_id
+        )
+        
+        # Start root span for this request
+        span = trace_ctx.start_span(
+            f"{request.method} {request.path}",
+            tags={
+                'http.method': request.method,
+                'http.url': request.url,
+                'http.route': request.path,
+                'http.user_agent': request.headers.get('User-Agent', 'unknown')[:200],
+                'http.remote_addr': request.remote_addr
+            }
+        )
+        g.root_span = span
     
     @app.after_request
-    def add_request_id_header(response):
-        """Add request ID to response headers."""
+    def add_tracing_headers(response):
+        """Add tracing headers to response."""
         if hasattr(g, 'request_id'):
             response.headers['X-Request-ID'] = g.request_id
+        if hasattr(g, 'trace_id'):
+            response.headers['X-Trace-ID'] = g.trace_id
+        
+        # Finish root span and log trace if errors
+        if hasattr(g, 'root_span'):
+            import time
+            g.root_span.set_tag('http.status_code', response.status_code)
+            if hasattr(g, 'request_start_time'):
+                duration_ms = (time.perf_counter() - g.request_start_time) * 1000
+                g.root_span.set_tag('http.duration_ms', round(duration_ms, 2))
+            
+            trace_ctx = get_current_trace()
+            if trace_ctx:
+                trace_ctx.finish_span(g.root_span)
+                
+                # Log trace summary for errors or slow requests
+                if response.status_code >= 400 or (hasattr(g, 'request_start_time') and duration_ms > 1000):
+                    logger.warning(
+                        f"Request completed: {request.method} {request.path} - {response.status_code}",
+                        extra={'trace_summary': trace_ctx.get_summary()}
+                    )
+        
         return response
+    
+    @app.teardown_request
+    def cleanup_request_context(exception=None):
+        """Cleanup request context after each request."""
+        if exception and hasattr(g, 'root_span'):
+            g.root_span.set_error(exception)
+        clear_current_trace()
+        clear_request_context()
     
     # ==========================================
     # Initialize Extensions
@@ -213,96 +277,204 @@ def create_app(config_override: dict = None) -> Flask:
         logger.info("Swagger documentation enabled at /apidocs")
     
     # ==========================================
-    # Error Handlers
+    # Error Handlers (RFC 7807 Problem Details)
     # ==========================================
+    
+    def _build_error_response(
+        error_code: str,
+        title: str,
+        message: str,
+        status_code: int,
+        details: dict = None
+    ) -> tuple:
+        """Build standardized RFC 7807 error response."""
+        request_id = getattr(g, 'request_id', 'unknown')
+        trace_id = getattr(g, 'trace_id', None)
+        
+        response = {
+            'success': False,
+            'error': {
+                'type': f'/errors/{error_code.lower().replace("_", "-")}',
+                'title': title,
+                'status': status_code,
+                'detail': message,
+                'code': error_code,
+                'request_id': request_id,
+                'timestamp': datetime.utcnow().isoformat() + 'Z'
+            }
+        }
+        
+        if trace_id:
+            response['error']['trace_id'] = trace_id
+            
+        if details and config.DEBUG:
+            response['error']['debug'] = details
+            
+        logger.error(
+            f"API Error: {error_code} - {message}",
+            extra={
+                'error_code': error_code,
+                'status_code': status_code,
+                'request_id': request_id,
+                'trace_id': trace_id
+            }
+        )
+        
+        return jsonify(response), status_code
     
     @app.errorhandler(AppException)
     def handle_app_exception(error):
         """Handle custom application exceptions."""
-        response = error.to_dict()
-        response['request_id'] = getattr(g, 'request_id', 'unknown')
-        return jsonify(response), error.status_code
+        response = error.to_dict(include_debug=config.DEBUG)
+        response['error']['request_id'] = getattr(g, 'request_id', 'unknown')
+        if hasattr(g, 'trace_id'):
+            response['error']['trace_id'] = g.trace_id
+        
+        logger.error(
+            f"AppException: {error.error_code} - {error.message}",
+            extra={
+                'error_code': error.error_code,
+                'status_code': error.status_code
+            }
+        )
+        
+        resp = jsonify(response)
+        if hasattr(error, 'retry_after') and error.retry_after:
+            resp.headers['Retry-After'] = str(error.retry_after)
+        
+        return resp, error.status_code
     
     @app.errorhandler(400)
     def bad_request(error):
         """Handle 400 Bad Request errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Bad Request',
-            'message': str(error.description) if hasattr(error, 'description') else 'Invalid request',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 400
+        return _build_error_response(
+            'BAD_REQUEST',
+            'Bad Request',
+            str(error.description) if hasattr(error, 'description') else 'Invalid request',
+            400
+        )
     
     @app.errorhandler(401)
     def unauthorized(error):
         """Handle 401 Unauthorized errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Unauthorized',
-            'message': 'Authentication required',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 401
+        return _build_error_response(
+            'UNAUTHORIZED',
+            'Authentication Required',
+            'Authentication is required to access this resource',
+            401
+        )
     
     @app.errorhandler(403)
     def forbidden(error):
         """Handle 403 Forbidden errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Forbidden',
-            'message': 'Access denied',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 403
+        return _build_error_response(
+            'FORBIDDEN',
+            'Access Denied',
+            'You do not have permission to access this resource',
+            403
+        )
     
     @app.errorhandler(404)
     def not_found(error):
         """Handle 404 Not Found errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Not Found',
-            'message': 'The requested resource was not found',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 404
+        return _build_error_response(
+            'NOT_FOUND',
+            'Resource Not Found',
+            'The requested resource was not found',
+            404
+        )
     
     @app.errorhandler(405)
     def method_not_allowed(error):
         """Handle 405 Method Not Allowed errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Method Not Allowed',
-            'message': 'The HTTP method is not allowed for this endpoint',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 405
+        return _build_error_response(
+            'METHOD_NOT_ALLOWED',
+            'Method Not Allowed',
+            'The HTTP method is not allowed for this endpoint',
+            405
+        )
+    
+    @app.errorhandler(422)
+    def unprocessable_entity(error):
+        """Handle 422 Unprocessable Entity errors."""
+        return _build_error_response(
+            'UNPROCESSABLE_ENTITY',
+            'Validation Error',
+            str(error.description) if hasattr(error, 'description') else 'Request validation failed',
+            422
+        )
     
     @app.errorhandler(429)
     def rate_limit_exceeded(error):
         """Handle 429 Rate Limit Exceeded errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Too Many Requests',
-            'message': 'Rate limit exceeded. Please slow down your requests.',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 429
+        return _build_error_response(
+            'RATE_LIMIT_EXCEEDED',
+            'Too Many Requests',
+            'Rate limit exceeded. Please slow down your requests.',
+            429
+        )
     
     @app.errorhandler(500)
     def internal_server_error(error):
         """Handle 500 Internal Server Error."""
-        logger.error(f"Internal server error: {error}")
-        return jsonify({
-            'success': False,
-            'error': 'Internal Server Error',
-            'message': 'An unexpected error occurred' if not config.DEBUG else str(error),
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 500
+        error_id = str(uuid.uuid4())[:8]
+        logger.exception(f"Internal server error [{error_id}]: {error}")
+        
+        message = 'An unexpected error occurred'
+        if config.DEBUG:
+            message = str(error)
+        
+        return _build_error_response(
+            'INTERNAL_ERROR',
+            'Internal Server Error',
+            message,
+            500,
+            details={'error_id': error_id} if not config.DEBUG else {'error_id': error_id, 'exception': str(error)}
+        )
+    
+    @app.errorhandler(502)
+    def bad_gateway(error):
+        """Handle 502 Bad Gateway errors."""
+        return _build_error_response(
+            'BAD_GATEWAY',
+            'Bad Gateway',
+            'Error communicating with upstream service',
+            502
+        )
     
     @app.errorhandler(503)
     def service_unavailable(error):
         """Handle 503 Service Unavailable errors."""
-        return jsonify({
-            'success': False,
-            'error': 'Service Unavailable',
-            'message': 'The service is temporarily unavailable',
-            'request_id': getattr(g, 'request_id', 'unknown')
-        }), 503
+        return _build_error_response(
+            'SERVICE_UNAVAILABLE',
+            'Service Unavailable',
+            'The service is temporarily unavailable',
+            503
+        )
+    
+    @app.errorhandler(504)
+    def gateway_timeout(error):
+        """Handle 504 Gateway Timeout errors."""
+        return _build_error_response(
+            'GATEWAY_TIMEOUT',
+            'Gateway Timeout',
+            'Upstream service timed out',
+            504
+        )
+    
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        """Catch-all handler for unexpected exceptions."""
+        error_id = str(uuid.uuid4())[:8]
+        logger.exception(f"Unexpected error [{error_id}]: {error}")
+        
+        return _build_error_response(
+            'INTERNAL_ERROR',
+            'Internal Server Error',
+            'An unexpected error occurred' if not config.DEBUG else str(error),
+            500,
+            details={'error_id': error_id}
+        )
     
     # ==========================================
     # Startup Tasks

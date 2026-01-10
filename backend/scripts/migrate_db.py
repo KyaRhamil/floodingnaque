@@ -313,6 +313,123 @@ def run_migration():
     return True
 
 
+def analyze_migration_plan(db_path: Path) -> dict:
+    """
+    Analyze what changes would be made during migration without executing them.
+    
+    Args:
+        db_path: Path to the database file
+        
+    Returns:
+        dict: Migration plan with changes to be made
+    """
+    plan = {
+        'database_path': str(db_path),
+        'database_exists': os.path.exists(db_path),
+        'actions': [],
+        'new_tables': [],
+        'new_columns': [],
+        'new_indexes': [],
+    }
+    
+    if not plan['database_exists']:
+        plan['actions'].append('CREATE new database with full schema')
+        plan['new_tables'] = ['weather_data', 'predictions', 'alert_history', 'model_registry', 'webhooks', 'api_requests']
+        return plan
+    
+    # Analyze existing database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Get existing tables
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    existing_tables = {row[0] for row in cursor.fetchall()}
+    
+    plan['actions'].append('BACKUP existing database')
+    
+    # Check for missing tables
+    required_tables = ['predictions', 'alert_history', 'model_registry']
+    for table in required_tables:
+        if table not in existing_tables:
+            plan['new_tables'].append(table)
+            plan['actions'].append(f'CREATE TABLE {table}')
+    
+    # Check for missing columns in weather_data
+    if 'weather_data' in existing_tables:
+        cursor.execute("PRAGMA table_info(weather_data)")
+        existing_columns = {row[1] for row in cursor.fetchall()}
+        
+        new_columns = {
+            'wind_speed': 'FLOAT',
+            'pressure': 'FLOAT',
+            'location_lat': 'FLOAT',
+            'location_lon': 'FLOAT',
+            'source': "VARCHAR(50) DEFAULT 'OWM'",
+            'created_at': "DATETIME DEFAULT CURRENT_TIMESTAMP",
+            'updated_at': "DATETIME DEFAULT CURRENT_TIMESTAMP"
+        }
+        
+        for col_name, col_type in new_columns.items():
+            if col_name not in existing_columns:
+                plan['new_columns'].append({'table': 'weather_data', 'column': col_name, 'type': col_type})
+                plan['actions'].append(f'ADD COLUMN weather_data.{col_name} ({col_type})')
+    
+    # Check for missing indexes
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='index'")
+    existing_indexes = {row[0] for row in cursor.fetchall()}
+    
+    required_indexes = [
+        ('idx_weather_timestamp', 'weather_data', 'timestamp'),
+        ('idx_weather_created', 'weather_data', 'created_at'),
+        ('idx_prediction_risk', 'predictions', 'risk_level'),
+        ('idx_prediction_model', 'predictions', 'model_version'),
+    ]
+    
+    for idx_name, table, column in required_indexes:
+        if idx_name not in existing_indexes and table in existing_tables:
+            plan['new_indexes'].append({'name': idx_name, 'table': table, 'column': column})
+            plan['actions'].append(f'CREATE INDEX {idx_name} ON {table}({column})')
+    
+    conn.close()
+    return plan
+
+
+def print_dry_run_report(plan: dict):
+    """Print a formatted dry-run report."""
+    logger.info("="*60)
+    logger.info("DRY RUN MIGRATION REPORT")
+    logger.info("="*60)
+    logger.info(f"Database path: {plan['database_path']}")
+    logger.info(f"Database exists: {plan['database_exists']}")
+    logger.info("")
+    
+    if not plan['actions']:
+        logger.info("No changes needed - database is up to date!")
+        return
+    
+    logger.info(f"Actions to be performed ({len(plan['actions'])}):\n")
+    for i, action in enumerate(plan['actions'], 1):
+        logger.info(f"  {i}. {action}")
+    
+    if plan['new_tables']:
+        logger.info(f"\nNew tables to create: {', '.join(plan['new_tables'])}")
+    
+    if plan['new_columns']:
+        logger.info("\nNew columns to add:")
+        for col in plan['new_columns']:
+            logger.info(f"  - {col['table']}.{col['column']}: {col['type']}")
+    
+    if plan['new_indexes']:
+        logger.info("\nNew indexes to create:")
+        for idx in plan['new_indexes']:
+            logger.info(f"  - {idx['name']} on {idx['table']}({idx['column']})")
+    
+    logger.info("")
+    logger.info("="*60)
+    logger.info("To execute these changes, run without --dry-run flag")
+    logger.info("="*60)
+
+
 if __name__ == '__main__':
     import argparse
     
@@ -322,9 +439,21 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
+    # Determine database path
+    db_url = os.getenv('DATABASE_URL', 'sqlite:///data/floodingnaque.db')
+    if db_url.startswith('sqlite:///'):
+        db_path = db_url.replace('sqlite:///', '')
+    else:
+        logger.error("Only SQLite databases are supported for migration")
+        sys.exit(1)
+    
+    backend_dir = Path(__file__).parent.parent
+    db_path = backend_dir / db_path
+    
     if args.dry_run:
         logger.info("DRY RUN MODE - No changes will be made")
-        # TODO: Implement dry-run logic
+        plan = analyze_migration_plan(db_path)
+        print_dry_run_report(plan)
         sys.exit(0)
     
     try:

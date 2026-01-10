@@ -1,5 +1,4 @@
-"""
-API Key Authentication Middleware.
+"""API Key Authentication Middleware.
 
 Provides decorator-based authentication for protecting API endpoints.
 Implements bcrypt hashing and timing-safe comparison to prevent attacks.
@@ -8,6 +7,8 @@ Security Features:
 - bcrypt for API key hashing (resistant to rainbow table attacks)
 - Timing-safe comparison prevents timing attacks
 - No information leakage about valid keys
+- API key format validation with entropy checks
+- Key expiration and revocation support
 """
 
 from functools import wraps
@@ -16,7 +17,12 @@ import os
 import hmac
 import hashlib
 import logging
-from typing import Optional, Set, Dict
+import math
+import re
+import time
+from typing import Optional, Set, Dict, Tuple
+from datetime import datetime, timedelta
+from collections import Counter
 from app.core.config import is_debug_mode
 from app.core.constants import MIN_API_KEY_LENGTH
 
@@ -32,6 +38,97 @@ logger = logging.getLogger(__name__)
 # Cache for hashed API keys (computed once at startup)
 _hashed_api_keys: Optional[Dict[str, bytes]] = None  # Maps key_id to bcrypt hash
 _legacy_hashed_keys: Optional[Set[str]] = None  # Fallback SHA-256 hashes
+
+# API key expiration cache (key_hash -> expiration timestamp)
+_api_key_expirations: Dict[str, float] = {}
+
+# Revoked API keys (key_hash -> revocation timestamp)
+_revoked_api_keys: Dict[str, float] = {}
+
+# Failed authentication attempts tracking (IP -> (count, last_attempt))
+_failed_auth_attempts: Dict[str, Tuple[int, float]] = {}
+
+# Security configuration
+MAX_FAILED_ATTEMPTS = int(os.getenv('AUTH_MAX_FAILED_ATTEMPTS', '5'))
+FAILED_ATTEMPT_WINDOW = int(os.getenv('AUTH_FAILED_ATTEMPT_WINDOW', '300'))  # 5 minutes
+LOCKOUT_DURATION = int(os.getenv('AUTH_LOCKOUT_DURATION', '900'))  # 15 minutes
+API_KEY_MIN_ENTROPY = float(os.getenv('API_KEY_MIN_ENTROPY', '3.0'))  # bits per character
+
+
+def _calculate_entropy(text: str) -> float:
+    """
+    Calculate Shannon entropy of a string.
+    
+    Higher entropy indicates more randomness (better for API keys).
+    A good API key should have entropy > 3.0 bits per character.
+    
+    Args:
+        text: String to analyze
+        
+    Returns:
+        float: Entropy in bits per character
+    """
+    if not text:
+        return 0.0
+    
+    char_counts = Counter(text)
+    length = len(text)
+    entropy = 0.0
+    
+    for count in char_counts.values():
+        if count > 0:
+            freq = count / length
+            entropy -= freq * math.log2(freq)
+    
+    return entropy
+
+
+def _validate_api_key_format(api_key: str) -> Tuple[bool, str]:
+    """
+    Validate API key format and entropy.
+    
+    Security checks:
+    - Minimum length requirement
+    - Character set validation (alphanumeric + limited special chars)
+    - Entropy check to ensure sufficient randomness
+    - No sequential patterns or common strings
+    
+    Args:
+        api_key: The API key to validate
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    # Check length
+    if len(api_key) < MIN_API_KEY_LENGTH:
+        return False, f"API key must be at least {MIN_API_KEY_LENGTH} characters"
+    
+    # Check character set (URL-safe base64 characters)
+    valid_pattern = re.compile(r'^[A-Za-z0-9_\-]+$')
+    if not valid_pattern.match(api_key):
+        return False, "API key contains invalid characters"
+    
+    # Check entropy
+    entropy = _calculate_entropy(api_key)
+    if entropy < API_KEY_MIN_ENTROPY:
+        logger.warning(
+            f"API key rejected: low entropy ({entropy:.2f} bits, minimum {API_KEY_MIN_ENTROPY})"
+        )
+        return False, "API key does not meet entropy requirements"
+    
+    # Check for common weak patterns
+    weak_patterns = [
+        r'(.)(\1{3,})',  # 4+ repeated characters
+        r'(?:0123|1234|2345|3456|4567|5678|6789|abcd|bcde|cdef)',  # Sequential
+        r'(?:password|secret|apikey|admin|test|demo)',  # Common words
+    ]
+    
+    api_key_lower = api_key.lower()
+    for pattern in weak_patterns:
+        if re.search(pattern, api_key_lower):
+            return False, "API key contains weak patterns"
+    
+    return True, ""
 
 
 def _hash_api_key_bcrypt(api_key: str) -> bytes:
@@ -142,25 +239,210 @@ def invalidate_api_key_cache():
     _legacy_hashed_keys = None
 
 
-def validate_api_key(api_key: str) -> bool:
+def revoke_api_key(api_key: str) -> bool:
     """
-    Validate an API key using bcrypt (preferred) or SHA-256 fallback.
+    Revoke an API key immediately.
+    
+    Revoked keys cannot be used even if they haven't expired.
+    
+    Args:
+        api_key: The API key to revoke
+        
+    Returns:
+        bool: True if revoked successfully
+    """
+    global _revoked_api_keys
+    key_hash = _hash_api_key_sha256(api_key)[:16]  # Use truncated hash as identifier
+    _revoked_api_keys[key_hash] = time.time()
+    logger.info(f"API key revoked: {key_hash[:8]}...")
+    return True
+
+
+def is_api_key_revoked(api_key: str) -> bool:
+    """
+    Check if an API key has been revoked.
+    
+    Args:
+        api_key: The API key to check
+        
+    Returns:
+        bool: True if revoked
+    """
+    key_hash = _hash_api_key_sha256(api_key)[:16]
+    return key_hash in _revoked_api_keys
+
+
+def set_api_key_expiration(api_key: str, expires_at: float) -> None:
+    """
+    Set expiration timestamp for an API key.
+    
+    Args:
+        api_key: The API key
+        expires_at: Unix timestamp when key expires
+    """
+    global _api_key_expirations
+    key_hash = _hash_api_key_sha256(api_key)[:16]
+    _api_key_expirations[key_hash] = expires_at
+
+
+def is_api_key_expired(api_key: str) -> bool:
+    """
+    Check if an API key has expired.
+    
+    Args:
+        api_key: The API key to check
+        
+    Returns:
+        bool: True if expired
+    """
+    key_hash = _hash_api_key_sha256(api_key)[:16]
+    
+    if key_hash not in _api_key_expirations:
+        # Check environment for default expiration
+        default_expiry_days = int(os.getenv('API_KEY_DEFAULT_EXPIRY_DAYS', '0'))
+        if default_expiry_days <= 0:
+            return False  # No expiration by default
+    
+    expires_at = _api_key_expirations.get(key_hash, float('inf'))
+    return time.time() > expires_at
+
+
+def _check_ip_lockout(ip_address: str) -> Tuple[bool, int]:
+    """
+    Check if an IP address is locked out due to failed authentication attempts.
+    
+    Args:
+        ip_address: Client IP address
+        
+    Returns:
+        Tuple of (is_locked_out, seconds_remaining)
+    """
+    if ip_address not in _failed_auth_attempts:
+        return False, 0
+    
+    count, last_attempt = _failed_auth_attempts[ip_address]
+    now = time.time()
+    
+    # Check if lockout period has passed
+    if count >= MAX_FAILED_ATTEMPTS:
+        lockout_end = last_attempt + LOCKOUT_DURATION
+        if now < lockout_end:
+            return True, int(lockout_end - now)
+        else:
+            # Reset after lockout period
+            del _failed_auth_attempts[ip_address]
+            return False, 0
+    
+    # Check if failed attempt window has expired
+    if now - last_attempt > FAILED_ATTEMPT_WINDOW:
+        del _failed_auth_attempts[ip_address]
+        return False, 0
+    
+    return False, 0
+
+
+def _record_failed_attempt(ip_address: str) -> int:
+    """
+    Record a failed authentication attempt.
+    
+    Args:
+        ip_address: Client IP address
+        
+    Returns:
+        int: Current failure count
+    """
+    global _failed_auth_attempts
+    now = time.time()
+    
+    if ip_address in _failed_auth_attempts:
+        count, last_attempt = _failed_auth_attempts[ip_address]
+        # Reset if window expired
+        if now - last_attempt > FAILED_ATTEMPT_WINDOW:
+            count = 0
+        _failed_auth_attempts[ip_address] = (count + 1, now)
+        return count + 1
+    else:
+        _failed_auth_attempts[ip_address] = (1, now)
+        return 1
+
+
+def _clear_failed_attempts(ip_address: str) -> None:
+    """Clear failed authentication attempts for an IP after successful auth."""
+    if ip_address in _failed_auth_attempts:
+        del _failed_auth_attempts[ip_address]
+
+
+def cleanup_auth_tracking() -> int:
+    """
+    Clean up old authentication tracking data.
+    
+    Should be called periodically to prevent memory growth.
+    
+    Returns:
+        int: Number of entries cleaned up
+    """
+    global _failed_auth_attempts, _revoked_api_keys
+    now = time.time()
+    cleaned = 0
+    
+    # Clean failed attempts older than lockout duration
+    to_remove = []
+    for ip, (count, last_attempt) in _failed_auth_attempts.items():
+        if now - last_attempt > LOCKOUT_DURATION:
+            to_remove.append(ip)
+    
+    for ip in to_remove:
+        del _failed_auth_attempts[ip]
+        cleaned += 1
+    
+    # Note: Revoked keys are kept indefinitely for security
+    # In production, use a persistent store (Redis/database)
+    
+    return cleaned
+
+
+def validate_api_key(api_key: str, check_expiration: bool = True, 
+                     check_revocation: bool = True) -> Tuple[bool, str]:
+    """
+    Validate an API key comprehensively.
+    
+    Security checks performed:
+    1. Format validation (length, characters, entropy)
+    2. Expiration check
+    3. Revocation check
+    4. Hash verification (bcrypt or SHA-256 fallback)
     
     bcrypt.checkpw is inherently timing-safe.
     For SHA-256 fallback, uses hmac.compare_digest.
     
     Args:
         api_key: The API key to validate
+        check_expiration: Whether to check key expiration
+        check_revocation: Whether to check key revocation
         
     Returns:
-        bool: True if valid, False otherwise
+        Tuple of (is_valid, error_reason)
     """
     if not api_key:
-        return False
+        return False, "API key is required"
+    
+    # Format validation
+    is_valid_format, format_error = _validate_api_key_format(api_key)
+    if not is_valid_format:
+        return False, format_error
+    
+    # Check revocation
+    if check_revocation and is_api_key_revoked(api_key):
+        return False, "API key has been revoked"
+    
+    # Check expiration
+    if check_expiration and is_api_key_expired(api_key):
+        return False, "API key has expired"
     
     # Ensure keys are initialized
     get_hashed_api_keys()
     
+    # Verify hash
     if BCRYPT_AVAILABLE and _hashed_api_keys:
         # Verify against all bcrypt hashes (timing-safe)
         # We check all keys to maintain constant time regardless of match position
@@ -169,7 +451,9 @@ def validate_api_key(api_key: str) -> bool:
             if _verify_api_key_bcrypt(api_key, hashed):
                 valid = True
                 # Don't break early - continue to maintain constant time
-        return valid
+        if not valid:
+            return False, "Invalid API key"
+        return True, ""
     elif _legacy_hashed_keys:
         # Fallback to SHA-256 comparison
         hashed_input = _hash_api_key_sha256(api_key)
@@ -177,9 +461,25 @@ def validate_api_key(api_key: str) -> bool:
         for hashed_key in _legacy_hashed_keys:
             if _timing_safe_compare(hashed_input, hashed_key):
                 valid = True
-        return valid
+        if not valid:
+            return False, "Invalid API key"
+        return True, ""
     
-    return False
+    return False, "No API keys configured"
+
+
+def validate_api_key_simple(api_key: str) -> bool:
+    """
+    Simple API key validation (backward compatible).
+    
+    Args:
+        api_key: The API key to validate
+        
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    is_valid, _ = validate_api_key(api_key)
+    return is_valid
 
 
 def require_api_key(f):
@@ -248,16 +548,41 @@ def require_api_key(f):
                 'message': 'Please provide a valid API key in the X-API-Key header'
             }), 401
         
-        # Validate using timing-safe comparison
-        if not validate_api_key(api_key):
+        # Check IP lockout
+        ip_address = request.remote_addr
+        is_locked, remaining_seconds = _check_ip_lockout(ip_address)
+        if is_locked:
             logger.warning(
-                f"Invalid API key attempt for {request.method} {request.path} "
-                f"from {request.remote_addr}"
+                f"Locked out IP attempted access: {ip_address}, "
+                f"remaining lockout: {remaining_seconds}s"
             )
             return jsonify({
+                'error': 'Too many failed attempts',
+                'message': f'Account temporarily locked. Try again in {remaining_seconds} seconds',
+                'retry_after': remaining_seconds
+            }), 429
+        
+        # Validate using timing-safe comparison with full security checks
+        is_valid, error_reason = validate_api_key(api_key)
+        if not is_valid:
+            failure_count = _record_failed_attempt(ip_address)
+            logger.warning(
+                f"Invalid API key attempt for {request.method} {request.path} "
+                f"from {ip_address} (reason: {error_reason}, attempts: {failure_count})"
+            )
+            
+            # Don't reveal specific reason in response (info leakage)
+            response_msg = 'The provided API key is not valid'
+            if failure_count >= MAX_FAILED_ATTEMPTS - 1:
+                response_msg = 'Too many failed attempts. Account may be locked.'
+            
+            return jsonify({
                 'error': 'Invalid API key',
-                'message': 'The provided API key is not valid'
+                'message': response_msg
             }), 401
+        
+        # Clear failed attempts on successful auth
+        _clear_failed_attempts(ip_address)
         
         # Set authentication context
         g.authenticated = True
@@ -284,9 +609,11 @@ def optional_api_key(f):
         g.authenticated = False
         g.api_key_hash = None
         
-        if api_key and validate_api_key(api_key):
-            g.authenticated = True
-            g.api_key_hash = _hash_api_key_sha256(api_key)[:8]
+        if api_key:
+            is_valid, _ = validate_api_key(api_key)
+            if is_valid:
+                g.authenticated = True
+                g.api_key_hash = _hash_api_key_sha256(api_key)[:8]
         
         return f(*args, **kwargs)
     return decorated

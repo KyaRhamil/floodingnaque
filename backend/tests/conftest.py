@@ -26,7 +26,8 @@ def app():
     from app.api.app import create_app
     
     # Create app with testing configuration
-    os.environ['FLASK_ENV'] = 'testing'
+    # Note: FLASK_ENV is deprecated in Flask 2.3+ - use FLASK_DEBUG instead
+    os.environ['FLASK_DEBUG'] = 'true'
     os.environ['TESTING'] = 'true'
     os.environ['AUTH_BYPASS_ENABLED'] = 'true'
     
@@ -193,7 +194,7 @@ def api_headers_invalid(invalid_api_key):
 def mock_env_production():
     """Mock production environment variables."""
     env_vars = {
-        'FLASK_ENV': 'production',
+        'FLASK_DEBUG': 'false',  # FLASK_ENV deprecated in Flask 2.3+
         'DEBUG': 'false',
         'AUTH_BYPASS_ENABLED': 'false',
         'VALID_API_KEYS': 'prod-key-1,prod-key-2',
@@ -206,7 +207,7 @@ def mock_env_production():
 def mock_env_development():
     """Mock development environment variables."""
     env_vars = {
-        'FLASK_ENV': 'development',
+        'FLASK_DEBUG': 'true',  # FLASK_ENV deprecated in Flask 2.3+
         'DEBUG': 'true',
         'AUTH_BYPASS_ENABLED': 'true',
     }

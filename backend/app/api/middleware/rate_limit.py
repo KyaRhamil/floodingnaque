@@ -1,17 +1,22 @@
-"""
-Rate Limiting Middleware.
+"""Rate Limiting Middleware.
 
 Provides rate limiting for API endpoints to prevent abuse and ensure fair usage.
-Supports multiple backends (memory, Redis), API key-based limits, and burst allowances.
+Supports multiple backends (memory, Redis), API key-based limits, burst allowances,
+and IP reputation-based adaptive limiting.
 """
 
 from app.utils.logging import get_logger
-from app.utils.rate_limit_tiers import get_rate_limit_for_key, get_anonymous_limits, get_tier_limits, get_api_key_tier
+from app.utils.rate_limit_tiers import (
+    get_rate_limit_for_key, get_anonymous_limits, get_tier_limits, 
+    get_api_key_tier, get_reputation_manager
+)
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask import request, g, has_request_context
+from flask import request, g, has_request_context, jsonify
+from functools import wraps
 import os
 import time
+from typing import Callable, Optional
 
 logger = get_logger(__name__)
 
@@ -348,6 +353,192 @@ def get_burst_stats() -> dict:
         'window_seconds': BURST_WINDOW_SECONDS,
         'active_trackers': len(_burst_tracker),
     }
+
+
+# ============================================================================
+# Enhanced Rate Limit Decorators with IP Reputation
+# ============================================================================
+
+def rate_limit_with_reputation(base_limit: str, endpoint_type: str = 'default'):
+    """
+    Rate limit decorator with IP reputation integration.
+    
+    Adjusts rate limits based on IP reputation score.
+    
+    Args:
+        base_limit: Base rate limit string
+        endpoint_type: Type of endpoint for logging
+        
+    Returns:
+        Rate limit decorator
+    """
+    def decorator(f: Callable) -> Callable:
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Check IP reputation first
+            ip_address = get_remote_address()
+            manager = get_reputation_manager()
+            
+            is_blocked, remaining = manager.is_blocked(ip_address)
+            if is_blocked:
+                logger.warning(
+                    f"Blocked IP {ip_address} attempted to access {endpoint_type}"
+                )
+                return create_rate_limit_response(
+                    message="Your IP has been temporarily blocked due to suspicious activity",
+                    retry_after=remaining,
+                    blocked=True
+                )
+            
+            return f(*args, **kwargs)
+        
+        # Apply the actual rate limit
+        return limiter.limit(base_limit)(decorated_function)
+    return decorator
+
+
+def rate_limit_endpoint(endpoint_type: str, auth_multiplier: float = 2.0):
+    """
+    Endpoint-specific rate limiting with authentication awareness.
+    
+    Authenticated users get auth_multiplier times the limit.
+    
+    Args:
+        endpoint_type: Type of endpoint (predict, ingest, data, etc.)
+        auth_multiplier: Multiplier for authenticated users
+        
+    Returns:
+        Rate limit decorator
+    """
+    def dynamic_limit():
+        base_limit = ENDPOINT_LIMITS.get(endpoint_type, f"{DEFAULT_LIMIT} per {WINDOW_SECONDS} seconds")
+        
+        if not has_request_context():
+            return base_limit
+        
+        api_key_hash = getattr(g, 'api_key_hash', None)
+        ip_address = get_remote_address()
+        
+        # Check IP reputation
+        manager = get_reputation_manager()
+        reputation_multiplier = manager.get_rate_limit_multiplier(ip_address)
+        
+        if api_key_hash:
+            # Authenticated - use tier-based limits
+            auth_limit = ENDPOINT_LIMITS.get(
+                f"{endpoint_type}_auth", base_limit
+            )
+            return _apply_multiplier(auth_limit, reputation_multiplier)
+        else:
+            # Anonymous - apply stricter limits
+            return _apply_multiplier(base_limit, reputation_multiplier * 0.5)
+    
+    return limiter.limit(dynamic_limit)
+
+
+def _apply_multiplier(limit_str: str, multiplier: float) -> str:
+    """Apply a multiplier to a rate limit string."""
+    if multiplier == 1.0:
+        return limit_str
+    
+    # Handle compound limits (e.g., "60 per hour;10 per minute")
+    parts = limit_str.split(';')
+    adjusted_parts = []
+    
+    for part in parts:
+        part = part.strip()
+        # Parse "N per period" format
+        tokens = part.split()
+        if len(tokens) >= 3:
+            try:
+                count = int(tokens[0])
+                adjusted_count = max(1, int(count * multiplier))
+                adjusted_parts.append(f"{adjusted_count} {' '.join(tokens[1:])}")
+            except ValueError:
+                adjusted_parts.append(part)
+        else:
+            adjusted_parts.append(part)
+    
+    return ';'.join(adjusted_parts)
+
+
+def create_rate_limit_response(
+    message: str = "Rate limit exceeded",
+    retry_after: Optional[int] = None,
+    limit: Optional[int] = None,
+    remaining: int = 0,
+    blocked: bool = False
+) -> tuple:
+    """
+    Create a standardized rate limit error response.
+    
+    Returns RFC 7807 Problem Details compliant response.
+    """
+    request_id = getattr(g, 'request_id', 'unknown') if has_request_context() else 'unknown'
+    
+    response = {
+        'success': False,
+        'error': {
+            'type': '/errors/rate-limit' if not blocked else '/errors/blocked',
+            'title': 'Rate Limit Exceeded' if not blocked else 'IP Blocked',
+            'status': 429,
+            'detail': message,
+            'code': 'RATE_LIMIT_EXCEEDED' if not blocked else 'IP_BLOCKED',
+            'request_id': request_id
+        }
+    }
+    
+    # Add rate limit details
+    if retry_after is not None:
+        response['error']['retry_after_seconds'] = retry_after
+    if limit is not None:
+        response['error']['limit'] = limit
+    response['error']['remaining'] = remaining
+    
+    # Add helpful message
+    if not blocked:
+        response['error']['help'] = (
+            "You have exceeded your rate limit. Please wait before making more requests. "
+            "Consider using an API key for higher limits."
+        )
+    else:
+        response['error']['help'] = (
+            "Your IP has been blocked due to suspicious activity. "
+            "If you believe this is an error, please contact support."
+        )
+    
+    headers = {}
+    if retry_after is not None:
+        headers['Retry-After'] = str(retry_after)
+    
+    return jsonify(response), 429, headers
+
+
+def setup_rate_limit_error_handler(app):
+    """
+    Setup custom error handler for rate limit exceeded errors.
+    
+    Args:
+        app: Flask application instance
+    """
+    @app.errorhandler(429)
+    def rate_limit_exceeded_handler(e):
+        # Record rate limit hit in reputation system
+        ip_address = get_remote_address()
+        manager = get_reputation_manager()
+        manager.record_rate_limit_hit(ip_address)
+        
+        # Get retry-after if available
+        retry_after = getattr(e, 'description', {}).get('retry_after')
+        if retry_after is None:
+            retry_after = 60  # Default 1 minute
+        
+        return create_rate_limit_response(
+            message=str(e.description) if isinstance(e.description, str) else "Rate limit exceeded",
+            retry_after=retry_after
+        )
+    
+    logger.info("Rate limit error handler configured")
 
 
 # ============================================================================

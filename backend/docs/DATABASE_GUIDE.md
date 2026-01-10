@@ -27,9 +27,9 @@ Comprehensive guide for the Floodingnaque database system, including schema refe
 
 ### Current State
 
-- **Tables**: 4 (weather_data, predictions, alert_history, model_registry)
-- **Indexes**: 10 (including primary keys)
-- **Constraints**: 15+ (CHECK, NOT NULL, FOREIGN KEY)
+- **Tables**: 9 (weather_data, predictions, alert_history, model_registry, satellite_weather_cache, tide_data_cache, api_requests, earth_engine_requests, webhooks)
+- **Indexes**: 40+ (including primary keys and performance indexes)
+- **Constraints**: 25+ (CHECK, NOT NULL, FOREIGN KEY)
 - **Average Query Time**: <25ms (with indexes)
 - **Query Performance Improvement**: 83% faster than v1.0
 
