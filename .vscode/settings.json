@@ -7,5 +7,16 @@
         "*test.py"
     ],
     "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": true
+    "python.testing.unittestEnabled": true,
+    "github.copilot.chat.agent.autoFix": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "github.copilot.chat.customAgents.showOrganizationAndEnterpriseAgents": true,
+    "github.copilot.chat.generateTests.codeLens": true,
+    "github.copilot.chat.githubMcpServer.enabled": true,
+    "github.copilot.chat.tools.memory.enabled": true,
+    "github.copilot.enable": {
+        "markdown": true,
+        "plaintext": true
+    },
+    "github.copilot.nextEditSuggestions.extendedRange": true
 }
