@@ -13,7 +13,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-batch_bp = Blueprint('batch', __name__, url_prefix='/batch')
+batch_bp = Blueprint('batch', __name__)
 
 
 @batch_bp.route('/predict', methods=['POST'])
@@ -23,28 +23,106 @@ def batch_predict():
     """
     Process multiple flood predictions in a single request.
     
+    Allows efficient batch processing of flood predictions.
+    Maximum 100 predictions per request.
+    
     Request Body:
-    {
-        "predictions": [
-            {
-                "temperature": 298.15,
-                "humidity": 65,
-                "precipitation": 5.0,
-                "wind_speed": 10.5,
-                "location": "Paranaque City"
-            },
-            {
-                "temperature": 300.15,
-                "humidity": 70,
-                "precipitation": 10.0
-            }
-        ]
-    }
+        predictions (array): List of prediction inputs (required)
+        
+    Each prediction object requires:
+        temperature (float): Temperature in Kelvin
+        humidity (float): Relative humidity (%)
+        precipitation (float): Precipitation in mm/hour
+        wind_speed (float): Wind speed in m/s (optional)
+        location (str): Location name (optional)
     
     Returns:
         200: Batch predictions completed
         400: Invalid request data
         413: Too many predictions (max 100)
+        500: Internal server error
+    ---
+    tags:
+      - Predictions
+      - Batch
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - predictions
+          properties:
+            predictions:
+              type: array
+              maxItems: 100
+              items:
+                type: object
+                required:
+                  - temperature
+                  - humidity
+                  - precipitation
+                properties:
+                  temperature:
+                    type: number
+                    example: 298.15
+                  humidity:
+                    type: number
+                    example: 65
+                  precipitation:
+                    type: number
+                    example: 5.0
+                  wind_speed:
+                    type: number
+                    example: 10.5
+                  location:
+                    type: string
+                    example: "Paranaque City"
+    responses:
+      200:
+        description: Batch predictions completed
+        schema:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            total_requested:
+              type: integer
+            successful:
+              type: integer
+            failed:
+              type: integer
+            results:
+              type: array
+              items:
+                type: object
+                properties:
+                  index:
+                    type: integer
+                  prediction:
+                    type: integer
+                  risk_level:
+                    type: integer
+                  confidence:
+                    type: number
+            errors:
+              type: array
+              items:
+                type: object
+      400:
+        description: Invalid request data
+      413:
+        description: Too many predictions
+      500:
+        description: Internal server error
+    security:
+      - api_key: []
     """
     try:
         data = request.get_json()

@@ -16,7 +16,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-export_bp = Blueprint('export', __name__, url_prefix='/export')
+export_bp = Blueprint('export', __name__)
 
 
 @export_bp.route('/weather', methods=['GET'])

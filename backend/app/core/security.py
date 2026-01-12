@@ -1,15 +1,31 @@
-"""
-Security Utilities.
+"""Security Utilities.
 
 Provides security-related utilities for the Floodingnaque API.
+Includes JWT token management for user authentication.
 """
 
 import secrets
 import hashlib
 import hmac
 import os
-from typing import Optional
+import time
+from typing import Optional, Tuple, Dict, Any
+from datetime import datetime, timedelta, timezone
 import logging
+
+try:
+    import jwt
+    JWT_AVAILABLE = True
+except ImportError:
+    JWT_AVAILABLE = False
+    logging.warning("PyJWT not installed. Install with: pip install PyJWT")
+
+try:
+    import bcrypt
+    BCRYPT_AVAILABLE = True
+except ImportError:
+    BCRYPT_AVAILABLE = False
+    logging.warning("bcrypt not installed. Install with: pip install bcrypt")
 
 logger = logging.getLogger(__name__)
 
@@ -180,3 +196,191 @@ class RateLimitExceeded(Exception):
 class SecurityViolation(Exception):
     """Exception raised for security violations."""
     pass
+
+
+# =============================================================================
+# JWT Token Management
+# =============================================================================
+
+# JWT Configuration
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production'))
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
+JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES_MINUTES', '15'))  # 15 minutes
+JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES_DAYS', '7'))  # 7 days
+
+
+def hash_password(password: str) -> str:
+    """
+    Hash a password using bcrypt.
+    
+    Args:
+        password: Plain text password
+    
+    Returns:
+        str: Bcrypt hashed password
+    """
+    if not BCRYPT_AVAILABLE:
+        raise RuntimeError("bcrypt is required for password hashing. Install with: pip install bcrypt")
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    """
+    Verify a password against its hash.
+    
+    Args:
+        password: Plain text password
+        password_hash: Bcrypt hash to compare against
+    
+    Returns:
+        bool: True if password matches
+    """
+    if not BCRYPT_AVAILABLE:
+        return False
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+    except (ValueError, TypeError):
+        return False
+
+
+def create_access_token(
+    user_id: int,
+    email: str,
+    role: str = 'user',
+    expires_minutes: int = None
+) -> str:
+    """
+    Create a JWT access token.
+    
+    Args:
+        user_id: User's database ID
+        email: User's email
+        role: User's role (user/admin/operator)
+        expires_minutes: Custom expiration in minutes
+    
+    Returns:
+        str: Encoded JWT token
+    """
+    if not JWT_AVAILABLE:
+        raise RuntimeError("PyJWT is required. Install with: pip install PyJWT")
+    
+    if expires_minutes is None:
+        expires_minutes = JWT_ACCESS_TOKEN_EXPIRES
+    
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(minutes=expires_minutes)
+    
+    payload = {
+        'sub': str(user_id),
+        'email': email,
+        'role': role,
+        'type': 'access',
+        'iat': now,
+        'exp': expire,
+        'jti': secrets.token_hex(16)  # Unique token ID for revocation
+    }
+    
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
+def create_refresh_token(
+    user_id: int,
+    expires_days: int = None
+) -> Tuple[str, str]:
+    """
+    Create a JWT refresh token.
+    
+    Args:
+        user_id: User's database ID
+        expires_days: Custom expiration in days
+    
+    Returns:
+        Tuple[str, str]: (encoded token, token hash for storage)
+    """
+    if not JWT_AVAILABLE:
+        raise RuntimeError("PyJWT is required. Install with: pip install PyJWT")
+    
+    if expires_days is None:
+        expires_days = JWT_REFRESH_TOKEN_EXPIRES
+    
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(days=expires_days)
+    token_id = secrets.token_hex(32)
+    
+    payload = {
+        'sub': str(user_id),
+        'type': 'refresh',
+        'iat': now,
+        'exp': expire,
+        'jti': token_id
+    }
+    
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
+    return token, token_hash
+
+
+def decode_token(token: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Decode and validate a JWT token.
+    
+    Args:
+        token: The JWT token to decode
+    
+    Returns:
+        Tuple[payload, error]: (decoded payload, None) on success, (None, error_message) on failure
+    """
+    if not JWT_AVAILABLE:
+        return None, "JWT support not available"
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload, None
+    except jwt.ExpiredSignatureError:
+        return None, "Token has expired"
+    except jwt.InvalidTokenError as e:
+        return None, f"Invalid token: {str(e)}"
+
+
+def create_password_reset_token() -> Tuple[str, datetime]:
+    """
+    Create a password reset token.
+    
+    Returns:
+        Tuple[str, datetime]: (token, expiration_time)
+    """
+    token = secrets.token_urlsafe(32)
+    expires = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
+    return token, expires
+
+
+def verify_password_reset_token(stored_token: str, provided_token: str, expires_at: datetime) -> bool:
+    """
+    Verify a password reset token.
+    
+    Args:
+        stored_token: Token stored in database
+        provided_token: Token provided by user
+        expires_at: Token expiration time
+    
+    Returns:
+        bool: True if token is valid and not expired
+    """
+    if not stored_token or not provided_token:
+        return False
+    
+    if datetime.now(timezone.utc) > expires_at:
+        return False
+    
+    return hmac.compare_digest(stored_token, provided_token)
+
+
+def is_jwt_available() -> bool:
+    """Check if JWT support is available."""
+    return JWT_AVAILABLE
+
+
+def is_bcrypt_available() -> bool:
+    """Check if bcrypt is available."""
+    return BCRYPT_AVAILABLE

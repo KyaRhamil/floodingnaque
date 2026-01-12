@@ -575,3 +575,58 @@ def rate_limit_with_burst(base_limit: str):
         return base_limit
     
     return limiter.limit(dynamic_limit)
+
+
+def rate_limit_tiered(endpoint_type: str = 'default'):
+    """
+    Tiered rate limit decorator based on user's subscription tier.
+    
+    Applies different rate limits based on API key tier:
+    - free: 5/min, 100/hour, 1000/day
+    - basic: 20/min, 500/hour, 10000/day
+    - pro: 100/min, 2000/hour, 50000/day
+    - enterprise: 500/min, 10000/hour, 250000/day
+    - unlimited: No practical limit
+    
+    Anonymous users get stricter limits (2/min, 20/hour).
+    
+    Args:
+        endpoint_type: Type of endpoint for logging
+        
+    Returns:
+        Rate limit decorator
+    
+    Usage:
+        @rate_limit_tiered('predict')
+        def predict_endpoint():
+            ...
+    """
+    def dynamic_limit():
+        if not has_request_context():
+            return "100 per hour;20 per minute"  # Default fallback
+        
+        api_key_hash = getattr(g, 'api_key_hash', None)
+        ip_address = get_remote_address()
+        
+        # Check IP reputation first
+        manager = get_reputation_manager()
+        is_blocked, remaining = manager.is_blocked(ip_address)
+        if is_blocked:
+            # Return extremely strict limit for blocked IPs
+            return "1 per day"
+        
+        # Get reputation multiplier
+        reputation_multiplier = manager.get_rate_limit_multiplier(ip_address)
+        
+        if api_key_hash:
+            # Authenticated - use tier-based limits
+            tier_name = get_api_key_tier(api_key_hash)
+            tier = get_tier_limits(tier_name)
+            base_limit = f"{tier.requests_per_hour} per hour;{tier.requests_per_minute} per minute"
+            return _apply_multiplier(base_limit, reputation_multiplier)
+        else:
+            # Anonymous - stricter limits
+            anonymous_limit = get_anonymous_limits(ip_address)
+            return _apply_multiplier(anonymous_limit, reputation_multiplier * 0.8)
+    
+    return limiter.limit(dynamic_limit)

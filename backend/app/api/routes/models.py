@@ -16,7 +16,31 @@ models_bp = Blueprint('models', __name__)
 
 @models_bp.route('/api/version', methods=['GET'])
 def api_version():
-    """API version endpoint."""
+    """
+    Get API version information.
+    
+    Returns:
+        200: API version details
+    ---
+    tags:
+      - API Info
+    produces:
+      - application/json
+    responses:
+      200:
+        description: API version information
+        schema:
+          type: object
+          properties:
+            version:
+              type: string
+              example: "2.0.0"
+            name:
+              type: string
+              example: "Floodingnaque API"
+            base_url:
+              type: string
+    """
     return jsonify({
         'version': '2.0.0',
         'name': 'Floodingnaque API',
@@ -26,7 +50,58 @@ def api_version():
 
 @models_bp.route('/api/models', methods=['GET'])
 def list_models():
-    """List all available model versions."""
+    """
+    List all available ML model versions.
+    
+    Returns a list of all available model versions with their metadata.
+    Includes accuracy metrics and indicates which model is currently active.
+    
+    Returns:
+        200: List of available models
+        500: Internal server error
+    ---
+    tags:
+      - Models
+    produces:
+      - application/json
+    responses:
+      200:
+        description: List of available models
+        schema:
+          type: object
+          properties:
+            models:
+              type: array
+              items:
+                type: object
+                properties:
+                  version:
+                    type: string
+                  path:
+                    type: string
+                  is_current:
+                    type: boolean
+                  created_at:
+                    type: string
+                    format: date-time
+                  metrics:
+                    type: object
+                    properties:
+                      accuracy:
+                        type: number
+                      precision:
+                        type: number
+                      recall:
+                        type: number
+                      f1_score:
+                        type: number
+            current_version:
+              type: string
+            total_versions:
+              type: integer
+      500:
+        description: Internal server error
+    """
     try:
         models = list_available_models()
         current_info = get_current_model_info()
@@ -67,7 +142,32 @@ def list_models():
 @models_bp.route('/api/docs', methods=['GET'])
 @limiter.limit(get_endpoint_limit('docs'))
 def api_docs():
-    """API documentation endpoint."""
+    """
+    Get API documentation.
+    
+    Returns comprehensive documentation of all available API endpoints,
+    including request/response formats and parameters.
+    
+    Returns:
+        200: API documentation
+    ---
+    tags:
+      - API Info
+    produces:
+      - application/json
+    responses:
+      200:
+        description: API documentation
+        schema:
+          type: object
+          properties:
+            endpoints:
+              type: object
+            version:
+              type: string
+            base_url:
+              type: string
+    """
     docs = {
         'endpoints': {
             'GET /status': {

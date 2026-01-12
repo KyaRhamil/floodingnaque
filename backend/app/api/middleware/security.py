@@ -185,12 +185,59 @@ def setup_cors(app: Flask, cors_instance):
         cors_instance.init_app(
             app,
             origins=origins,
-            methods=['GET', 'POST', 'OPTIONS'],
-            allow_headers=['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
-            expose_headers=['X-Request-ID'],
+            methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            allow_headers=[
+                'Content-Type', 
+                'Authorization', 
+                'X-API-Key', 
+                'X-Request-ID',
+                'X-CSRF-Token',
+                'Accept',
+                'Origin',
+            ],
+            expose_headers=[
+                'X-Request-ID', 
+                'X-RateLimit-Limit', 
+                'X-RateLimit-Remaining',
+                'X-RateLimit-Reset',
+                'X-Trace-ID',
+            ],
             supports_credentials=True,
             max_age=600  # Cache preflight for 10 minutes
         )
         logger.info(f"CORS configured for origins: {origins}")
     else:
         logger.warning("No CORS origins configured - all origins will be blocked in production")
+
+
+def validate_cors_origin(request_origin: str) -> bool:
+    """
+    Validate if a request origin is allowed.
+    
+    Args:
+        request_origin: The Origin header value from the request
+        
+    Returns:
+        bool: True if origin is allowed
+    """
+    if not request_origin:
+        return False
+    
+    allowed_origins = get_cors_origins()
+    if not allowed_origins:
+        return False
+    
+    # Normalize origins for comparison
+    request_origin = request_origin.rstrip('/')
+    
+    for allowed in allowed_origins:
+        allowed = allowed.rstrip('/')
+        if request_origin == allowed:
+            return True
+        # Support wildcard subdomains (e.g., *.floodingnaque.com)
+        if allowed.startswith('*.'):
+            domain = allowed[2:]
+            if request_origin.endswith(domain) or request_origin.endswith('.' + domain):
+                return True
+    
+    return False

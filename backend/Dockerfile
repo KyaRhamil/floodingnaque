@@ -87,7 +87,7 @@ RUN groupadd --gid 1000 appgroup && \
     useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
 
 # Create application directories
-RUN mkdir -p /app/models /app/data /app/logs /app/uploads /app/backups /app/.cache && \
+RUN mkdir -p /app/models /app/data /app/logs /app/uploads /app/backups /app/.cache /app/certs && \
     chown -R appuser:appgroup /app
 
 # Set working directory
@@ -106,6 +106,9 @@ COPY --chown=appuser:appgroup alembic/ ./alembic/
 # Copy model files (JSON metadata and joblib models)
 COPY --chown=appuser:appgroup models/*.json ./models/
 COPY --chown=appuser:appgroup models/*.joblib ./models/
+
+# Copy SSL certificates for database connection (Supabase)
+COPY --chown=appuser:appgroup prod-ca-2021.crt ./certs/
 
 # Copy data files for reference
 COPY --chown=appuser:appgroup data/*.csv ./data/

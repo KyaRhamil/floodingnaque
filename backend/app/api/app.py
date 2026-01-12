@@ -34,6 +34,7 @@ from app.api.middleware import (
     get_cors_origins
 )
 from app.utils.startup_health import validate_startup_health
+from app.utils.session_config import init_session
 from app.api.middleware.request_logger import setup_request_logging_middleware
 from app.api.routes.health import health_bp
 from app.api.routes.health_k8s import health_k8s_bp
@@ -51,6 +52,12 @@ from app.api.routes.graphql import graphql_bp, init_graphql_route
 from app.api.routes.security_txt import security_txt_bp
 from app.api.routes.csp_report import csp_report_bp
 from app.api.routes.performance import performance_bp, setup_response_time_tracking
+from app.api.routes.users import users_bp
+from app.api.routes.alerts import alerts_bp
+from app.api.routes.dashboard import dashboard_bp
+from app.api.routes.predictions import predictions_bp
+from app.api.routes.sse import sse_bp, get_sse_manager, broadcast_alert
+from app.api.routes.upload import upload_bp
 from app.api.swagger_config import init_swagger
 
 # Initialize module-level logger
@@ -185,9 +192,23 @@ def create_app(config_override: dict = None) -> Flask:
         cors.init_app(
             app,
             origins=cors_origins,
-            methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-            allow_headers=['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
-            expose_headers=['X-Request-ID', 'X-RateLimit-Limit', 'X-RateLimit-Remaining'],
+            methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            allow_headers=[
+                'Content-Type', 
+                'Authorization', 
+                'X-API-Key', 
+                'X-Request-ID',
+                'X-CSRF-Token',
+                'Accept',
+                'Origin',
+            ],
+            expose_headers=[
+                'X-Request-ID', 
+                'X-RateLimit-Limit', 
+                'X-RateLimit-Remaining',
+                'X-RateLimit-Reset',
+                'X-Trace-ID',
+            ],
             supports_credentials=True,
             max_age=600
         )
@@ -200,6 +221,16 @@ def create_app(config_override: dict = None) -> Flask:
     # Rate limiting
     init_rate_limiter(app)
     logger.info(f"Rate limiting {'enabled' if config.RATE_LIMIT_ENABLED else 'disabled'}")
+    
+    # ==========================================
+    # Initialize Server-Side Sessions (Redis in production)
+    # ==========================================
+    
+    session_enabled = init_session(app)
+    if session_enabled:
+        logger.info("Server-side session storage initialized")
+    else:
+        logger.warning("Using default Flask sessions (not recommended for production)")
     
     # ==========================================
     # Initialize Security
@@ -232,25 +263,33 @@ def create_app(config_override: dict = None) -> Flask:
     # Register Blueprints
     # ==========================================
     
-    # Core routes (no prefix)
+    # Core routes (no prefix - infrastructure endpoints)
     app.register_blueprint(health_bp)
     app.register_blueprint(health_k8s_bp)
     app.register_blueprint(security_txt_bp)
     app.register_blueprint(csp_report_bp)
     
-    # API routes
-    app.register_blueprint(ingest_bp)
-    app.register_blueprint(predict_bp)
-    app.register_blueprint(data_bp)
-    app.register_blueprint(models_bp)
-    app.register_blueprint(webhooks_bp)
-    app.register_blueprint(batch_bp)
-    app.register_blueprint(export_bp)
-    app.register_blueprint(celery_bp)
-    app.register_blueprint(rate_limits_bp)
-    app.register_blueprint(tides_bp)
-    app.register_blueprint(graphql_bp)
-    app.register_blueprint(performance_bp)  # Performance monitoring
+    # API v1 routes (with /api/v1 prefix)
+    API_V1_PREFIX = '/api/v1'
+    
+    app.register_blueprint(ingest_bp, url_prefix=f'{API_V1_PREFIX}/ingest')
+    app.register_blueprint(predict_bp, url_prefix=f'{API_V1_PREFIX}/predict')
+    app.register_blueprint(data_bp, url_prefix=f'{API_V1_PREFIX}/data')
+    app.register_blueprint(models_bp, url_prefix=f'{API_V1_PREFIX}/models')
+    app.register_blueprint(webhooks_bp, url_prefix=f'{API_V1_PREFIX}/webhooks')
+    app.register_blueprint(batch_bp, url_prefix=f'{API_V1_PREFIX}/batch')
+    app.register_blueprint(export_bp, url_prefix=f'{API_V1_PREFIX}/export')
+    app.register_blueprint(celery_bp, url_prefix=f'{API_V1_PREFIX}/tasks')
+    app.register_blueprint(rate_limits_bp, url_prefix=f'{API_V1_PREFIX}/rate-limits')
+    app.register_blueprint(tides_bp, url_prefix=f'{API_V1_PREFIX}/tides')
+    app.register_blueprint(graphql_bp, url_prefix=f'{API_V1_PREFIX}/graphql')
+    app.register_blueprint(performance_bp, url_prefix=f'{API_V1_PREFIX}/performance')
+    app.register_blueprint(users_bp, url_prefix=f'{API_V1_PREFIX}/auth')
+    app.register_blueprint(alerts_bp, url_prefix=f'{API_V1_PREFIX}/alerts')
+    app.register_blueprint(dashboard_bp, url_prefix=f'{API_V1_PREFIX}/dashboard')
+    app.register_blueprint(predictions_bp, url_prefix=f'{API_V1_PREFIX}/predictions')
+    app.register_blueprint(sse_bp, url_prefix=f'{API_V1_PREFIX}/sse')
+    app.register_blueprint(upload_bp, url_prefix=f'{API_V1_PREFIX}/upload')
     
     logger.info("All blueprints registered")
     

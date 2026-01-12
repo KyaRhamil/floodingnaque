@@ -63,6 +63,10 @@ services:
       - VERIFY_MODEL_INTEGRITY=True
       - REQUIRE_MODEL_SIGNATURE=True
       
+      # Database SSL Configuration (verify-full for production)
+      - DB_SSL_MODE=verify-full
+      - DB_SSL_CA_CERT=/app/certs/prod-ca-2021.crt
+      
       # Redis Cloud connections (loaded from .env.production)
       # REDIS_URL, CACHE_REDIS_URL, RATELIMIT_STORAGE_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
       # are configured in .env.production pointing to Redis Cloud

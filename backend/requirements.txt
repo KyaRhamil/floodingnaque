@@ -13,7 +13,7 @@ waitress==3.0.0  # Windows alternative
 # HTTP & EXTERNAL APIs
 # ============================================================================
 requests==2.32.3
-urllib3>=2.0.0,<3.0.0  # Explicit for security
+urllib3==2.2.3  # Pinned for reproducibility
 
 # ============================================================================
 # DATA PROCESSING & MACHINE LEARNING
@@ -57,7 +57,7 @@ seaborn==0.13.2
 # ============================================================================
 # SECURITY & AUTHENTICATION
 # ============================================================================
-cryptography==45.0.7,<47  # Latest security patches
+cryptography==45.0.3  # Latest security patches, pinned
 itsdangerous==2.2.0
 bcrypt==4.3.0
 PyJWT==2.9.0  # For JWT token-based authentication
@@ -73,9 +73,10 @@ email-validator==2.2.0  # Enhanced email validation
 # RATE LIMITING & CACHING
 # ============================================================================
 Flask-Limiter==3.8.0
-redis==5.2.0  # For rate limiting and caching
+Flask-Session==0.8.0  # Server-side session storage (Redis in production)
+redis==5.2.0  # For rate limiting, caching, and sessions
 limits==3.13.0  # Required by Flask-Limiter
-packaging>=21,<25 # Required by limits
+packaging==24.2  # Required by limits, pinned
 
 # ============================================================================
 # PERFORMANCE OPTIMIZATION
@@ -92,7 +93,7 @@ flasgger==0.9.7.1  # Swagger/OpenAPI documentation
 # MONITORING, LOGGING & ERROR TRACKING
 # ============================================================================
 python-json-logger==3.2.1
-prometheus-flask-exporter>=0.23.0  # Prometheus metrics (kept from original)
+prometheus-flask-exporter==0.23.1  # Prometheus metrics, pinned
 sentry-sdk[flask]==2.18.0  # Installed but not yet configured
                            # To enable: Set SENTRY_DSN in .env and initialize in app.py
                            # See: https://docs.sentry.io/platforms/python/guides/flask/
@@ -155,6 +156,12 @@ prophet==1.1.6  # Facebook's forecasting tool
                   # Uncomment if needed: pip install prophet==1.1.6
 
 # ============================================================================
+# SERVER-SENT EVENTS (SSE)
+# ============================================================================
+sse-starlette==2.2.1  # SSE support (compatible with Flask via adapters)
+flask-sse==1.0.0  # Flask SSE extension for real-time updates
+
+# ============================================================================
 # GRAPHQL
 # ============================================================================
 graphene==3.4.3  # GraphQL schema definition framework
@@ -180,4 +187,4 @@ google-auth-httplib2==0.2.0
 google-cloud-storage==2.19.0
 
 # Protocol buffers (required by Google Cloud)
-protobuf>=4.21.0,<6.0.0
+protobuf==5.29.2  # Required by Google Cloud, pinned

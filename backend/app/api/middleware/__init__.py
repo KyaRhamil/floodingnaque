@@ -18,9 +18,10 @@ from app.api.middleware.rate_limit import (
     rate_limit_password_reset,
     rate_limit_standard,
     rate_limit_strict,
-    rate_limit_relaxed
+    rate_limit_relaxed,
+    rate_limit_tiered,
 )
-from app.api.middleware.security import setup_security_headers, add_security_headers, get_cors_origins
+from app.api.middleware.security import setup_security_headers, add_security_headers, get_cors_origins, validate_cors_origin
 from app.api.middleware.logging import setup_request_logging, request_logger, add_request_id
 from app.api.middleware.body_size import limit_body_size, validate_json_body_size, BodySizeLimits
 
@@ -36,9 +37,11 @@ __all__ = [
     'rate_limit_standard',
     'rate_limit_strict',
     'rate_limit_relaxed',
+    'rate_limit_tiered',
     'setup_security_headers',
     'add_security_headers',
     'get_cors_origins',
+    'validate_cors_origin',
     'setup_request_logging',
     'request_logger',
     'add_request_id',

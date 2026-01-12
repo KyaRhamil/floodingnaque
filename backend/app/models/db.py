@@ -62,26 +62,98 @@ logger.info(f"Using PostgreSQL driver: {pg_driver}")
 
 # Handle SSL mode for pg8000 (doesn't accept sslmode in URL like psycopg2)
 # Extract sslmode from URL and configure via connect_args for pg8000
+# Also support environment-based SSL configuration via DB_SSL_MODE and DB_SSL_CA_CERT
 ssl_context = None
-if pg_driver == 'pg8000' and 'sslmode=' in DB_URL:
+
+# Get SSL configuration from environment
+db_ssl_mode = os.getenv('DB_SSL_MODE', '').lower()
+db_ssl_ca_cert = os.getenv('DB_SSL_CA_CERT', '')
+
+# Determine app environment for default SSL mode
+app_env = os.getenv('APP_ENV', 'development').lower()
+if not db_ssl_mode:
+    # Default: verify-full for production/staging, require for development
+    if app_env in ('production', 'prod', 'staging', 'stage'):
+        db_ssl_mode = 'verify-full'
+    else:
+        db_ssl_mode = 'require'
+
+if pg_driver == 'pg8000':
     import ssl
-    # Remove sslmode from URL for pg8000
-    import re
-    sslmode_match = re.search(r'[?&]sslmode=([^&]*)', DB_URL)
-    if sslmode_match:
-        sslmode = sslmode_match.group(1)
-        # Remove sslmode parameter from URL
-        DB_URL = re.sub(r'[?&]sslmode=[^&]*', '', DB_URL)
-        # Clean up URL if we left a dangling ? or &
-        DB_URL = DB_URL.replace('?&', '?').rstrip('?')
+    
+    # Remove sslmode from URL for pg8000 if present
+    if 'sslmode=' in DB_URL:
+        import re
+        sslmode_match = re.search(r'[?&]sslmode=([^&]*)', DB_URL)
+        if sslmode_match:
+            url_sslmode = sslmode_match.group(1).lower()
+            # Use URL sslmode if DB_SSL_MODE not explicitly set
+            if not os.getenv('DB_SSL_MODE'):
+                db_ssl_mode = url_sslmode
+            # Remove sslmode parameter from URL
+            DB_URL = re.sub(r'[?&]sslmode=[^&]*', '', DB_URL)
+            # Clean up URL if we left a dangling ? or &
+            DB_URL = DB_URL.replace('?&', '?').rstrip('?')
+    
+    if db_ssl_mode in ('require', 'verify-ca', 'verify-full'):
+        ssl_context = ssl.create_default_context()
         
-        if sslmode in ('require', 'verify-ca', 'verify-full'):
-            ssl_context = ssl.create_default_context()
-            if sslmode == 'require':
-                # For 'require', we don't verify the certificate
+        if db_ssl_mode == 'require':
+            # Encrypted connection, no certificate verification
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            logger.info("SSL mode 'require': Encrypted connection without certificate verification")
+            
+        elif db_ssl_mode in ('verify-ca', 'verify-full'):
+            # Full certificate verification
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            
+            if db_ssl_mode == 'verify-full':
+                ssl_context.check_hostname = True
+                logger.info("SSL mode 'verify-full': Full certificate and hostname verification")
+            else:
                 ssl_context.check_hostname = False
-                ssl_context.verify_mode = ssl.CERT_NONE
-            logger.info(f"Configured SSL context for pg8000 (sslmode={sslmode})")
+                logger.info("SSL mode 'verify-ca': Certificate verification without hostname check")
+            
+            # Load CA certificate
+            if db_ssl_ca_cert:
+                import os.path
+                if os.path.isfile(db_ssl_ca_cert):
+                    ssl_context.load_verify_locations(db_ssl_ca_cert)
+                    logger.info(f"Loaded CA certificate from: {db_ssl_ca_cert}")
+                else:
+                    error_msg = (
+                        f"CRITICAL: SSL certificate file not found: {db_ssl_ca_cert}. "
+                        f"SSL mode '{db_ssl_mode}' requires a valid CA certificate. "
+                        "Set DB_SSL_CA_CERT to the path of your CA certificate file."
+                    )
+                    logger.error(error_msg)
+                    # Fail fast in production/staging
+                    if app_env in ('production', 'prod', 'staging', 'stage'):
+                        raise ValueError(error_msg)
+                    else:
+                        # Fall back to require mode in development
+                        logger.warning("Falling back to SSL mode 'require' for development")
+                        ssl_context.check_hostname = False
+                        ssl_context.verify_mode = ssl.CERT_NONE
+                        db_ssl_mode = 'require'
+            else:
+                error_msg = (
+                    f"CRITICAL: DB_SSL_CA_CERT not set but SSL mode is '{db_ssl_mode}'. "
+                    "Certificate verification modes require DB_SSL_CA_CERT to be set."
+                )
+                logger.error(error_msg)
+                # Fail fast in production/staging
+                if app_env in ('production', 'prod', 'staging', 'stage'):
+                    raise ValueError(error_msg)
+                else:
+                    # Fall back to require mode in development
+                    logger.warning("Falling back to SSL mode 'require' for development")
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
+                    db_ssl_mode = 'require'
+        
+        logger.info(f"Configured SSL context for pg8000 (sslmode={db_ssl_mode})")
 
 if DB_URL.startswith('postgres://'):
     DB_URL = DB_URL.replace('postgres://', f'postgresql+{pg_driver}://', 1)
@@ -786,6 +858,91 @@ class EarthEngineRequest(Base):
     
     def __repr__(self):
         return f"<EarthEngineRequest(id={self.id}, type={self.request_type}, status={self.status})>"
+
+
+class User(Base):
+    """
+    User model for authentication and authorization.
+    
+    Supports JWT-based authentication with refresh tokens.
+    """
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    
+    # Profile information
+    full_name = Column(String(255), info={'description': 'User full name'})
+    phone_number = Column(String(50), info={'description': 'Phone number for SMS alerts'})
+    
+    # Role-based access control
+    role = Column(String(50), default='user', nullable=False, info={'description': 'user/admin/operator'})
+    
+    # Account status
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    is_verified = Column(Boolean, default=False, nullable=False, info={'description': 'Email verified'})
+    
+    # Password reset
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_expires = Column(DateTime(timezone=True), nullable=True)
+    
+    # Refresh token management
+    refresh_token_hash = Column(String(255), nullable=True)
+    refresh_token_expires = Column(DateTime(timezone=True), nullable=True)
+    
+    # Login tracking
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    last_login_ip = Column(String(45), nullable=True)
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Soft delete
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    
+    __table_args__ = (
+        CheckConstraint("role IN ('user', 'admin', 'operator')", name='valid_user_role'),
+        Index('idx_user_email_active', 'email', 'is_active'),
+        Index('idx_user_role', 'role'),
+        {'comment': 'User accounts for authentication and authorization'}
+    )
+    
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email}, role={self.role})>"
+    
+    def to_dict(self, include_sensitive: bool = False) -> dict:
+        """Convert to dictionary for JSON serialization."""
+        result = {
+            'id': self.id,
+            'email': self.email,
+            'full_name': self.full_name,
+            'role': self.role,
+            'is_active': self.is_active,
+            'is_verified': self.is_verified,
+            'last_login_at': self.last_login_at.isoformat() if self.last_login_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+        if include_sensitive:
+            result['phone_number'] = self.phone_number
+            result['last_login_ip'] = self.last_login_ip
+        return result
+    
+    def soft_delete(self):
+        """Mark user as deleted."""
+        self.is_deleted = True
+        self.deleted_at = datetime.now(timezone.utc)
+        self.is_active = False
+    
+    def is_locked(self) -> bool:
+        """Check if user account is locked."""
+        if self.locked_until is None:
+            return False
+        return datetime.now(timezone.utc) < self.locked_until
 
 
 class Webhook(Base):
