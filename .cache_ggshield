@@ -1,1 +1,1 @@
-{"last_found_secrets": [{"match": "6268e18420aa1028466dd2361517e412bacee53e9158487e7c7f90684761f4ab", "name": "Generic High Entropy Secret - commit://7c9978aba44a0a3238d1a8873551fda793577c21/backend/.env.example"}]}
+{"last_found_secrets": [{"name": "Google Cloud Keys - commit://staged/backend/google_application_credentials_astral-archive-482008-g2-e31c78fffb69.json", "match": "12fdb68b1abd56e5aff4596342d473f47118da20393230865404debd7eb86d6b"}]}

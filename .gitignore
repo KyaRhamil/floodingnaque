@@ -165,6 +165,9 @@ backend/backups/*.sql
 backend/backups/*.gz
 *.db.backup.*
 
+# SSL/TLS certificates
+prod-ca-2021.crt
+
 # Security logs (CSP violations, etc.)
 csp_violations.log
 backend/logs/csp_violations.log
@@ -198,6 +201,7 @@ floodingnaque-google-cloud-*.json
 backend/*-service-account*.json
 backend/floodingnaque-*.json
 backend/google_oauth*.json
+backend/google_application_credentials_astral-archive-482008-g2-e31c78fffb69.json
 
 # Earth Engine credentials
 .ee-credentials
