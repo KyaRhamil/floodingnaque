@@ -35,7 +35,7 @@ import os
 
 logger = get_logger(__name__)
 
-performance_bp = Blueprint('performance', __name__, url_prefix='/api/performance')
+performance_bp = Blueprint('performance', __name__)
 
 # ============================================================================
 # Response Time Tracking

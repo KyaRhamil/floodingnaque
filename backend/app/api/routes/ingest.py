@@ -26,7 +26,77 @@ ingest_bp = Blueprint('ingest', __name__)
 @validate_request_size(endpoint_name='ingest')  # 10KB limit for ingest payloads
 @require_api_key
 def ingest():
-    """Ingest weather data from external APIs."""
+    """
+    Ingest weather data from external APIs.
+    
+    Fetches current weather data from OpenWeatherMap and Weatherstack APIs
+    for the specified location and stores it in the database.
+    
+    GET: Returns usage information and examples
+    POST: Ingests weather data for the specified coordinates
+    
+    Request Body (POST):
+        lat (float): Latitude (-90 to 90), defaults to Parañaque (14.4793)
+        lon (float): Longitude (-180 to 180), defaults to Parañaque (121.0198)
+    
+    Returns:
+        200: Weather data ingested successfully
+        400: Validation error (invalid coordinates)
+        500: Ingestion failed
+    ---
+    tags:
+      - Data Ingestion
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            lat:
+              type: number
+              description: Latitude (-90 to 90)
+              example: 14.4793
+            lon:
+              type: number
+              description: Longitude (-180 to 180)
+              example: 121.0198
+    responses:
+      200:
+        description: Data ingested successfully
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+            data:
+              type: object
+              properties:
+                temperature:
+                  type: number
+                  description: Temperature in Kelvin
+                humidity:
+                  type: number
+                  description: Relative humidity (%)
+                precipitation:
+                  type: number
+                  description: Precipitation in mm
+                timestamp:
+                  type: string
+                  format: date-time
+            request_id:
+              type: string
+      400:
+        description: Validation error
+      500:
+        description: Ingestion failed
+    security:
+      - api_key: []
+    """
     # Handle GET requests - show usage information
     if request.method == 'GET':
         return jsonify({

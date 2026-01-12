@@ -37,6 +37,11 @@ from app.api.routes import (
     security_txt_bp,
     csp_report_bp,
     performance_bp,
+    users_bp,
+    alerts_bp,
+    dashboard_bp,
+    predictions_bp,
+    sse_bp,
 )
 
 __all__ = [
@@ -56,4 +61,9 @@ __all__ = [
     'security_txt_bp',
     'csp_report_bp',
     'performance_bp',
+    'users_bp',
+    'alerts_bp',
+    'dashboard_bp',
+    'predictions_bp',
+    'sse_bp',
 ]

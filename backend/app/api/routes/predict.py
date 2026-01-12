@@ -37,7 +37,113 @@ PREDICTION_CACHE_ENABLED = os.getenv('PREDICTION_CACHE_ENABLED', 'True').lower()
 @validate_request_size(endpoint_name='predict')  # 10KB limit for prediction payloads
 @require_api_key
 def predict():
-    """Predict flood risk based on weather data with optional caching."""
+    """
+    Predict flood risk based on weather data.
+    
+    Uses machine learning model to predict flood risk from weather parameters.
+    Results are cached for 5 minutes to improve performance.
+    
+    Request Body:
+        temperature (float): Temperature in Kelvin (required, 173.15-333.15)
+        humidity (float): Relative humidity percentage (required, 0-100)
+        precipitation (float): Precipitation in mm/hour (required, >= 0)
+        wind_speed (float): Wind speed in m/s (optional)
+        pressure (float): Atmospheric pressure in hPa (optional)
+        model_version (str): Specific model version to use (optional)
+    
+    Query Parameters:
+        risk_level (bool): Include 3-level risk classification (default: true)
+        return_proba (bool): Include probability values (default: false)
+    
+    Returns:
+        200: Prediction result with risk level and confidence
+        400: Validation error (invalid input data)
+        404: Model not found
+        500: Prediction failed
+    ---
+    tags:
+      - Predictions
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - temperature
+            - humidity
+            - precipitation
+          properties:
+            temperature:
+              type: number
+              description: Temperature in Kelvin
+              example: 303.15
+            humidity:
+              type: number
+              description: Relative humidity (0-100%)
+              example: 85
+            precipitation:
+              type: number
+              description: Precipitation in mm/hour
+              example: 50
+            wind_speed:
+              type: number
+              description: Wind speed in m/s
+              example: 15
+            pressure:
+              type: number
+              description: Atmospheric pressure in hPa
+              example: 1005
+      - in: query
+        name: risk_level
+        type: boolean
+        default: true
+        description: Include 3-level risk classification
+      - in: query
+        name: return_proba
+        type: boolean
+        default: false
+        description: Include probability values
+    responses:
+      200:
+        description: Successful prediction
+        schema:
+          type: object
+          properties:
+            prediction:
+              type: integer
+              description: Binary prediction (0=no flood, 1=flood)
+            flood_risk:
+              type: string
+              enum: [low, high]
+            risk_level:
+              type: integer
+              description: Risk level (0=Safe, 1=Alert, 2=Critical)
+            risk_label:
+              type: string
+              enum: [Safe, Alert, Critical]
+            probability:
+              type: number
+              description: Flood probability (0-1)
+            confidence:
+              type: number
+              description: Model confidence score
+            cache_hit:
+              type: boolean
+      400:
+        description: Validation error
+      404:
+        description: Model not found
+      500:
+        description: Prediction failed
+    security:
+      - api_key: []
+      - bearer_auth: []
+    """
     request_id = getattr(g, 'request_id', 'unknown')
     
     try:

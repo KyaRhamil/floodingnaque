@@ -69,6 +69,30 @@ def _get_jwt_secret_key() -> str:
     return key
 
 
+def _get_db_ssl_mode() -> str:
+    """
+    Get DB_SSL_MODE with environment-specific defaults.
+    
+    - Production/Staging: defaults to 'verify-full' (maximum security)
+    - Development: defaults to 'require' (encrypted, no certificate needed)
+    
+    Returns:
+        str: SSL mode (require, verify-ca, or verify-full)
+    """
+    ssl_mode = os.getenv('DB_SSL_MODE', '').lower()
+    
+    if ssl_mode in ('require', 'verify-ca', 'verify-full'):
+        return ssl_mode
+    
+    # Environment-based defaults
+    app_env = os.getenv('APP_ENV', 'development').lower()
+    
+    if app_env in ('production', 'prod', 'staging', 'stage'):
+        return 'verify-full'
+    
+    return 'require'
+
+
 def _get_database_url() -> str:
     """
     Get DATABASE_URL with environment-specific validation.
@@ -213,10 +237,25 @@ class Config:
     
     # Database - Supabase PostgreSQL is required (no SQLite fallback in production)
     DATABASE_URL: str = field(default_factory=lambda: _get_database_url())
+    
+    # Connection Pool Settings for Production
+    # Adjust based on your database plan limits:
+    # - Supabase Free: pool_size=3, max_overflow=5
+    # - Supabase Pro: pool_size=20, max_overflow=10
+    # - Self-hosted: pool_size=20-50 based on resources
     DB_POOL_SIZE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_SIZE', '20')))
     DB_MAX_OVERFLOW: int = field(default_factory=lambda: int(os.getenv('DB_MAX_OVERFLOW', '10')))
-    DB_POOL_RECYCLE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_RECYCLE', '3600')))
+    DB_POOL_RECYCLE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_RECYCLE', '1800')))  # 30 min default
     DB_POOL_TIMEOUT: int = field(default_factory=lambda: int(os.getenv('DB_POOL_TIMEOUT', '30')))
+    DB_POOL_PRE_PING: bool = field(default_factory=lambda: os.getenv('DB_POOL_PRE_PING', 'True').lower() == 'true')
+    DB_ECHO_POOL: bool = field(default_factory=lambda: os.getenv('DB_ECHO_POOL', 'False').lower() == 'true')
+    
+    # Database SSL Configuration
+    # - require: Encrypted connection, no certificate verification (development default)
+    # - verify-ca: Encrypted + verify CA certificate
+    # - verify-full: Encrypted + verify CA + hostname check (production recommended)
+    DB_SSL_MODE: str = field(default_factory=lambda: _get_db_ssl_mode())
+    DB_SSL_CA_CERT: str = field(default_factory=lambda: os.getenv('DB_SSL_CA_CERT', ''))
     
     # Security
     RATE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true')

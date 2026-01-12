@@ -132,7 +132,37 @@ def check_cache_health() -> dict:
 
 @health_bp.route('/', methods=['GET'])
 def root():
-    """Root endpoint - API information."""
+    """
+    Root endpoint - API information.
+    
+    Returns basic API information and available endpoints.
+    
+    Returns:
+        200: API information object
+    ---
+    tags:
+      - Health
+    produces:
+      - application/json
+    responses:
+      200:
+        description: API information
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Floodingnaque API
+            version:
+              type: string
+              example: "2.0.0"
+            description:
+              type: string
+            endpoints:
+              type: object
+            documentation:
+              type: string
+    """
     return jsonify({
         'name': 'Floodingnaque API',
         'version': '2.0.0',
@@ -152,7 +182,44 @@ def root():
 @health_bp.route('/status', methods=['GET'])
 @limiter.limit(get_endpoint_limit('status'))
 def status():
-    """Health check endpoint with database connectivity."""
+    """
+    Quick health check endpoint.
+    
+    Returns basic health status with database connectivity and model status.
+    Use /health for comprehensive health information.
+    
+    Returns:
+        200: System is healthy
+        503: System is degraded (database not connected)
+    ---
+    tags:
+      - Health
+    produces:
+      - application/json
+    responses:
+      200:
+        description: System healthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [running]
+            database:
+              type: string
+              enum: [healthy, unhealthy]
+            database_latency_ms:
+              type: number
+            model:
+              type: string
+              enum: [loaded, not found]
+            model_version:
+              type: string
+            model_accuracy:
+              type: number
+      503:
+        description: System degraded
+    """
     model_info = get_current_model_info()
     model_status = 'loaded' if model_info else 'not found'
     
@@ -179,7 +246,62 @@ def status():
 @health_bp.route('/health', methods=['GET'])
 @limiter.limit(get_endpoint_limit('status'))
 def health():
-    """Detailed health check endpoint with all dependency status."""
+    """
+    Comprehensive health check endpoint.
+    
+    Returns detailed health status including all dependencies:
+    - Database connection and pool status
+    - Redis connection (if configured)
+    - Cache system status
+    - ML model availability and version
+    - External API circuit breakers
+    - Scheduler status
+    - Sentry monitoring status
+    
+    Returns:
+        200: All systems healthy
+        503: One or more systems degraded
+    ---
+    tags:
+      - Health
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Detailed health status
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded]
+            timestamp:
+              type: string
+              format: date-time
+            checks:
+              type: object
+              properties:
+                database:
+                  type: object
+                database_pool:
+                  type: object
+                redis:
+                  type: object
+                cache:
+                  type: object
+                model_available:
+                  type: boolean
+                scheduler_running:
+                  type: boolean
+                sentry_enabled:
+                  type: boolean
+            model:
+              type: object
+            system:
+              type: object
+      503:
+        description: System degraded
+    """
     model_info = get_current_model_info()
     model_available = model_info is not None
     
@@ -248,7 +370,30 @@ def health():
 def liveness():
     """
     Kubernetes liveness probe endpoint.
-    Returns simple status to indicate the service is alive.
+    
+    Simple endpoint for Kubernetes to check if the service is alive.
+    Always returns 200 if the service is running.
+    
+    Returns:
+        200: Service is alive
+    ---
+    tags:
+      - Health
+      - Kubernetes
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Service is alive
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: alive
+            timestamp:
+              type: string
+              format: date-time
     """
     return jsonify({
         'status': 'alive',
@@ -261,7 +406,41 @@ def liveness():
 def readiness():
     """
     Kubernetes readiness probe endpoint.
-    Checks if the service is ready to accept traffic.
+    
+    Checks if the service is ready to accept traffic:
+    - Database must be connected
+    - ML model must be available
+    
+    Returns:
+        200: Service is ready
+        503: Service is not ready
+    ---
+    tags:
+      - Health
+      - Kubernetes
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Service is ready
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: ready
+            timestamp:
+              type: string
+              format: date-time
+            checks:
+              type: object
+              properties:
+                database:
+                  type: string
+                model_available:
+                  type: boolean
+      503:
+        description: Service is not ready
     """
     # Check database connectivity
     db_health = check_database_health()

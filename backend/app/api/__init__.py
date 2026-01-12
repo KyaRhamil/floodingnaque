@@ -1,11 +1,11 @@
-"""
-API package for Floodingnaque.
+"""API package for Floodingnaque.
 
 Contains:
-- routes: Modular API route blueprints (16 total)
+- routes: Modular API route blueprints (18 total)
 - middleware: Request processing middleware
 - schemas: Request/response data schemas
 - graphql: GraphQL schema and resolvers
+- sse: Server-Sent Events for real-time alerts
 """
 
 # Import all route blueprints from the routes package
@@ -26,6 +26,8 @@ from app.api.routes import (
     security_txt_bp,
     csp_report_bp,
     performance_bp,
+    sse_bp,
+    upload_bp,
 )
 
 __all__ = [
@@ -47,4 +49,8 @@ __all__ = [
     'security_txt_bp',
     'csp_report_bp',
     'performance_bp',
+    # SSE for real-time alerts
+    'sse_bp',
+    # File uploads
+    'upload_bp',
 ]

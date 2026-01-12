@@ -1,23 +1,28 @@
-"""
-Routes package for Floodingnaque API.
+"""Routes package for Floodingnaque API.
 
 Contains modular route definitions:
 - health: /status, /health, / (root)
 - health_k8s: /health/live, /health/ready (Kubernetes probes)
-- ingest: /ingest
-- predict: /predict
-- data: /data, /meteostat/stations, /meteostat/hourly, /meteostat/daily, /meteostat/current, /meteostat/status
-- models: /api/models, /api/docs, /api/version
-- batch: /batch/predict
-- export: /export/weather, /export/predictions
-- webhooks: /webhooks/register, /webhooks/list
-- celery: /tasks/retrain, /tasks/process-data, /tasks
-- rate_limits: /rate-limits/status, /rate-limits/tiers
-- tides: /tides/current, /tides/extremes, /tides/prediction
-- graphql: /graphql/info, /graphql/schema
+- ingest: /api/v1/ingest
+- predict: /api/v1/predict
+- data: /api/v1/data, /api/v1/data/meteostat/*
+- models: /api/v1/models
+- batch: /api/v1/batch/predict
+- export: /api/v1/export/weather, /api/v1/export/predictions
+- webhooks: /api/v1/webhooks/register, /api/v1/webhooks/list
+- celery: /api/v1/tasks/*
+- rate_limits: /api/v1/rate-limits/status, /api/v1/rate-limits/tiers
+- tides: /api/v1/tides/current, /api/v1/tides/extremes, /api/v1/tides/prediction
+- graphql: /api/v1/graphql/*
 - security_txt: /.well-known/security.txt, /security.txt
 - csp_report: /csp-report
-- performance: /api/performance/dashboard, /api/performance/response-times
+- performance: /api/v1/performance/*
+- users: /api/v1/auth/register, /api/v1/auth/login, /api/v1/auth/logout, /api/v1/auth/refresh, /api/v1/auth/me
+- alerts: /api/v1/alerts, /api/v1/alerts/history, /api/v1/alerts/recent, /api/v1/alerts/stats
+- dashboard: /api/v1/dashboard/summary, /api/v1/dashboard/statistics, /api/v1/dashboard/activity
+- predictions: /api/v1/predictions, /api/v1/predictions/stats, /api/v1/predictions/recent
+- sse: /api/v1/sse/alerts (Server-Sent Events for real-time flood alerts)
+- upload: /api/v1/upload (File upload endpoints)
 """
 
 from app.api.routes.health import health_bp
@@ -36,6 +41,12 @@ from app.api.routes.graphql import graphql_bp
 from app.api.routes.security_txt import security_txt_bp
 from app.api.routes.csp_report import csp_report_bp
 from app.api.routes.performance import performance_bp
+from app.api.routes.users import users_bp
+from app.api.routes.alerts import alerts_bp
+from app.api.routes.dashboard import dashboard_bp
+from app.api.routes.predictions import predictions_bp
+from app.api.routes.sse import sse_bp
+from app.api.routes.upload import upload_bp
 
 __all__ = [
     # Core routes
@@ -56,4 +67,10 @@ __all__ = [
     'security_txt_bp',
     'csp_report_bp',
     'performance_bp',
+    'users_bp',
+    'alerts_bp',
+    'dashboard_bp',
+    'predictions_bp',
+    'sse_bp',
+    'upload_bp',
 ]

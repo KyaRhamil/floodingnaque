@@ -368,9 +368,122 @@ class Query(ObjectType):
             return {'error': str(e)}
 
 
+# Result Types for Mutations
+class MutationResultType(ObjectType):
+    """Generic mutation result type."""
+    success = Boolean(required=True)
+    message = String()
+    errors = List(String)
+
+
+class WeatherDataResultType(ObjectType):
+    """Weather data mutation result."""
+    success = Boolean(required=True)
+    message = String()
+    data = Field(WeatherDataType)
+    errors = List(String)
+
+
+class PredictionResultType(ObjectType):
+    """Prediction mutation result."""
+    success = Boolean(required=True)
+    message = String()
+    data = Field(FloodPredictionType)
+    errors = List(String)
+
+
+class WebhookResultType(ObjectType):
+    """Webhook mutation result."""
+    success = Boolean(required=True)
+    message = String()
+    webhook_id = Int()
+    url = String()
+    events = List(String)
+    secret = String()
+    is_active = Boolean()
+    errors = List(String)
+
+
+class BulkDeleteResultType(ObjectType):
+    """Bulk delete mutation result."""
+    success = Boolean(required=True)
+    message = String()
+    deleted_count = Int()
+    deleted_ids = List(Int)
+    errors = List(String)
+
+
+# Input Types for Mutations
+class WeatherDataInput(graphene.InputObjectType):
+    """Input type for creating/updating weather data."""
+    temperature = Float(required=True, description="Temperature in Kelvin")
+    humidity = Float(required=True, description="Humidity percentage (0-100)")
+    precipitation = Float(required=True, description="Precipitation in mm")
+    wind_speed = Float(description="Wind speed in m/s")
+    pressure = Float(description="Atmospheric pressure in hPa")
+    source = String(default_value="GraphQL", description="Data source")
+    location_lat = Float(description="Latitude")
+    location_lon = Float(description="Longitude")
+    timestamp = DateTime(description="Measurement timestamp")
+
+
+class WebhookInput(graphene.InputObjectType):
+    """Input type for creating/updating webhooks."""
+    url = String(required=True, description="Webhook URL")
+    events = List(String, required=True, description="Events to subscribe to")
+    secret = String(description="Webhook secret (auto-generated if not provided)")
+
+
 # Mutation Resolvers
 class Mutation(ObjectType):
     """Root mutation type for GraphQL."""
+    
+    # Weather Data mutations
+    create_weather_data = Field(
+        WeatherDataResultType,
+        input=WeatherDataInput(required=True)
+    )
+    
+    update_weather_data = Field(
+        WeatherDataResultType,
+        id=Int(required=True),
+        input=WeatherDataInput(required=True)
+    )
+    
+    delete_weather_data = Field(
+        MutationResultType,
+        id=Int(required=True)
+    )
+    
+    bulk_delete_weather_data = Field(
+        BulkDeleteResultType,
+        ids=List(Int, required=True),
+        confirm=Boolean(required=True)
+    )
+    
+    # Webhook mutations
+    create_webhook = Field(
+        WebhookResultType,
+        input=WebhookInput(required=True)
+    )
+    
+    update_webhook = Field(
+        WebhookResultType,
+        id=Int(required=True),
+        url=String(),
+        events=List(String),
+        is_active=Boolean()
+    )
+    
+    delete_webhook = Field(
+        MutationResultType,
+        id=Int(required=True)
+    )
+    
+    toggle_webhook = Field(
+        WebhookResultType,
+        id=Int(required=True)
+    )
     
     # Task mutations
     trigger_model_retraining = Field(
@@ -383,12 +496,428 @@ class Mutation(ObjectType):
         data_batch=List(GenericScalar)
     )
     
-    # Data mutations (placeholder for future data management)
-    create_webhook = Field(
-        GenericScalar,
-        url=String(required=True),
-        events=List(String)
-    )
+    def resolve_create_weather_data(self, info, input):
+        """Create new weather data entry."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            from app.models.db import get_db_session, WeatherData
+            from datetime import timezone
+            
+            # Validate temperature
+            if input.temperature < 173.15 or input.temperature > 333.15:
+                return WeatherDataResultType(
+                    success=False,
+                    message='Validation failed',
+                    errors=['Temperature must be between 173.15K and 333.15K']
+                )
+            
+            # Validate humidity
+            if input.humidity < 0 or input.humidity > 100:
+                return WeatherDataResultType(
+                    success=False,
+                    message='Validation failed',
+                    errors=['Humidity must be between 0 and 100']
+                )
+            
+            # Validate precipitation
+            if input.precipitation < 0:
+                return WeatherDataResultType(
+                    success=False,
+                    message='Validation failed',
+                    errors=['Precipitation cannot be negative']
+                )
+            
+            with get_db_session() as session:
+                weather_data = WeatherData(
+                    temperature=input.temperature,
+                    humidity=input.humidity,
+                    precipitation=input.precipitation,
+                    wind_speed=input.wind_speed,
+                    pressure=input.pressure,
+                    source=input.source or 'GraphQL',
+                    location_lat=input.location_lat,
+                    location_lon=input.location_lon,
+                    timestamp=input.timestamp or datetime.now(timezone.utc)
+                )
+                session.add(weather_data)
+                session.flush()
+                
+                result = WeatherDataType(
+                    id=str(weather_data.id),
+                    timestamp=weather_data.timestamp,
+                    latitude=weather_data.location_lat,
+                    longitude=weather_data.location_lon,
+                    temperature=weather_data.temperature,
+                    humidity=weather_data.humidity,
+                    precipitation=weather_data.precipitation,
+                    wind_speed=weather_data.wind_speed,
+                    pressure=weather_data.pressure,
+                    source=weather_data.source
+                )
+            
+            return WeatherDataResultType(
+                success=True,
+                message='Weather data created successfully',
+                data=result
+            )
+        except Exception as e:
+            logger.error(f"GraphQL create weather data failed: {str(e)}")
+            return WeatherDataResultType(
+                success=False,
+                message='Failed to create weather data',
+                errors=[str(e)]
+            )
+    
+    def resolve_update_weather_data(self, info, id, input):
+        """Update existing weather data."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            from app.models.db import get_db_session, WeatherData
+            
+            with get_db_session() as session:
+                weather_data = session.query(WeatherData).filter(
+                    WeatherData.id == id,
+                    WeatherData.is_deleted == False
+                ).first()
+                
+                if not weather_data:
+                    return WeatherDataResultType(
+                        success=False,
+                        message=f'Weather data with id {id} not found',
+                        errors=['Record not found']
+                    )
+                
+                # Update fields
+                weather_data.temperature = input.temperature
+                weather_data.humidity = input.humidity
+                weather_data.precipitation = input.precipitation
+                if input.wind_speed is not None:
+                    weather_data.wind_speed = input.wind_speed
+                if input.pressure is not None:
+                    weather_data.pressure = input.pressure
+                if input.source:
+                    weather_data.source = input.source
+                if input.location_lat is not None:
+                    weather_data.location_lat = input.location_lat
+                if input.location_lon is not None:
+                    weather_data.location_lon = input.location_lon
+                
+                result = WeatherDataType(
+                    id=str(weather_data.id),
+                    timestamp=weather_data.timestamp,
+                    latitude=weather_data.location_lat,
+                    longitude=weather_data.location_lon,
+                    temperature=weather_data.temperature,
+                    humidity=weather_data.humidity,
+                    precipitation=weather_data.precipitation,
+                    wind_speed=weather_data.wind_speed,
+                    pressure=weather_data.pressure,
+                    source=weather_data.source
+                )
+            
+            return WeatherDataResultType(
+                success=True,
+                message='Weather data updated successfully',
+                data=result
+            )
+        except Exception as e:
+            logger.error(f"GraphQL update weather data failed: {str(e)}")
+            return WeatherDataResultType(
+                success=False,
+                message='Failed to update weather data',
+                errors=[str(e)]
+            )
+    
+    def resolve_delete_weather_data(self, info, id):
+        """Delete weather data (soft delete)."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            from app.models.db import get_db_session, WeatherData
+            
+            with get_db_session() as session:
+                weather_data = session.query(WeatherData).filter(
+                    WeatherData.id == id,
+                    WeatherData.is_deleted == False
+                ).first()
+                
+                if not weather_data:
+                    return MutationResultType(
+                        success=False,
+                        message=f'Weather data with id {id} not found',
+                        errors=['Record not found']
+                    )
+                
+                weather_data.soft_delete()
+            
+            return MutationResultType(
+                success=True,
+                message='Weather data deleted successfully'
+            )
+        except Exception as e:
+            logger.error(f"GraphQL delete weather data failed: {str(e)}")
+            return MutationResultType(
+                success=False,
+                message='Failed to delete weather data',
+                errors=[str(e)]
+            )
+    
+    def resolve_bulk_delete_weather_data(self, info, ids, confirm):
+        """Bulk delete weather data."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            if not confirm:
+                return BulkDeleteResultType(
+                    success=False,
+                    message='Bulk delete requires confirm=true',
+                    errors=['Confirmation required']
+                )
+            
+            if len(ids) > 1000:
+                return BulkDeleteResultType(
+                    success=False,
+                    message='Maximum 1000 IDs per request',
+                    errors=['Too many IDs']
+                )
+            
+            from app.models.db import get_db_session, WeatherData
+            
+            deleted_ids = []
+            with get_db_session() as session:
+                records = session.query(WeatherData).filter(
+                    WeatherData.id.in_(ids),
+                    WeatherData.is_deleted == False
+                ).all()
+                
+                for record in records:
+                    record.soft_delete()
+                    deleted_ids.append(record.id)
+            
+            return BulkDeleteResultType(
+                success=True,
+                message=f'Successfully deleted {len(deleted_ids)} records',
+                deleted_count=len(deleted_ids),
+                deleted_ids=deleted_ids
+            )
+        except Exception as e:
+            logger.error(f"GraphQL bulk delete weather data failed: {str(e)}")
+            return BulkDeleteResultType(
+                success=False,
+                message='Failed to bulk delete',
+                errors=[str(e)]
+            )
+    
+    def resolve_create_webhook(self, info, input):
+        """Create a new webhook."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            import secrets
+            import json
+            from app.models.db import get_db_session, Webhook
+            
+            # Validate URL
+            url = input.url
+            if not url.startswith('http://') and not url.startswith('https://'):
+                return WebhookResultType(
+                    success=False,
+                    message='Invalid URL format',
+                    errors=['URL must start with http:// or https://']
+                )
+            
+            # Validate events
+            events = input.events or []
+            valid_events = ['flood_detected', 'critical_risk', 'high_risk', 'medium_risk', 'low_risk']
+            invalid_events = [e for e in events if e not in valid_events]
+            if invalid_events:
+                return WebhookResultType(
+                    success=False,
+                    message='Invalid events',
+                    errors=[f'Invalid events: {invalid_events}. Valid: {valid_events}']
+                )
+            
+            # Generate secret if not provided
+            secret = input.secret or secrets.token_urlsafe(32)
+            
+            with get_db_session() as session:
+                webhook = Webhook(
+                    url=url,
+                    events=json.dumps(events),
+                    secret=secret,
+                    is_active=True
+                )
+                session.add(webhook)
+                session.flush()
+                webhook_id = webhook.id
+            
+            return WebhookResultType(
+                success=True,
+                message='Webhook created successfully',
+                webhook_id=webhook_id,
+                url=url,
+                events=events,
+                secret=secret,
+                is_active=True
+            )
+        except Exception as e:
+            logger.error(f"GraphQL create webhook failed: {str(e)}")
+            return WebhookResultType(
+                success=False,
+                message='Failed to create webhook',
+                errors=[str(e)]
+            )
+    
+    def resolve_update_webhook(self, info, id, url=None, events=None, is_active=None):
+        """Update an existing webhook."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            import json
+            from app.models.db import get_db_session, Webhook
+            from datetime import timezone
+            
+            with get_db_session() as session:
+                webhook = session.query(Webhook).filter(
+                    Webhook.id == id,
+                    Webhook.is_deleted == False
+                ).first()
+                
+                if not webhook:
+                    return WebhookResultType(
+                        success=False,
+                        message=f'Webhook with id {id} not found',
+                        errors=['Webhook not found']
+                    )
+                
+                if url is not None:
+                    if not url.startswith('http://') and not url.startswith('https://'):
+                        return WebhookResultType(
+                            success=False,
+                            message='Invalid URL format',
+                            errors=['URL must start with http:// or https://']
+                        )
+                    webhook.url = url
+                
+                if events is not None:
+                    valid_events = ['flood_detected', 'critical_risk', 'high_risk', 'medium_risk', 'low_risk']
+                    invalid = [e for e in events if e not in valid_events]
+                    if invalid:
+                        return WebhookResultType(
+                            success=False,
+                            message='Invalid events',
+                            errors=[f'Invalid events: {invalid}']
+                        )
+                    webhook.events = json.dumps(events)
+                
+                if is_active is not None:
+                    webhook.is_active = is_active
+                
+                webhook.updated_at = datetime.now(timezone.utc)
+                
+                return WebhookResultType(
+                    success=True,
+                    message='Webhook updated successfully',
+                    webhook_id=webhook.id,
+                    url=webhook.url,
+                    events=json.loads(webhook.events),
+                    is_active=webhook.is_active
+                )
+        except Exception as e:
+            logger.error(f"GraphQL update webhook failed: {str(e)}")
+            return WebhookResultType(
+                success=False,
+                message='Failed to update webhook',
+                errors=[str(e)]
+            )
+    
+    def resolve_delete_webhook(self, info, id):
+        """Delete a webhook."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            from app.models.db import get_db_session, Webhook
+            from datetime import timezone
+            
+            with get_db_session() as session:
+                webhook = session.query(Webhook).filter(
+                    Webhook.id == id,
+                    Webhook.is_deleted == False
+                ).first()
+                
+                if not webhook:
+                    return MutationResultType(
+                        success=False,
+                        message=f'Webhook with id {id} not found',
+                        errors=['Webhook not found']
+                    )
+                
+                webhook.is_deleted = True
+                webhook.deleted_at = datetime.now(timezone.utc)
+            
+            return MutationResultType(
+                success=True,
+                message='Webhook deleted successfully'
+            )
+        except Exception as e:
+            logger.error(f"GraphQL delete webhook failed: {str(e)}")
+            return MutationResultType(
+                success=False,
+                message='Failed to delete webhook',
+                errors=[str(e)]
+            )
+    
+    def resolve_toggle_webhook(self, info, id):
+        """Toggle webhook active status."""
+        try:
+            if not GRAPHQL_ENABLED:
+                raise Exception("GraphQL is disabled")
+            
+            import json
+            from app.models.db import get_db_session, Webhook
+            from datetime import timezone
+            
+            with get_db_session() as session:
+                webhook = session.query(Webhook).filter(
+                    Webhook.id == id,
+                    Webhook.is_deleted == False
+                ).first()
+                
+                if not webhook:
+                    return WebhookResultType(
+                        success=False,
+                        message=f'Webhook with id {id} not found',
+                        errors=['Webhook not found']
+                    )
+                
+                webhook.is_active = not webhook.is_active
+                webhook.updated_at = datetime.now(timezone.utc)
+                new_status = webhook.is_active
+                
+                return WebhookResultType(
+                    success=True,
+                    message=f'Webhook {"enabled" if new_status else "disabled"} successfully',
+                    webhook_id=webhook.id,
+                    url=webhook.url,
+                    events=json.loads(webhook.events),
+                    is_active=new_status
+                )
+        except Exception as e:
+            logger.error(f"GraphQL toggle webhook failed: {str(e)}")
+            return WebhookResultType(
+                success=False,
+                message='Failed to toggle webhook',
+                errors=[str(e)]
+            )
     
     def resolve_trigger_model_retraining(self, info, model_id=None):
         """Trigger model retraining task."""
@@ -447,23 +976,6 @@ class Mutation(ObjectType):
                 error=str(e),
                 created_at=datetime.utcnow()
             )
-    
-    def resolve_create_webhook(self, info, url, events=None):
-        """Create a webhook (placeholder)."""
-        try:
-            if not GRAPHQL_ENABLED:
-                raise Exception("GraphQL is disabled")
-            
-            # Placeholder implementation
-            return {
-                'message': 'Webhook creation not implemented in GraphQL yet',
-                'url': url,
-                'events': events or [],
-                'status': 'placeholder'
-            }
-        except Exception as e:
-            logger.error(f"GraphQL webhook creation mutation failed: {str(e)}")
-            return {'error': str(e)}
 
 
 # Create GraphQL schema

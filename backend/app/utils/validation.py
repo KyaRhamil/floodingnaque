@@ -23,7 +23,7 @@ from datetime import datetime
 from flask import request, jsonify, g
 import logging
 
-from app.core.exceptions import ValidationError
+from app.utils.api_errors import ValidationError
 
 logger = logging.getLogger(__name__)
 
