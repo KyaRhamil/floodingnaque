@@ -1,0 +1,17 @@
+Climatological data from DOST-PAGASA (http://bagong.pagasa.dost.gov.ph/climate/climate-data)
+Notes:
+-999.0 indicate Missing Values
+RAINFALL UNIT: mm
+-1.0 indicate Trace Values (RAINFALL<0.1mm)
+TMAX (Maximum Temperature, Unit: Deg C)
+TMIN (Minimum Temperature, Unit: Deg C)
+RH (Relative Humidity, Unit: %)
+Wind Speed, Unit: m/s
+Wind direction, Unit: degree relative to North indicating where the wind is blowing from
+Stations:
+Port Area Latitude: 14.58841 N Longitude: 120.967866 E Elevation: 15 m
+NAIA Latitude: 14.5047 N Longitude: 121.004751 E Elevation: 21 m
+Science Garden Latitude: 14.645072 N Longitude: 121.044282 E Elevation: 42 m
+-------
+For more details regarding this dataset, please refer to this paper:
+https://philjournalsci.dost.gov.ph/images/pdf/pjs_pdf/vol150no1/ClimDatPh_an_online_platform_for_data_acquisition_.pdf

@@ -25,6 +25,22 @@ python scripts/train_with_production_data.py --production
 
 ---
 
+## 🌤️ NEW: PAGASA Weather Data Integration
+
+The project now includes **DOST-PAGASA climate data** from 3 Metro Manila stations (2020-2025):
+
+```powershell
+# Process PAGASA weather data
+python scripts/preprocess_pagasa_data.py --create-training
+
+# Train with PAGASA-enhanced features
+python scripts/train_production.py --data-path data/processed/pagasa_training_dataset.csv
+```
+
+📖 See [PAGASA_DATA_INTEGRATION_GUIDE.md](../docs/PAGASA_DATA_INTEGRATION_GUIDE.md) for details
+
+---
+
 ## 📋 Prerequisites Checklist
 
 Before training, ensure you have:
