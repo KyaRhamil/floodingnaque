@@ -2402,3 +2402,50 @@ FROM weather_data) AS anon_1]
  * Running on http://127.0.0.1:5000
  * Running on http://192.168.254.104:5000"}
 {"timestamp":"2025-12-23T01:34:18+0800","level":"INFO","logger":"werkzeug","message":"[33mPress CTRL+C to quit[0m"}
+{"timestamp": "2026-01-12T13:50:25.663826Z", "level": "INFO", "logger": "app.services.celery_app", "message": "Celery tasks module loaded"}
+{"timestamp": "2026-01-12T13:50:29.457041Z", "level": "INFO", "logger": "app.utils.rate_limit_tiers", "message": "Rate limiting tier configuration is valid"}
+{"timestamp": "2026-01-12T13:53:32.620920Z", "level": "INFO", "logger": "app.services.celery_app", "message": "Celery tasks module loaded"}
+{"timestamp": "2026-01-12T13:53:33.768290Z", "level": "INFO", "logger": "app.utils.rate_limit_tiers", "message": "Rate limiting tier configuration is valid"}
+{"timestamp": "2026-01-12T13:53:36.522325Z", "level": "INFO", "logger": "app.core.config", "message": "Loading environment from: .env.production"}
+{"timestamp": "2026-01-12T13:53:36.581080Z", "level": "INFO", "logger": "app.core.config", "message": "Loading environment from: .env.production"}
+{"timestamp": "2026-01-12T13:53:36.696050Z", "level": "INFO", "logger": "app.api.app", "message": "Response compression enabled"}
+{"timestamp": "2026-01-12T13:53:36.696930Z", "level": "INFO", "logger": "app.api.app", "message": "CORS configured for: ['https://floodingnaque.vercel.app']"}
+{"timestamp": "2026-01-12T13:53:36.699713Z", "level": "INFO", "logger": "app.api.middleware.rate_limit", "message": "Rate limiting enabled: 100 requests per 3600s (storage: Memory)"}
+{"timestamp": "2026-01-12T13:53:36.700029Z", "level": "INFO", "logger": "app.api.app", "message": "Rate limiting enabled"}
+{"timestamp": "2026-01-12T13:53:36.700893Z", "level": "WARNING", "logger": "app.utils.session_config", "message": "Flask-Session not installed. Using default Flask sessions.", "location": {"file": "session_config.py", "line": 140, "function": "init_session"}}
+{"timestamp": "2026-01-12T13:53:36.701163Z", "level": "WARNING", "logger": "app.api.app", "message": "Using default Flask sessions (not recommended for production)", "location": {"file": "app.py", "line": 233, "function": "create_app"}}
+{"timestamp": "2026-01-12T13:53:36.701637Z", "level": "INFO", "logger": "app.api.middleware.security", "message": "Security headers middleware enabled"}
+{"timestamp": "2026-01-12T13:53:36.702347Z", "level": "INFO", "logger": "app.api.middleware.logging", "message": "Request logging middleware enabled"}
+{"timestamp": "2026-01-12T13:53:36.707343Z", "level": "INFO", "logger": "app.api.middleware.request_logger", "message": "Request logging middleware enabled"}
+{"timestamp": "2026-01-12T13:53:38.065451Z", "level": "INFO", "logger": "app.utils.sentry", "message": "Sentry initialized successfully (env=production, release=2.0.0, traces=0.1)"}
+{"timestamp": "2026-01-12T13:53:38.066455Z", "level": "INFO", "logger": "app.api.app", "message": "Sentry error tracking initialized"}
+{"timestamp": "2026-01-12T13:53:38.130894Z", "level": "INFO", "logger": "app.utils.metrics", "message": "Prometheus metrics enabled at /metrics"}
+{"timestamp": "2026-01-12T13:53:38.160989Z", "level": "INFO", "logger": "app.models.db", "message": "Database tables initialized successfully"}
+{"timestamp": "2026-01-12T13:53:38.161405Z", "level": "INFO", "logger": "app.models.db", "message": "Created tables: weather_data, predictions, alert_history, model_registry, satellite_weather_cache, tide_data_cache, api_requests, earth_engine_requests, users, webhooks"}
+{"timestamp": "2026-01-12T13:53:38.162005Z", "level": "INFO", "logger": "app.utils.query_optimizer", "message": "Slow query logging enabled (threshold: 100.0ms)"}
+{"timestamp": "2026-01-12T13:53:38.162774Z", "level": "INFO", "logger": "app.models.db", "message": "Slow query logging initialized"}
+{"timestamp": "2026-01-12T13:53:38.164357Z", "level": "INFO", "logger": "app.api.app", "message": "Database initialized"}
+{"timestamp": "2026-01-12T13:53:38.233808Z", "level": "INFO", "logger": "app.api.app", "message": "All blueprints registered"}
+{"timestamp": "2026-01-12T13:53:38.234311Z", "level": "INFO", "logger": "app.api.routes.performance", "message": "Response time tracking enabled"}
+{"timestamp": "2026-01-12T13:53:38.234734Z", "level": "INFO", "logger": "app.api.app", "message": "Response time tracking enabled"}
+{"timestamp": "2026-01-12T13:53:38.235568Z", "level": "INFO", "logger": "app.api.routes.graphql", "message": "GraphQL endpoint initialized at /graphql"}
+{"timestamp": "2026-01-12T13:53:38.248948Z", "level": "WARNING", "logger": "app.services.predict", "message": "Could not load model for info: Model file not found: models\\flood_rf_model.joblib. Please train the model first using train.py", "location": {"file": "predict.py", "line": 521, "function": "get_current_model_info"}}
+{"timestamp": "2026-01-12T13:53:39.660298Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "============================================================"}
+{"timestamp": "2026-01-12T13:53:39.660739Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "STARTUP HEALTH VALIDATION"}
+{"timestamp": "2026-01-12T13:53:39.661115Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "============================================================"}
+{"timestamp": "2026-01-12T13:53:39.661444Z", "level": "WARNING", "logger": "app.utils.startup_health", "message": "  [WARN] environment_variables: Some recommended variables not set: OPENWEATHERMAP_API_KEY", "location": {"file": "startup_health.py", "line": 605, "function": "log_startup_health_report"}}
+{"timestamp": "2026-01-12T13:53:39.661812Z", "level": "ERROR", "logger": "app.utils.startup_health", "message": "  [FAIL] model_directory: No .joblib model files found", "location": {"file": "startup_health.py", "line": 608, "function": "log_startup_health_report"}}
+{"timestamp": "2026-01-12T13:53:39.676408Z", "level": "ERROR", "logger": "app.utils.startup_health", "message": "  [FAIL] ml_model: Failed to load ML model: Model could not be loaded", "location": {"file": "startup_health.py", "line": 608, "function": "log_startup_health_report"}}
+{"timestamp": "2026-01-12T13:53:39.691736Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "  [OK] database: Database connection successful"}
+{"timestamp": "2026-01-12T13:53:39.692336Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "  [OK] redis: Redis connection successful"}
+{"timestamp": "2026-01-12T13:53:39.692929Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "------------------------------------------------------------"}
+{"timestamp": "2026-01-12T13:53:39.693618Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "Summary: 2/5 healthy, 2 critical failures, 1 warnings"}
+{"timestamp": "2026-01-12T13:53:39.694375Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "Total validation time: 1424ms"}
+{"timestamp": "2026-01-12T13:53:39.694770Z", "level": "INFO", "logger": "app.utils.startup_health", "message": "============================================================"}
+{"timestamp": "2026-01-12T13:53:39.695206Z", "level": "ERROR", "logger": "app.utils.startup_health", "message": "STARTUP VALIDATION FAILED - Application may not function correctly", "location": {"file": "startup_health.py", "line": 618, "function": "log_startup_health_report"}}
+{"timestamp": "2026-01-12T13:53:39.711791Z", "level": "CRITICAL", "logger": "app.api.app", "message": "CRITICAL: Application startup blocked - Startup health validation failed with 2 critical issues:\n  - model_directory: No .joblib model files found\n  - ml_model: Failed to load ML model: Model could not be loaded", "location": {"file": "app.py", "line": 557, "function": "create_app"}}
+{"timestamp": "2026-01-12T13:53:40.924551Z", "level": "INFO", "logger": "__main__", "message": "Starting graceful shutdown..."}
+{"timestamp": "2026-01-12T13:53:40.925652Z", "level": "INFO", "logger": "__main__", "message": "Database connections closed"}
+{"timestamp": "2026-01-12T13:53:42.097447Z", "level": "INFO", "logger": "app.utils.cache", "message": "Redis caching enabled: redis-12236.c232.us-east-1-2.ec2.cloud.redislabs.com:12236"}
+{"timestamp": "2026-01-12T13:53:42.098494Z", "level": "INFO", "logger": "__main__", "message": "Redis connection closed"}
+{"timestamp": "2026-01-12T13:53:42.098897Z", "level": "INFO", "logger": "__main__", "message": "Graceful shutdown complete"}

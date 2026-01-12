@@ -5,10 +5,10 @@ Write-Host "Starting Floodingnaque Backend..." -ForegroundColor Green
 
 # Activate virtual environment
 Write-Host "Activating virtual environment..." -ForegroundColor Yellow
-& ..\venv\Scripts\Activate.ps1
+. ..\venv\Scripts\Activate.ps1
 
-# Check if activation was successful
-if ($LASTEXITCODE -eq 0) {
+# Check if activation was successful by verifying VIRTUAL_ENV is set
+if ($env:VIRTUAL_ENV) {
     Write-Host "Virtual environment activated successfully" -ForegroundColor Green
 } else {
     Write-Host "Failed to activate virtual environment" -ForegroundColor Red
