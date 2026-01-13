@@ -77,23 +77,66 @@ python scripts/train_with_production_data.py --production
 
 ---
 
-### **Option 2: Quick Training**
+### **Option 2: PAGASA Weather Data (NEW - Recommended)**
 ```powershell
-python scripts/train_with_production_data.py --days 180
+python scripts/train_pagasa.py --production
 ```
-✅ Last 6 months  
-❌ No grid search  
-⏱️ ~20-30 minutes
+✅ DOST-PAGASA climate data (2020-2025)
+✅ 3 Metro Manila weather stations
+✅ Rolling precipitation features
+✅ Monsoon modeling
+⏱️ ~30-45 minutes
 
 ---
 
-### **Option 3: Progressive (Thesis)**
+### **Option 3: Quick Training**
 ```powershell
-python scripts/train_with_production_data.py --progressive --grid-search
+python scripts/train_pagasa.py
 ```
-✅ Models v1-v4 (2022→2025)  
-✅ Shows improvement  
-⏱️ ~2-3 hours
+✅ Fast training with optimized defaults
+❌ No grid search
+⏱️ ~5-10 minutes
+
+---
+
+### **Option 4: ULTIMATE Progressive Training (Recommended for Thesis)**
+```powershell
+# One command for complete model evolution showcase
+.\run_training_pipeline.ps1 -Progressive
+
+# Or with grid search for maximum accuracy
+python scripts/train_ultimate.py --production
+```
+✅ Trains ALL model versions (v1 → v2 → ... → ULTIMATE)  
+✅ Shows model improvement progression  
+✅ Generates comparison charts  
+✅ Future-proof (easy to add new datasets)  
+⏱️ ~2-3 hours (full) or ~30 min (quick)
+
+**Model Versions Trained:**
+| Version | Name | Data Source |
+|---------|------|-------------|
+| v1 | Baseline | Official Records 2022 |
+| v2 | Extended | Official Records 2022-2023 |
+| v3 | Expanded | Official Records 2022-2024 |
+| v4 | Complete | Official Records 2022-2025 |
+| v5 | PAGASA | PAGASA Weather Data (2020-2025) |
+| v6 | **ULTIMATE** | All datasets combined |
+| v7+ | *Future* | New datasets → New models |
+
+---
+
+### **Option 5: Latest Model Only**
+```powershell
+# Only train the best (ULTIMATE) model
+.\run_training_pipeline.ps1 -Progressive -LatestOnly
+
+# Or via Python directly
+python scripts/train_ultimate.py --latest-only
+```
+✅ Skip older versions  
+✅ Train only the best model  
+⏱️ ~15-30 minutes
 
 ---
 
@@ -101,7 +144,8 @@ python scripts/train_with_production_data.py --progressive --grid-search
 
 | Data Source | What It Provides | Required? |
 |-------------|------------------|-----------|
-| **Supabase DB** | Real-time weather from OpenWeatherMap | ✅ Core |
+| **PAGASA Stations** | NAIA, Port Area, Science Garden weather | ✅ Core (NEW) |
+| **Supabase DB** | Real-time weather from OpenWeatherMap | ⭐ Optional |
 | **Earth Engine** | Satellite precipitation (GPM, CHIRPS, ERA5) | ⭐ Recommended |
 | **Meteostat** | Weather station observations | ⭐ Recommended |
 | **WorldTides** | Tidal heights (coastal flooding) | ⭐ Recommended |

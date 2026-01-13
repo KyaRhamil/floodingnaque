@@ -293,13 +293,24 @@ backend/
 
 | Document | Description |
 |----------|-------------|
-| [API Documentation](http://localhost:5000/api/docs) | Interactive API documentation |
+| [**Interactive API Explorer**](http://localhost:5000/apidocs) | 🔗 Try API calls directly in your browser |
+| [OpenAPI Spec (JSON)](http://localhost:5000/openapi.json) | Download OpenAPI 3.1 schema for code generation |
+| [OpenAPI Spec (YAML)](http://localhost:5000/openapi.yaml) | Download OpenAPI 3.1 schema in YAML format |
 | [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Quick start guide |
 | [BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md) | Complete backend architecture |
 | [DATABASE_GUIDE.md](docs/DATABASE_GUIDE.md) | Database reference guide |
 | [MODEL_MANAGEMENT.md](docs/MODEL_MANAGEMENT.md) | Model versioning and management |
 | [POWERSHELL_API_EXAMPLES.md](docs/POWERSHELL_API_EXAMPLES.md) | PowerShell API examples |
 | [SENTRY_SETUP.md](docs/SENTRY_SETUP.md) | Sentry error tracking setup |
+
+### API Explorer Features
+
+The interactive API explorer at `/apidocs` provides:
+- **Try It Out**: Execute API calls directly from the browser
+- **Request Examples**: Pre-filled example payloads for each endpoint
+- **Response Previews**: See expected response formats
+- **Authentication**: Test with API keys and JWT tokens
+- **Schema Validation**: Automatic request validation
 
 ## License
 

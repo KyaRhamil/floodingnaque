@@ -1,0 +1,110 @@
+# Dependabot Configuration
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # ==========================================================================
+  # Python Dependencies (Backend)
+  # ==========================================================================
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Manila"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "floodingnaque/backend-team"
+    labels:
+      - "dependencies"
+      - "python"
+      - "security"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Group minor and patch updates to reduce PR noise
+    groups:
+      python-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Ignore major version updates for stability-critical packages
+      - dependency-name: "sqlalchemy"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "alembic"
+        update-types: ["version-update:semver-major"]
+    # Security updates get priority
+    security-updates:
+      enabled: true
+
+  # ==========================================================================
+  # GitHub Actions
+  # ==========================================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Manila"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    groups:
+      github-actions-all:
+        patterns:
+          - "*"
+
+  # ==========================================================================
+  # Docker Dependencies
+  # ==========================================================================
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Asia/Manila"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+      - "infrastructure"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+
+  # ==========================================================================
+  # npm Dependencies (Frontend/Tooling)
+  # ==========================================================================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "Asia/Manila"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "frontend"
+    commit-message:
+      prefix: "chore(npm)"
+      include: "scope"
+    groups:
+      npm-all:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

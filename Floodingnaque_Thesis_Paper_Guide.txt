@@ -1,0 +1,90 @@
+(Critical-Objective: Create a complete thesis for Floodingnaque system (Floodingnaque Directory))
+
+# To do: 
+
+- Complete the missing requirements (No emojis and use a proper punctuation styling)
+- READ AICS_thesis-journal-template.pdf and I want you to analyze each part/section and read the entire system and replace the contents with the appropriate content 
+- Ask and list all the additional requirements that you need from me
+- All of your answers must come and based only from the entire floodingnaque directory
+- If you have any questions, you may ask me first before proceeding with creating the paper
+- Avoid adding informations that has no basis
+- Here's the references used in the previous title defense (10 Foreign and Local references)
+References
+List of Valid APA Version 7 References (at least 10 foreign and 10 local reference with valid DOIs, arranged in Alphabetical order)
+Foreign References
+Ahmed, S., & Alim, M. A. (2021). Flood prediction and monitoring using machine learning algorithms: A review. Environmental Modelling & Software, 145, 105204. https://doi.org/10.1016/j.envsoft.2021.105204
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 785–794. https://doi.org/10.1145/2939672.2939785
+Jain, A., & Kumar, S. (2020). Machine learning models for flood forecasting: A comparative study. Journal of Hydrology, 585, 124808. https://doi.org/10.1016/j.jhydrol.2020.124808
+Khurshid, S., & Lee, H. (2019). Integration of IoT and weather data APIs for real-time disaster monitoring. IEEE Access, 7, 153345–153355. https://doi.org/10.1109/ACCESS.2019.2948411
+Liu, J., & Chen, Q. (2022). Random forest-based rainfall prediction for urban flood prevention. Water Resources Management, 36(4), 1243–1258. https://doi.org/10.1007/s11269-021-03006-2
+Muhammad, N., & Rahman, A. (2021). Comparative evaluation of ensemble learning algorithms for flood hazard classification. International Journal of Environmental Science and Technology, 18(12), 3571–3584. https://doi.org/10.1007/s13762-021-03332-1
+OpenWeatherMap. (2024). OpenWeatherMap API documentation. https://openweathermap.org/api
+Meteostat. (2024). Meteostat weather data API. https://dev.meteostat.net/
+Patki, N., Wedge, R., & Veeramachaneni, K. (2016). The synthetic data vault (SDV). 2016 IEEE International Conference on Data Science and Advanced Analytics (DSAA), 399–410. https://doi.org/10.1109/DSAA.2016.49
+Zhang, X., & Li, Z. (2023). Using artificial intelligence for real-time flood risk assessment in smart cities. Natural Hazards Review, 24(1), 04022041. https://doi.org/10.1061/(ASCE)NH.1527-6996.0000558
+
+References
+List of Valid APA Version 7 References (at least 10 foreign and 10 local reference with valid DOIs, arranged in Alphabetical order)
+Local References
+Briones, R. (2020). Flood hazard mapping and early warning in Metro Manila. Philippine Journal of Science, 149(2), 403–414. https://doi.org/10.56899/pjs.v149i2.2020
+Cruz, R. V. O., & Narisma, G. T. (2019). Climate change adaptation and flood resilience in Philippine cities. Ateneo de Manila University Press.
+Department of Science and Technology – PAGASA. (2024). Climate data and flood monitoring reports. https://www.pagasa.dost.gov.ph
+Department of the Interior and Local Government (DILG). (2023). Guidelines on disaster risk reduction management at the local level. https://www.dilg.gov.ph
+Manila Observatory. (2020). Urban flood modeling and warning systems in the Philippines. Climate Studies Program Report.
+Parayno, A. (2021). Application of machine learning models in localized flood forecasting in the Philippines. University of the Philippines Diliman Thesis Repository.
+Parañaque City Disaster Risk Reduction and Management Office (DRRMO). (2023). Annual flood incident report.
+Philippine Atmospheric, Geophysical and Astronomical Services  Administration (PAGASA). (2023). Weather and flood bulletins.
+Santos, J. M. (2022). Integration of real-time data APIs for early warning systems: A Philippine case study. De La Salle University Research Journal, 17(3), 45–56. https://doi.org/10.24034/dlsurj.v17i3.2022
+Villanueva, E. R., & Dela Cruz, K. L. (2020). Data-driven approaches for disaster mitigation in the National Capital Region. Philippine Information Agency Reports.
+
+- Relevance of the references to the study (Foreign and Local)
+RELEVANCE OF REFERENCES TO THE STUDY
+(Categorized by Foreign and Local Sources - APA 7th Edition)
+Foreign References
+Ahmed & Alim (2021) - Validates the application of ML algorithms in flood forecasting, supporting your use of Random Forest.
+Chen & Guestrin (2016) - Describes scalable tree-based algorithms, reinforcing Random Forest’s reliability for structured datasets.
+Jain & Kumar (2020) - Compares flood forecasting models; supports your model’s selection based on accuracy.
+Khurshid & Lee (2019) - Demonstrates real-time disaster monitoring using IoT and APIs  the same approach your system uses for weather data.
+Liu & Chen (2022) - Applies Random Forest to rainfall prediction; closely parallels your methodology for flood risk classification.
+Muhammad & Rahman (2021) - Shows ensemble algorithms outperform single models in environmental prediction.
+OpenWeatherMap (2024) - Serves as your system’s primary live data source for rainfall, temperature, and humidity.
+Meteostat (2024) - Secondary API source for historical and real-time weather data, ensuring redundancy and reliability.
+Patki, Wedge, and Veeramachaneni (2016) - provides theoretical justification for generating synthetic datasets in research environments lacking accessible labeled data. 
+Zhang & Li (2023) - Explores AI use in smart-city flood risk management supports your study’s real-time urban focus.
+
+RELEVANCE OF REFERENCES TO THE STUDY
+(Categorized by Foreign and Local Sources - APA 7th Edition)
+Local References
+Briones (2020) - Discusses flood hazard mapping and early warning efforts in Metro Manila, giving context to the flooding problem in NCR and justifying your study’s focus on Parañaque City.
+Cruz & Narisma (2019) - Examines climate change adaptation and urban flood resilience in Philippine cities forming the environmental and societal rationale for developing early warning systems like yours.
+DOST–PAGASA (2024) - Provides local climate data and flood bulletins, which you can use to validate your system’s predictions or as a secondary data source during implementation.
+DILG (2023) - Defines disaster risk reduction guidelines at the LGU level, ensuring your system aligns with official government frameworks for early warning and public alerting.
+Manila Observatory (2020) - Explores urban flood modeling within the Philippines reinforcing the need for localized, data-based solutions for Metro Manila’s flooding issues.
+Parayno (2021) - Demonstrates the use of ML in localized flood forecasting providing a strong precedent for using Random Forest in Philippine settings.
+Parañaque City DRRMO (2023) - Documents real flood incidents in Parañaque, serving as a baseline dataset for your local context and as evidence of the study’s necessity.
+PAGASA (2023) - Source for official weather and flood data ensures your study’s data acquisition and analysis are aligned with national meteorological standards.
+Santos (2022) - Investigates API integration in local early warning systems, directly supporting your system’s technical framework and justifying the use of real-time APIs.
+Villanueva & Dela Cruz (2020) - Highlights data-driven disaster mitigation approaches in NCR, validating your study’s relevance to current government digital transformation goals.
+
+- You may use the provided references and suggest a more relevant study
+
+
+-- Thesis Paper starts Here (Read and understand the structure of the AICS_thesis-journal-template.pdf before generating the paper for Floodingnaque Thesis --
+
+FLOODINGNAQUE: A PROPOSED REAL-TIME FLOOD DETECTION AND EARLY WARNING SYSTEM UTILIZING APIs AND RANDOM FOREST ALGORITHM
+
+ANDAM, EDRIAN¹, BARBA, CHRISTIAN DAVE², DE CASTRO, DONNA BELLE³, DOMINGO⁴, RENGIEE 
+GUMBA, JEFF CHRISTIAN⁵, RAMIL C. MARTIZANO⁶, NORIEL A. QUIRAY⁷
+
+Bachelor of Science in Computer Science, Asian Institute of Computer Studies 
+1571 Triangle Bldg., Doa Soledad Avenue, Better Living Subd, Paranaque City, 1709 Metro Manila, Philippines
+
+¹edrian.andam07@gmail.com
+²Christianbarba12@gmail.com
+³Decastrobellebelle@gmail.com
+⁴
+⁵gjeffchristian@gmail.com
+⁶iamdefinitely.ramil@gmail.com
+⁷norielqry@gmail.com
+
+Generate the appropriate contents here:

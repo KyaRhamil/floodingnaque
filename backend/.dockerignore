@@ -55,6 +55,16 @@ secrets*
 credentials/
 .credentials
 
+# Google Cloud credentials (NEVER include in Docker image!)
+google_oauth_credentials.json
+client_secret*.json
+*-service-account.json
+*-sa-key.json
+floodingnaque-*.json
+google_application_credentials*.json
+*.iam.gserviceaccount.com.json
+earth*.json
+
 # IDE
 .vscode/
 .idea/
@@ -76,6 +86,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+pytest.ini
 
 # Documentation (don't need in runtime)
 docs/
@@ -112,6 +123,17 @@ evaluation_results/
 # Backups
 backups/
 *.bak
+
+# Database files
+*.db
+data/*.db
+
+# Reports
+reports/
+
+# mypy cache
+.mypy_cache/
+mypy.ini
 
 # Docker files (prevent nested copying)
 Dockerfile*

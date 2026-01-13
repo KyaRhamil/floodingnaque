@@ -6,7 +6,11 @@ Contains:
 - schemas: Request/response data schemas
 - graphql: GraphQL schema and resolvers
 - sse: Server-Sent Events for real-time alerts
+- swagger_config: OpenAPI 3.1 documentation with schema validation
 """
+
+# Import schema validation decorator for use in routes
+from app.api.swagger_config import validate_openapi_schema
 
 # Import all route blueprints from the routes package
 from app.api.routes import (
@@ -53,4 +57,6 @@ __all__ = [
     'sse_bp',
     # File uploads
     'upload_bp',
+    # Schema validation
+    'validate_openapi_schema',
 ]

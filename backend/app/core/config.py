@@ -303,6 +303,9 @@ class Config:
     # Logging
     LOG_LEVEL: str = field(default_factory=lambda: os.getenv('LOG_LEVEL', 'INFO'))
     LOG_FORMAT: str = field(default_factory=lambda: os.getenv('LOG_FORMAT', 'json'))
+    LOG_SAMPLING_ENABLED: bool = field(default_factory=lambda: os.getenv('LOG_SAMPLING_ENABLED', 'False').lower() == 'true')
+    LOG_SAMPLING_RATE: float = field(default_factory=lambda: float(os.getenv('LOG_SAMPLING_RATE', '0.1')))  # Sample 10% of logs
+    LOG_SAMPLING_EXCLUDE_ERRORS: bool = field(default_factory=lambda: os.getenv('LOG_SAMPLING_EXCLUDE_ERRORS', 'True').lower() == 'true')
     
     # Default Location (Parañaque City)
     DEFAULT_LATITUDE: float = field(default_factory=lambda: float(os.getenv('DEFAULT_LATITUDE', '14.4793')))
