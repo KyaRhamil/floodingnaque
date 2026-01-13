@@ -36,6 +36,11 @@ BURST_ENABLED = os.getenv('RATE_LIMIT_BURST_ENABLED', 'True').lower() == 'true'
 BURST_MULTIPLIER = float(os.getenv('RATE_LIMIT_BURST_MULTIPLIER', '2.0'))
 BURST_WINDOW_SECONDS = int(os.getenv('RATE_LIMIT_BURST_WINDOW', '10'))
 
+# Internal service bypass configuration
+INTERNAL_API_TOKEN = os.getenv('INTERNAL_API_TOKEN', '')
+INTERNAL_BYPASS_ENABLED = os.getenv('RATE_LIMIT_INTERNAL_BYPASS_ENABLED', 'True').lower() == 'true'
+INTERNAL_BYPASS_IPS = set(filter(None, os.getenv('RATE_LIMIT_INTERNAL_BYPASS_IPS', '127.0.0.1,::1').split(',')))
+
 # Burst tracking (in-memory, for more sophisticated use Redis)
 _burst_tracker: dict = {}
 
@@ -47,7 +52,12 @@ def get_rate_limit_key():
     This provides:
     - Per-API-key limits for authenticated users (more generous)
     - Per-IP limits for anonymous users (more restrictive)
+    - Bypass for internal services (returns exempt key)
     """
+    # Check for internal service bypass first
+    if is_internal_service_request():
+        return "internal:exempt"
+    
     # Check if authenticated via API key
     api_key_hash = getattr(g, 'api_key_hash', None)
     if api_key_hash:
@@ -55,6 +65,46 @@ def get_rate_limit_key():
     
     # Fall back to IP address for anonymous users
     return get_remote_address()
+
+
+def is_internal_service_request() -> bool:
+    """
+    Check if the current request is from an internal service.
+    
+    Internal service requests are identified by:
+    1. Valid X-Internal-Token header matching INTERNAL_API_TOKEN
+    2. Request from whitelisted internal IPs
+    3. Feature flag 'rate_limit_internal_bypass' enabled for segment
+    
+    Returns:
+        bool: True if request is from internal service
+    """
+    if not INTERNAL_BYPASS_ENABLED:
+        return False
+    
+    # Check internal token header
+    internal_token = request.headers.get('X-Internal-Token')
+    if internal_token and INTERNAL_API_TOKEN and internal_token == INTERNAL_API_TOKEN:
+        logger.debug("Internal service detected via token")
+        return True
+    
+    # Check whitelisted IPs
+    client_ip = get_remote_address()
+    if client_ip in INTERNAL_BYPASS_IPS:
+        logger.debug(f"Internal service detected via whitelisted IP: {client_ip}")
+        return True
+    
+    # Check feature flag for segment-based bypass
+    try:
+        from app.services.feature_flags import is_internal_service
+        segment = getattr(g, 'user_segment', None)
+        if is_internal_service(segment):
+            logger.debug("Internal service detected via feature flag")
+            return True
+    except ImportError:
+        pass
+    
+    return False
 
 
 def get_rate_limit_key_ip_only():

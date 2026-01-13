@@ -41,8 +41,10 @@ mypy>=1.0.0
 isort>=5.12.0  # Import sorting
 
 # API Contract Testing
-schemathesis==3.22.0  # OpenAPI-based testing (optional)
+schemathesis==4.8.0  # OpenAPI-based testing (Python 3.13 compatible)
 hypothesis==6.92.0  # Property-based testing
+pact-python==2.2.2  # Consumer-driven contract testing
+syrupy==4.6.1  # Snapshot testing framework
 
 # Google Cloud Development Tools
 google-cloud-bigquery-storage==2.27.0  # Fast BigQuery reads for testing

@@ -9,6 +9,7 @@ from app.utils.circuit_breaker import (
     retry_with_backoff,
     CircuitOpenError
 )
+from app.utils.correlation import inject_correlation_headers
 import logging
 
 logger = logging.getLogger(__name__)
@@ -99,7 +100,11 @@ def ingest_data(lat=None, lon=None):
         
         @retry_with_backoff(max_retries=2, base_delay=1.0, exceptions=(requests.exceptions.RequestException,))
         def fetch_owm():
-            response = requests.get(owm_url, timeout=10)
+            # Inject correlation headers for distributed tracing
+            headers = inject_correlation_headers({
+                'User-Agent': 'FloodingNaque/2.0 (Flood Prediction API)'
+            })
+            response = requests.get(owm_url, timeout=10, headers=headers)
             response.raise_for_status()
             return response.json()
         
@@ -141,7 +146,11 @@ def ingest_data(lat=None, lon=None):
                 
                 @retry_with_backoff(max_retries=2, base_delay=1.0, exceptions=(requests.exceptions.RequestException,))
                 def fetch_weatherstack():
-                    response = requests.get(weatherstack_url, timeout=10)
+                    # Inject correlation headers for distributed tracing
+                    headers = inject_correlation_headers({
+                        'User-Agent': 'FloodingNaque/2.0 (Flood Prediction API)'
+                    })
+                    response = requests.get(weatherstack_url, timeout=10, headers=headers)
                     response.raise_for_status()
                     return response.json()
                 

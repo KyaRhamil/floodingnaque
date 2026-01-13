@@ -312,6 +312,69 @@ services:
       - /tmp:size=50M,mode=1777
 
   # ===================
+  # PgBouncer Connection Pooler
+  # ===================
+  # Use with: --profile pgbouncer
+  # Provides connection pooling for PostgreSQL
+  pgbouncer:
+    build:
+      context: ./pgbouncer
+      dockerfile: Dockerfile
+    image: floodingnaque-pgbouncer:1.21.0
+    container_name: floodingnaque-pgbouncer-prod
+    restart: always
+    ports:
+      - "127.0.0.1:6432:6432"
+    environment:
+      # Database connection (from .env.production)
+      - DB_HOST=${PGBOUNCER_DB_HOST:-db.your-project-ref.supabase.co}
+      - DB_PORT=${PGBOUNCER_DB_PORT:-5432}
+      - DB_NAME=${PGBOUNCER_DB_NAME:-postgres}
+      - DB_USER=${PGBOUNCER_DB_USER:-postgres}
+      - DB_PASSWORD=${PGBOUNCER_DB_PASSWORD}
+      - DB_SSL_MODE=${DB_SSL_MODE:-verify-full}
+      # Read replica (optional)
+      - DB_REPLICA_HOST=${DB_REPLICA_HOST:-}
+      - DB_REPLICA_PORT=${DB_REPLICA_PORT:-5432}
+      # Pool settings
+      - PGBOUNCER_POOL_MODE=${PGBOUNCER_POOL_MODE:-transaction}
+      - PGBOUNCER_MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-1000}
+      - PGBOUNCER_DEFAULT_POOL_SIZE=${PGBOUNCER_DEFAULT_POOL_SIZE:-25}
+      - PGBOUNCER_MIN_POOL_SIZE=${PGBOUNCER_MIN_POOL_SIZE:-5}
+      - PGBOUNCER_RESERVE_POOL_SIZE=${PGBOUNCER_RESERVE_POOL_SIZE:-10}
+      - PGBOUNCER_MAX_DB_CONNECTIONS=${PGBOUNCER_MAX_DB_CONNECTIONS:-50}
+      # Admin credentials
+      - PGBOUNCER_ADMIN_USER=${PGBOUNCER_ADMIN_USER:-pgbouncer_admin}
+      - PGBOUNCER_ADMIN_PASSWORD=${PGBOUNCER_ADMIN_PASSWORD}
+      - PGBOUNCER_STATS_USER=${PGBOUNCER_STATS_USER:-pgbouncer_stats}
+      - PGBOUNCER_STATS_PASSWORD=${PGBOUNCER_STATS_PASSWORD}
+    networks:
+      - floodingnaque-backend
+    profiles:
+      - pgbouncer
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  # ===================
   # Datadog Agent
   # ===================
   datadog-agent:

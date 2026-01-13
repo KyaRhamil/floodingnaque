@@ -19,6 +19,12 @@ from app.core.exceptions import AppException
 from app.models.db import init_db
 from app.utils.utils import setup_logging
 from app.utils.logging import set_request_context, clear_request_context, get_logger
+from app.utils.correlation import (
+    CorrelationContext,
+    set_correlation_context,
+    get_correlation_context,
+    clear_correlation_context
+)
 from app.utils.tracing import (
     TraceContext, 
     set_current_trace, 
@@ -58,6 +64,8 @@ from app.api.routes.dashboard import dashboard_bp
 from app.api.routes.predictions import predictions_bp
 from app.api.routes.sse import sse_bp, get_sse_manager, broadcast_alert
 from app.api.routes.upload import upload_bp
+from app.api.routes.versioning import versioning_bp
+from app.api.routes.feature_flags import feature_flags_bp
 from app.api.swagger_config import init_swagger
 
 # Initialize module-level logger
@@ -112,20 +120,35 @@ def create_app(config_override: dict = None) -> Flask:
     
     @app.before_request
     def setup_request_tracing():
-        """Setup request ID and distributed tracing."""
+        """Setup request ID, correlation IDs, and distributed tracing."""
         import time
         g.request_start_time = time.perf_counter()
         
-        # Extract or create trace context from headers
-        trace_ctx = TraceContext.from_headers(dict(request.headers))
-        g.request_id = trace_ctx.request_id
-        g.trace_id = trace_ctx.trace_id
+        # Extract or create correlation context from headers (W3C compatible)
+        corr_ctx = CorrelationContext.from_headers(
+            dict(request.headers),
+            service_name=os.getenv('SERVICE_NAME', 'floodingnaque-api'),
+            service_version=os.getenv('APP_VERSION', '2.0.0')
+        )
         
-        # Set up tracing
+        # Store in Flask g context
+        g.request_id = corr_ctx.request_id
+        g.trace_id = corr_ctx.trace_id
+        g.correlation_id = corr_ctx.correlation_id
+        g.span_id = corr_ctx.span_id
+        
+        # Set correlation context for logging
+        set_correlation_context(corr_ctx)
+        
+        # Also set legacy trace context for backward compatibility
+        trace_ctx = TraceContext.from_headers(dict(request.headers))
         set_current_trace(trace_ctx)
+        
+        # Set request context for legacy logging
         set_request_context(
-            request_id=trace_ctx.request_id,
-            trace_id=trace_ctx.trace_id
+            request_id=corr_ctx.request_id,
+            trace_id=corr_ctx.trace_id,
+            correlation_id=corr_ctx.correlation_id
         )
         
         # Start root span for this request
@@ -136,18 +159,24 @@ def create_app(config_override: dict = None) -> Flask:
                 'http.url': request.url,
                 'http.route': request.path,
                 'http.user_agent': request.headers.get('User-Agent', 'unknown')[:200],
-                'http.remote_addr': request.remote_addr
+                'http.remote_addr': request.remote_addr,
+                'correlation_id': corr_ctx.correlation_id
             }
         )
         g.root_span = span
     
     @app.after_request
     def add_tracing_headers(response):
-        """Add tracing headers to response."""
+        """Add tracing and correlation headers to response."""
+        # Add correlation headers for client-side tracing
+        if hasattr(g, 'correlation_id'):
+            response.headers['X-Correlation-ID'] = g.correlation_id
         if hasattr(g, 'request_id'):
             response.headers['X-Request-ID'] = g.request_id
         if hasattr(g, 'trace_id'):
             response.headers['X-Trace-ID'] = g.trace_id
+        if hasattr(g, 'span_id'):
+            response.headers['X-Span-ID'] = g.span_id
         
         # Finish root span and log trace if errors
         if hasattr(g, 'root_span'):
@@ -176,6 +205,7 @@ def create_app(config_override: dict = None) -> Flask:
         if exception and hasattr(g, 'root_span'):
             g.root_span.set_error(exception)
         clear_current_trace()
+        clear_correlation_context()
         clear_request_context()
     
     # ==========================================
@@ -290,6 +320,8 @@ def create_app(config_override: dict = None) -> Flask:
     app.register_blueprint(predictions_bp, url_prefix=f'{API_V1_PREFIX}/predictions')
     app.register_blueprint(sse_bp, url_prefix=f'{API_V1_PREFIX}/sse')
     app.register_blueprint(upload_bp, url_prefix=f'{API_V1_PREFIX}/upload')
+    app.register_blueprint(versioning_bp, url_prefix=f'{API_V1_PREFIX}/versioning')
+    app.register_blueprint(feature_flags_bp, url_prefix=f'{API_V1_PREFIX}/feature-flags')
     
     logger.info("All blueprints registered")
     
@@ -524,6 +556,33 @@ def create_app(config_override: dict = None) -> Flask:
         warnings = config.validate()
         for warning in warnings:
             logger.warning(f"Configuration warning: {warning}")
+        
+        # ==========================================
+        # Environment Variable Validation
+        # ==========================================
+        # Validate all required environment variables on startup
+        env_validation_enabled = os.getenv('ENV_VALIDATION_ENABLED', 'True').lower() == 'true'
+        
+        if env_validation_enabled:
+            try:
+                from app.utils.env_validation import validate_all_env_vars
+                env_report = validate_all_env_vars(
+                    raise_on_critical=is_production,
+                    log_results=True
+                )
+                
+                if not env_report.is_valid:
+                    logger.error(f"Environment validation failed: {env_report.get_summary()}")
+                elif env_report.has_warnings:
+                    logger.warning(f"Environment validation completed with warnings: {env_report.get_summary()}")
+                else:
+                    logger.info("Environment validation passed")
+            except Exception as e:
+                if is_production:
+                    logger.critical(f"Environment validation error: {e}")
+                    raise
+                else:
+                    logger.warning(f"Environment validation error (non-critical in development): {e}")
         
         # ==========================================
         # Startup Health Validation

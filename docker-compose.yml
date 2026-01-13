@@ -76,6 +76,51 @@ services:
       retries: 5
       start_period: 10s
 
+  # ===================
+  # PgBouncer Connection Pooler
+  # ===================
+  pgbouncer:
+    build:
+      context: ./pgbouncer
+      dockerfile: Dockerfile
+    container_name: floodingnaque-pgbouncer-dev
+    restart: unless-stopped
+    ports:
+      - "6432:6432"
+    environment:
+      # Database connection
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=floodingnaque
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_SSL_MODE=disable
+      # Pool settings (development)
+      - PGBOUNCER_POOL_MODE=transaction
+      - PGBOUNCER_MAX_CLIENT_CONN=100
+      - PGBOUNCER_DEFAULT_POOL_SIZE=10
+      - PGBOUNCER_MIN_POOL_SIZE=2
+      - PGBOUNCER_RESERVE_POOL_SIZE=5
+      - PGBOUNCER_MAX_DB_CONNECTIONS=20
+      # Admin credentials (set via environment or .env file)
+      - PGBOUNCER_ADMIN_USER=${PGBOUNCER_ADMIN_USER:-pgbouncer_admin}
+      - PGBOUNCER_ADMIN_PASSWORD=${PGBOUNCER_ADMIN_PASSWORD:-changeme}
+      - PGBOUNCER_STATS_USER=${PGBOUNCER_STATS_USER:-pgbouncer_stats}
+      - PGBOUNCER_STATS_PASSWORD=${PGBOUNCER_STATS_PASSWORD:-changeme}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - floodingnaque-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    profiles:
+      - pgbouncer
+
 # ===================
 # Networks
 # ===================

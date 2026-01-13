@@ -17,8 +17,40 @@ import time
 import os
 import platform
 import sys
+from dataclasses import dataclass
+from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# Health Check SLA Configuration
+HEALTH_CHECK_RESPONSE_TIME_SLA_MS = int(os.getenv('HEALTH_CHECK_RESPONSE_TIME_SLA_MS', '500'))
+HEALTH_CHECK_DB_TIMEOUT_MS = int(os.getenv('HEALTH_CHECK_DB_TIMEOUT_SECONDS', '5')) * 1000
+
+
+@dataclass
+class SLAStatus:
+    """SLA compliance status for health checks."""
+    within_sla: bool
+    response_time_ms: float
+    sla_threshold_ms: int
+    message: str
+
+
+def check_sla_compliance(response_time_ms: float) -> SLAStatus:
+    """Check if response time meets SLA threshold."""
+    within_sla = response_time_ms <= HEALTH_CHECK_RESPONSE_TIME_SLA_MS
+    
+    if within_sla:
+        message = f"Response time {response_time_ms:.2f}ms is within SLA ({HEALTH_CHECK_RESPONSE_TIME_SLA_MS}ms)"
+    else:
+        message = f"Response time {response_time_ms:.2f}ms EXCEEDS SLA ({HEALTH_CHECK_RESPONSE_TIME_SLA_MS}ms)"
+    
+    return SLAStatus(
+        within_sla=within_sla,
+        response_time_ms=response_time_ms,
+        sla_threshold_ms=HEALTH_CHECK_RESPONSE_TIME_SLA_MS,
+        message=message
+    )
 
 health_bp = Blueprint('health', __name__)
 
@@ -247,7 +279,7 @@ def status():
 @limiter.limit(get_endpoint_limit('status'))
 def health():
     """
-    Comprehensive health check endpoint.
+    Comprehensive health check endpoint with SLA monitoring.
     
     Returns detailed health status including all dependencies:
     - Database connection and pool status
@@ -257,6 +289,7 @@ def health():
     - External API circuit breakers
     - Scheduler status
     - Sentry monitoring status
+    - Response time SLA compliance
     
     Returns:
         200: All systems healthy
@@ -278,6 +311,15 @@ def health():
             timestamp:
               type: string
               format: date-time
+            sla:
+              type: object
+              properties:
+                within_sla:
+                  type: boolean
+                response_time_ms:
+                  type: number
+                threshold_ms:
+                  type: integer
             checks:
               type: object
               properties:
@@ -302,6 +344,8 @@ def health():
       503:
         description: System degraded
     """
+    start_time = time.perf_counter()
+    
     model_info = get_current_model_info()
     model_available = model_info is not None
     
@@ -324,9 +368,22 @@ def health():
     redis_ok = redis_health.get('status') in ('healthy', 'not_configured')
     is_healthy = db_health['connected'] and model_available and redis_ok
     
+    # Calculate response time and SLA compliance
+    response_time_ms = (time.perf_counter() - start_time) * 1000
+    sla_status = check_sla_compliance(response_time_ms)
+    
+    if not sla_status.within_sla:
+        logger.warning(sla_status.message)
+    
     response = {
         'status': 'healthy' if is_healthy else 'degraded',
         'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+        'sla': {
+            'within_sla': sla_status.within_sla,
+            'response_time_ms': round(sla_status.response_time_ms, 2),
+            'threshold_ms': sla_status.sla_threshold_ms,
+            'message': sla_status.message
+        },
         'checks': {
             'database': db_health,
             'database_pool': pool_status,
