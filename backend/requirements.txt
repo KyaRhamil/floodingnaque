@@ -13,7 +13,7 @@ waitress==3.0.0  # Windows alternative
 # HTTP & EXTERNAL APIs
 # ============================================================================
 requests==2.32.3
-urllib3==2.2.3  # Pinned for reproducibility
+urllib3==2.6.3  # Pinned for reproducibility
 aiohttp==3.11.11  # Async HTTP client for external API calls
 aiohttp[speedups]==3.11.11  # Optional C extensions for better performance
 tenacity==9.0.0  # Retry logic with exponential backoff
