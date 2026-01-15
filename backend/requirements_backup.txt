@@ -27,7 +27,7 @@ asn1crypto==1.5.1
 asttokens==3.0.1
 async-lru==2.0.5
 attrs==25.4.0
-Authlib==1.2.0
+Authlib==1.6.6
 babel==2.17.0
 backoff==2.2.1
 backports.zstd==1.2.0
