@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Floodingnaque - Flood Prediction System for Parañaque City">
+    <title>Floodingnaque - Flood Prediction Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Vercel Speed Insights for performance monitoring -->
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+</head>
+<body>
+    <div id="app" class="dashboard-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-content">
+                <h1 class="logo">🌊 Floodingnaque</h1>
+                <ul class="nav-links">
+                    <li><a href="index.html" class="active">Dashboard</a></li>
+                    <li><a href="alert.html">Alerts</a></li>
+                    <li><a href="#about">About</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header Section -->
+            <section class="header-section">
+                <h2>Flood Risk Dashboard</h2>
+                <p>Real-time flood prediction for Parañaque City using Random Forest ML</p>
+            </section>
+
+            <!-- Risk Level Display -->
+            <section class="risk-section">
+                <div class="risk-card" id="riskCard">
+                    <h3>Current Risk Level</h3>
+                    <div class="risk-level" id="riskLevel">Loading...</div>
+                    <p class="risk-description" id="riskDescription"></p>
+                </div>
+            </section>
+
+            <!-- Weather Data Section -->
+            <section class="weather-section">
+                <h3>Current Weather Conditions</h3>
+                <div class="weather-grid" id="weatherGrid">
+                    <div class="weather-card">
+                        <span class="weather-label">Temperature</span>
+                        <span class="weather-value" id="temperature">--</span>
+                        <span class="weather-unit">°C</span>
+                    </div>
+                    <div class="weather-card">
+                        <span class="weather-label">Humidity</span>
+                        <span class="weather-value" id="humidity">--</span>
+                        <span class="weather-unit">%</span>
+                    </div>
+                    <div class="weather-card">
+                        <span class="weather-label">Precipitation</span>
+                        <span class="weather-value" id="precipitation">--</span>
+                        <span class="weather-unit">mm</span>
+                    </div>
+                    <div class="weather-card">
+                        <span class="weather-label">Wind Speed</span>
+                        <span class="weather-value" id="windSpeed">--</span>
+                        <span class="weather-unit">km/h</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Map Section -->
+            <section class="map-section">
+                <h3>Flood Risk Map</h3>
+                <div id="map" class="map-container">
+                    <!-- Leaflet map will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Chart Section -->
+            <section class="chart-section">
+                <h3>Risk Trend</h3>
+                <canvas id="riskChart" class="chart-container"></canvas>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Floodingnaque - Flood Prediction System. All rights reserved.</p>
+            <p>Performance monitoring powered by <a href="https://vercel.com/speed-insights">Vercel Speed Insights</a></p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/main.js"></script>
+    
+    <!-- Vercel Speed Insights Performance Tracking -->
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+</body>
+</html>
