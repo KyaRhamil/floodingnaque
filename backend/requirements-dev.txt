@@ -10,9 +10,9 @@ jupyter==1.0.0
 ipython==8.18.1
 
 # Testing
-pytest==7.4.3
-pytest-cov==4.1.0
-pytest-mock==3.12.0  # Mock objects for pytest
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-mock==3.14.0  # Mock objects for pytest
 pytest-xdist==3.5.0  # Parallel test execution
 faker==21.0.0  # Generate test data
 responses==0.24.1  # Mock requests library
@@ -30,22 +30,28 @@ pip-audit==2.7.3  # CVE scanning for Python dependencies (CI/CD integration)
 shap>=0.42.0
 
 # Test Coverage and Reporting
-coverage==7.3.2
+coverage==7.6.0
 coverage-badge==1.1.0
 pytest-html==4.1.1  # HTML test reports
 
-# Code Quality (optional)
+# Code Quality & Pre-commit Hooks
+pre-commit>=3.5.0  # Git hooks framework
 flake8>=6.0.0
+flake8-bugbear>=24.0.0  # Additional flake8 checks
+flake8-simplify>=0.21.0  # Simplification suggestions
 black>=23.0.0
 mypy>=1.0.0
 isort>=5.12.0  # Import sorting
+commitizen>=3.14.0  # Commit message validation
+detect-secrets>=1.4.0  # Secret detection
+pyyaml>=6.0  # YAML validation
 
 # API Contract Testing
-schemathesis==4.8.0  # OpenAPI-based testing (Python 3.13 compatible)
-hypothesis==6.92.0  # Property-based testing
+schemathesis>=4.9.0  # OpenAPI-based testing (requires tenacity>=9.1.2)
+hypothesis>=6.108.0  # Property-based testing (compatible with schemathesis)
 pact-python==2.2.2  # Consumer-driven contract testing
 syrupy==4.6.1  # Snapshot testing framework
 
 # Google Cloud Development Tools
 google-cloud-bigquery-storage==2.27.0  # Fast BigQuery reads for testing
-mock-google-cloud==0.1.0  # Mock Google Cloud services in tests
+# Note: Use unittest.mock or pytest-mock for mocking Google Cloud services

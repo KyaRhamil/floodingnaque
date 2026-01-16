@@ -1,0 +1,38 @@
+# Floodingnaque Project Configuration
+# This file provides configuration for various Python tools
+
+[project]
+name = "floodingnaque"
+version = "1.0.0"
+description = "Flood prediction and monitoring system for Paranaque"
+requires-python = ">=3.11"
+
+[tool.bandit]
+# Security linting configuration
+exclude_dirs = ["tests", "backend/tests", "venv", "backend/venv", ".venv"]
+skips = ["B101", "B104", "B311"]  # Skip assert warnings, hardcoded bindings, random for non-crypto
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | __pycache__
+  | alembic/versions
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = [".git", "__pycache__", "venv", ".venv", "alembic/versions"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

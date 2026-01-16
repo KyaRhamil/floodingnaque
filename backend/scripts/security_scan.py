@@ -25,17 +25,18 @@ Usage:
 
 import argparse
 import json
-import subprocess
+import subprocess  # nosec B404
 import sys
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional
 
 
 class SeverityLevel(str, Enum):
     """Severity levels for vulnerabilities."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -46,6 +47,7 @@ class SeverityLevel(str, Enum):
 @dataclass
 class Vulnerability:
     """Represents a security vulnerability."""
+
     id: str
     package: str
     installed_version: str
@@ -58,6 +60,7 @@ class Vulnerability:
 @dataclass
 class ScanResult:
     """Result of a security scan."""
+
     scanner: str
     passed: bool
     vulnerabilities: List[Vulnerability]
@@ -68,6 +71,7 @@ class ScanResult:
 @dataclass
 class SecurityReport:
     """Aggregate security scan report."""
+
     timestamp: str
     total_vulnerabilities: int
     critical_count: int
@@ -75,11 +79,11 @@ class SecurityReport:
     medium_count: int
     low_count: int
     scans: List[ScanResult]
-    
+
     @property
     def has_critical(self) -> bool:
         return self.critical_count > 0
-    
+
     @property
     def has_high(self) -> bool:
         return self.high_count > 0
@@ -88,11 +92,7 @@ class SecurityReport:
 def check_tool_installed(tool: str) -> bool:
     """Check if a security tool is installed."""
     try:
-        subprocess.run(
-            [sys.executable, "-m", tool, "--help"],
-            capture_output=True,
-            check=True
-        )
+        subprocess.run([sys.executable, "-m", tool, "--help"], capture_output=True, check=True)  # nosec B603
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
@@ -101,30 +101,36 @@ def check_tool_installed(tool: str) -> bool:
 def run_pip_audit(requirements_file: Path) -> ScanResult:
     """
     Run pip-audit to check for known CVEs in dependencies.
-    
-    pip-audit queries the Python Package Index (PyPI) and the 
+
+    pip-audit queries the Python Package Index (PyPI) and the
     Open Source Vulnerability (OSV) database.
     """
     import time
+
     start = time.time()
     vulnerabilities = []
     raw_output = ""
-    
+
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             [
-                sys.executable, "-m", "pip_audit",
-                "-r", str(requirements_file),
-                "--format", "json",
-                "--desc", "on",
+                sys.executable,
+                "-m",
+                "pip_audit",
+                "-r",
+                str(requirements_file),
+                "--format",
+                "json",
+                "--desc",
+                "on",
             ],
             capture_output=True,
             text=True,
             timeout=300,
         )
-        
+
         raw_output = result.stdout + result.stderr
-        
+
         if result.stdout:
             try:
                 data = json.loads(result.stdout)
@@ -138,30 +144,32 @@ def run_pip_audit(requirements_file: Path) -> ScanResult:
                                 # Could query NVD for actual severity
                                 severity = SeverityLevel.HIGH  # Default assumption
                                 break
-                        
-                        vulnerabilities.append(Vulnerability(
-                            id=vuln.get("id", "Unknown"),
-                            package=dep.get("name", "Unknown"),
-                            installed_version=dep.get("version", "Unknown"),
-                            fixed_version=vuln.get("fix_versions", [None])[0] if vuln.get("fix_versions") else None,
-                            description=vuln.get("description", "No description available"),
-                            severity=severity,
-                            source="pip-audit",
-                        ))
+
+                        vulnerabilities.append(
+                            Vulnerability(
+                                id=vuln.get("id", "Unknown"),
+                                package=dep.get("name", "Unknown"),
+                                installed_version=dep.get("version", "Unknown"),
+                                fixed_version=vuln.get("fix_versions", [None])[0] if vuln.get("fix_versions") else None,
+                                description=vuln.get("description", "No description available"),
+                                severity=severity,
+                                source="pip-audit",
+                            )
+                        )
             except json.JSONDecodeError:
                 pass
-        
+
         passed = result.returncode == 0
-        
+
     except subprocess.TimeoutExpired:
         raw_output = "pip-audit timed out after 5 minutes"
         passed = False
     except Exception as e:
         raw_output = f"pip-audit error: {e}"
         passed = False
-    
+
     duration = time.time() - start
-    
+
     return ScanResult(
         scanner="pip-audit",
         passed=passed,
@@ -174,7 +182,7 @@ def run_pip_audit(requirements_file: Path) -> ScanResult:
 def run_bandit(source_dir: Path) -> ScanResult:
     """
     Run bandit for Python security linting.
-    
+
     Bandit checks for common security issues in Python code:
     - Hardcoded passwords
     - SQL injection risks
@@ -182,26 +190,32 @@ def run_bandit(source_dir: Path) -> ScanResult:
     - Insecure crypto usage
     """
     import time
+
     start = time.time()
     vulnerabilities = []
     raw_output = ""
-    
+
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             [
-                sys.executable, "-m", "bandit",
-                "-r", str(source_dir),
-                "-f", "json",
+                sys.executable,
+                "-m",
+                "bandit",
+                "-r",
+                str(source_dir),
+                "-f",
+                "json",
                 "-ll",  # Only report medium and higher
-                "--exclude", ".venv,venv,__pycache__,tests",
+                "--exclude",
+                ".venv,venv,__pycache__,tests",
             ],
             capture_output=True,
             text=True,
             timeout=300,
         )
-        
+
         raw_output = result.stdout + result.stderr
-        
+
         if result.stdout:
             try:
                 data = json.loads(result.stdout)
@@ -212,35 +226,34 @@ def run_bandit(source_dir: Path) -> ScanResult:
                         "MEDIUM": SeverityLevel.MEDIUM,
                         "LOW": SeverityLevel.LOW,
                     }
-                    severity = severity_map.get(
-                        issue.get("issue_severity", "UNKNOWN"),
-                        SeverityLevel.UNKNOWN
+                    severity = severity_map.get(issue.get("issue_severity", "UNKNOWN"), SeverityLevel.UNKNOWN)
+
+                    vulnerabilities.append(
+                        Vulnerability(
+                            id=issue.get("test_id", "Unknown"),
+                            package=issue.get("filename", "Unknown"),
+                            installed_version="N/A",
+                            fixed_version=None,
+                            description=f"{issue.get('issue_text', 'No description')} (line {issue.get('line_number', '?')})",
+                            severity=severity,
+                            source="bandit",
+                        )
                     )
-                    
-                    vulnerabilities.append(Vulnerability(
-                        id=issue.get("test_id", "Unknown"),
-                        package=issue.get("filename", "Unknown"),
-                        installed_version="N/A",
-                        fixed_version=None,
-                        description=f"{issue.get('issue_text', 'No description')} (line {issue.get('line_number', '?')})",
-                        severity=severity,
-                        source="bandit",
-                    ))
             except json.JSONDecodeError:
                 pass
-        
+
         # Bandit returns non-zero if issues found, not just on error
         passed = len(vulnerabilities) == 0
-        
+
     except subprocess.TimeoutExpired:
         raw_output = "bandit timed out after 5 minutes"
         passed = False
     except Exception as e:
         raw_output = f"bandit error: {e}"
         passed = False
-    
+
     duration = time.time() - start
-    
+
     return ScanResult(
         scanner="bandit",
         passed=passed,
@@ -255,62 +268,72 @@ def run_safety(requirements_file: Path) -> ScanResult:
     Run safety to check dependencies against known vulnerability database.
     """
     import time
+
     start = time.time()
     vulnerabilities = []
     raw_output = ""
-    
+
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             [
-                sys.executable, "-m", "safety",
+                sys.executable,
+                "-m",
+                "safety",
                 "check",
-                "-r", str(requirements_file),
+                "-r",
+                str(requirements_file),
                 "--json",
             ],
             capture_output=True,
             text=True,
             timeout=300,
         )
-        
+
         raw_output = result.stdout + result.stderr
-        
+
         if result.stdout:
             try:
                 # Safety 3.x has different JSON format
                 data = json.loads(result.stdout)
-                
+
                 # Handle different safety output formats
                 vuln_list = []
                 if isinstance(data, list):
                     vuln_list = data
                 elif isinstance(data, dict):
                     vuln_list = data.get("vulnerabilities", [])
-                
+
                 for vuln in vuln_list:
                     if isinstance(vuln, dict):
-                        vulnerabilities.append(Vulnerability(
-                            id=str(vuln.get("vulnerability_id", vuln.get("id", "Unknown"))),
-                            package=vuln.get("package_name", vuln.get("package", "Unknown")),
-                            installed_version=vuln.get("analyzed_version", vuln.get("installed_version", "Unknown")),
-                            fixed_version=vuln.get("fixed_versions", [None])[0] if vuln.get("fixed_versions") else None,
-                            description=vuln.get("advisory", vuln.get("description", "No description")),
-                            severity=SeverityLevel.HIGH,  # Safety doesn't provide severity
-                            source="safety",
-                        ))
+                        vulnerabilities.append(
+                            Vulnerability(
+                                id=str(vuln.get("vulnerability_id", vuln.get("id", "Unknown"))),
+                                package=vuln.get("package_name", vuln.get("package", "Unknown")),
+                                installed_version=vuln.get(
+                                    "analyzed_version", vuln.get("installed_version", "Unknown")
+                                ),
+                                fixed_version=(
+                                    vuln.get("fixed_versions", [None])[0] if vuln.get("fixed_versions") else None
+                                ),
+                                description=vuln.get("advisory", vuln.get("description", "No description")),
+                                severity=SeverityLevel.HIGH,  # Safety doesn't provide severity
+                                source="safety",
+                            )
+                        )
             except json.JSONDecodeError:
                 pass
-        
+
         passed = result.returncode == 0
-        
+
     except subprocess.TimeoutExpired:
         raw_output = "safety timed out after 5 minutes"
         passed = False
     except Exception as e:
         raw_output = f"safety error: {e}"
         passed = False
-    
+
     duration = time.time() - start
-    
+
     return ScanResult(
         scanner="safety",
         passed=passed,
@@ -325,7 +348,7 @@ def generate_report(scans: List[ScanResult]) -> SecurityReport:
     all_vulns = []
     for scan in scans:
         all_vulns.extend(scan.vulnerabilities)
-    
+
     return SecurityReport(
         timestamp=datetime.now().isoformat(),
         total_vulnerabilities=len(all_vulns),
@@ -344,21 +367,21 @@ def print_report(report: SecurityReport) -> None:
     print("=" * 70)
     print(f"Timestamp: {report.timestamp}")
     print("-" * 70)
-    
+
     for scan in report.scans:
         status = "✅ PASSED" if scan.passed else "❌ FAILED"
         print(f"\n{scan.scanner.upper()}: {status}")
         print(f"  Duration: {scan.duration_seconds:.1f}s")
         print(f"  Vulnerabilities: {len(scan.vulnerabilities)}")
-        
+
         if scan.vulnerabilities:
             for vuln in scan.vulnerabilities[:10]:  # Limit output
                 print(f"    - [{vuln.severity.value.upper()}] {vuln.package}: {vuln.id}")
                 print(f"      {vuln.description[:80]}...")
-            
+
             if len(scan.vulnerabilities) > 10:
                 print(f"    ... and {len(scan.vulnerabilities) - 10} more")
-    
+
     print("\n" + "-" * 70)
     print("SUMMARY")
     print("-" * 70)
@@ -368,7 +391,7 @@ def print_report(report: SecurityReport) -> None:
     print(f"  Medium:   {report.medium_count}")
     print(f"  Low:      {report.low_count}")
     print("=" * 70)
-    
+
     if report.has_critical:
         print("\n⚠️  CRITICAL vulnerabilities found - immediate action required!")
     elif report.has_high:
@@ -406,95 +429,77 @@ def save_json_report(report: SecurityReport, output_path: Path) -> None:
                         "severity": v.severity.value,
                     }
                     for v in scan.vulnerabilities
-                ]
+                ],
             }
             for scan in report.scans
-        ]
+        ],
     }
-    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(data, f, indent=2)
-    
+
     print(f"\nJSON report saved to: {output_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Security scanning for Floodingnaque dependencies and code"
-    )
+    parser = argparse.ArgumentParser(description="Security scanning for Floodingnaque dependencies and code")
     parser.add_argument(
         "--scan-type",
         choices=["all", "pip-audit", "bandit", "safety"],
         default="all",
-        help="Type of security scan to run"
+        help="Type of security scan to run",
     )
-    parser.add_argument(
-        "--requirements",
-        default="requirements.txt",
-        help="Path to requirements file"
-    )
-    parser.add_argument(
-        "--source-dir",
-        default="app",
-        help="Source directory for code scanning"
-    )
-    parser.add_argument(
-        "--output-dir",
-        default="reports/security",
-        help="Output directory for reports"
-    )
-    parser.add_argument(
-        "--ci",
-        action="store_true",
-        help="CI mode: exit with non-zero code on failures"
-    )
+    parser.add_argument("--requirements", default="requirements.txt", help="Path to requirements file")
+    parser.add_argument("--source-dir", default="app", help="Source directory for code scanning")
+    parser.add_argument("--output-dir", default="reports/security", help="Output directory for reports")
+    parser.add_argument("--ci", action="store_true", help="CI mode: exit with non-zero code on failures")
     parser.add_argument(
         "--fail-on",
         choices=["critical", "high", "medium", "low", "any"],
         default="critical",
-        help="Severity level that causes CI failure"
+        help="Severity level that causes CI failure",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Resolve paths
     backend_dir = Path(__file__).parent.parent
     requirements_file = backend_dir / args.requirements
     source_dir = backend_dir / args.source_dir
     output_dir = backend_dir / args.output_dir
-    
+
     # Validate paths
     if not requirements_file.exists():
         print(f"Error: Requirements file not found: {requirements_file}")
         sys.exit(1)
-    
+
     if not source_dir.exists():
         print(f"Error: Source directory not found: {source_dir}")
         sys.exit(1)
-    
+
     # Run scans
     scans = []
     scan_types = ["pip-audit", "bandit", "safety"] if args.scan_type == "all" else [args.scan_type]
-    
+
     for scan_type in scan_types:
         print(f"\n🔍 Running {scan_type}...")
-        
+
         if scan_type == "pip-audit":
             scans.append(run_pip_audit(requirements_file))
         elif scan_type == "bandit":
             scans.append(run_bandit(source_dir))
         elif scan_type == "safety":
             scans.append(run_safety(requirements_file))
-    
+
     # Generate and print report
     report = generate_report(scans)
     print_report(report)
-    
+
     # Save JSON report
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_json_report(report, output_dir / f"security_report_{timestamp}.json")
-    
+
     # CI exit code
     if args.ci:
         fail_levels = {
@@ -504,15 +509,15 @@ def main():
             "high": [SeverityLevel.CRITICAL, SeverityLevel.HIGH],
             "critical": [SeverityLevel.CRITICAL],
         }
-        
+
         levels_to_check = fail_levels[args.fail_on]
-        
+
         for scan in scans:
             for vuln in scan.vulnerabilities:
                 if vuln.severity in levels_to_check:
                     print(f"\n❌ CI FAILURE: Found {args.fail_on} or higher severity vulnerabilities")
                     sys.exit(1)
-        
+
         print(f"\n✅ CI SUCCESS: No {args.fail_on} or higher severity vulnerabilities found")
         sys.exit(0)
 

@@ -1,13 +1,14 @@
 """Configuration management for Floodingnaque API."""
 
-from dotenv import load_dotenv
+import logging
 import os
 import secrets
 from dataclasses import dataclass, field
-from typing import List, Optional
 from datetime import timedelta
-import logging
 from pathlib import Path
+from typing import List, Optional
+
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
@@ -18,51 +19,50 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 def is_debug_mode() -> bool:
     """
     Check if application is running in debug mode.
-    
+
     Centralized check for consistent debug mode detection across the app.
     Uses FLASK_DEBUG environment variable.
-    
+
     Returns:
         bool: True if debug mode is enabled
     """
-    return os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    return os.getenv("FLASK_DEBUG", "False").lower() == "true"
 
 
 def _get_secret_key() -> str:
     """
     Get SECRET_KEY from environment with security validation.
-    
+
     In production (FLASK_DEBUG=False), fails if not explicitly set.
     In development, generates a temporary key with warning.
     """
-    key = os.getenv('SECRET_KEY')
-    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    if not key or key in ('change-me-in-production', 'change_this_to_a_random_secret_key_in_production'):
+    key = os.getenv("SECRET_KEY")
+    is_debug = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+
+    if not key or key in ("change-me-in-production", "change_this_to_a_random_secret_key_in_production"):
         if not is_debug:
             raise ValueError(
                 "CRITICAL: SECRET_KEY must be set in production! "
-                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+                'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
             )
         # Development mode - generate temporary key
         key = secrets.token_hex(32)
         logger.warning(
-            "SECRET_KEY not configured - using temporary key. "
-            "Set SECRET_KEY in .env for persistent sessions."
+            "SECRET_KEY not configured - using temporary key. " "Set SECRET_KEY in .env for persistent sessions."
         )
     return key
 
 
 def _get_jwt_secret_key() -> str:
     """Get JWT_SECRET_KEY with security validation."""
-    key = os.getenv('JWT_SECRET_KEY')
-    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    if not key or key in ('change_this_to_another_random_secret_key',):
+    key = os.getenv("JWT_SECRET_KEY")
+    is_debug = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+
+    if not key or key in ("change_this_to_another_random_secret_key",):
         if not is_debug:
             raise ValueError(
                 "CRITICAL: JWT_SECRET_KEY must be set in production! "
-                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+                'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
             )
         key = secrets.token_hex(32)
         logger.warning("JWT_SECRET_KEY not configured - using temporary key.")
@@ -72,146 +72,144 @@ def _get_jwt_secret_key() -> str:
 def _get_db_ssl_mode() -> str:
     """
     Get DB_SSL_MODE with environment-specific defaults.
-    
+
     - Production/Staging: defaults to 'verify-full' (maximum security)
     - Development: defaults to 'require' (encrypted, no certificate needed)
-    
+
     Returns:
         str: SSL mode (require, verify-ca, or verify-full)
     """
-    ssl_mode = os.getenv('DB_SSL_MODE', '').lower()
-    
-    if ssl_mode in ('require', 'verify-ca', 'verify-full'):
+    ssl_mode = os.getenv("DB_SSL_MODE", "").lower()
+
+    if ssl_mode in ("require", "verify-ca", "verify-full"):
         return ssl_mode
-    
+
     # Environment-based defaults
-    app_env = os.getenv('APP_ENV', 'development').lower()
-    
-    if app_env in ('production', 'prod', 'staging', 'stage'):
-        return 'verify-full'
-    
-    return 'require'
+    app_env = os.getenv("APP_ENV", "development").lower()
+
+    if app_env in ("production", "prod", "staging", "stage"):
+        return "verify-full"
+
+    return "require"
 
 
 def _get_database_url() -> str:
     """
     Get DATABASE_URL with environment-specific validation.
-    
+
     - Production: Requires Supabase PostgreSQL with SSL (fails if not set or using SQLite)
     - Staging: Requires PostgreSQL with SSL (fails if using SQLite)
     - Development: Allows SQLite fallback with warning
-    
+
     Returns:
         str: Database connection URL
-    
+
     Raises:
         ValueError: If production/staging uses SQLite or DATABASE_URL not configured
     """
-    url = os.getenv('DATABASE_URL', '')
-    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-    app_env = os.getenv('APP_ENV', 'development').lower()
-    
+    url = os.getenv("DATABASE_URL", "")
+    is_debug = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    app_env = os.getenv("APP_ENV", "development").lower()
+
     # Production and staging require PostgreSQL/Supabase
-    if app_env in ('production', 'prod', 'staging', 'stage'):
+    if app_env in ("production", "prod", "staging", "stage"):
         if not url:
             raise ValueError(
                 f"CRITICAL: DATABASE_URL must be set for {app_env}! "
                 "Configure a Supabase PostgreSQL connection string in your .env file. "
                 "Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?sslmode=require"
             )
-        if url.startswith('sqlite'):
+        if url.startswith("sqlite"):
             raise ValueError(
-                f"CRITICAL: SQLite is not allowed in {app_env}! "
-                "Configure a Supabase PostgreSQL connection string."
+                f"CRITICAL: SQLite is not allowed in {app_env}! " "Configure a Supabase PostgreSQL connection string."
             )
-        
+
         # Enforce SSL mode for production PostgreSQL connections
-        if url.startswith('postgresql') and 'sslmode=' not in url:
+        if url.startswith("postgresql") and "sslmode=" not in url:
             logger.warning(
-                "DATABASE_URL does not specify sslmode. "
-                "Automatically adding sslmode=require for security."
+                "DATABASE_URL does not specify sslmode. " "Automatically adding sslmode=require for security."
             )
-            separator = '&' if '?' in url else '?'
+            separator = "&" if "?" in url else "?"
             url = f"{url}{separator}sslmode=require"
-        
+
         return url
-    
+
     # Development mode - allow SQLite fallback with warning
     if not url:
-        fallback = 'sqlite:///data/floodingnaque.db'
+        fallback = "sqlite:///data/floodingnaque.db"
         logger.warning(
             "DATABASE_URL not configured - using SQLite fallback for development. "
             "Set DATABASE_URL to use Supabase PostgreSQL."
         )
         return fallback
-    
-    if url.startswith('sqlite') and not is_debug:
+
+    if url.startswith("sqlite") and not is_debug:
         logger.warning(
             "Using SQLite database. This is not recommended for production. "
             "Configure Supabase PostgreSQL for better reliability."
         )
-    
+
     return url
 
 
 def get_env_file() -> Path:
     """
     Determine which .env file to load based on APP_ENV.
-    
+
     Priority:
     1. APP_ENV environment variable (development, staging, production)
     2. Falls back to .env if exists, otherwise .env.development
-    
+
     Returns:
         Path to the appropriate .env file
     """
-    app_env = os.getenv('APP_ENV', '').lower()
-    
+    app_env = os.getenv("APP_ENV", "").lower()
+
     env_file_map = {
-        'development': '.env.development',
-        'dev': '.env.development',
-        'staging': '.env.staging',
-        'stage': '.env.staging',
-        'production': '.env.production',
-        'prod': '.env.production',
+        "development": ".env.development",
+        "dev": ".env.development",
+        "staging": ".env.staging",
+        "stage": ".env.staging",
+        "production": ".env.production",
+        "prod": ".env.production",
     }
-    
+
     # Get the appropriate env file name
     env_file_name = env_file_map.get(app_env)
-    
+
     if env_file_name:
         env_file = BASE_DIR / env_file_name
         if env_file.exists():
             return env_file
         logger.warning(f"Environment file {env_file_name} not found, falling back...")
-    
+
     # Fallback order: .env -> .env.development
-    default_env = BASE_DIR / '.env'
+    default_env = BASE_DIR / ".env"
     if default_env.exists():
         return default_env
-    
-    dev_env = BASE_DIR / '.env.development'
+
+    dev_env = BASE_DIR / ".env.development"
     if dev_env.exists():
         logger.info("Using .env.development as default")
         return dev_env
-    
+
     # No env file found - will rely on system environment variables
     logger.warning("No .env file found. Using system environment variables only.")
     return default_env  # Return path even if doesn't exist - load_dotenv handles gracefully
 
 
-def load_env():
+def load_env() -> None:
     """
     Load environment variables from the appropriate .env file.
-    
+
     The file is selected based on APP_ENV environment variable:
     - development/dev -> .env.development
-    - staging/stage -> .env.staging  
+    - staging/stage -> .env.staging
     - production/prod -> .env.production
     - (unset) -> .env or .env.development
     """
     env_file = get_env_file()
-    
+
     if env_file.exists():
         logger.info(f"Loading environment from: {env_file.name}")
         load_dotenv(env_file, override=True)
@@ -224,149 +222,155 @@ def load_env():
 class Config:
     """
     Application configuration with validation.
-    
+
     All values are loaded from environment variables with sensible defaults.
     """
-    
+
     # Flask Settings - SECRET_KEY fails in production if not set
     SECRET_KEY: str = field(default_factory=_get_secret_key)
     JWT_SECRET_KEY: str = field(default_factory=_get_jwt_secret_key)
-    DEBUG: bool = field(default_factory=lambda: os.getenv('FLASK_DEBUG', 'False').lower() == 'true')
-    HOST: str = field(default_factory=lambda: os.getenv('HOST', '0.0.0.0'))
-    PORT: int = field(default_factory=lambda: int(os.getenv('PORT', '5000')))
-    
+    DEBUG: bool = field(default_factory=lambda: os.getenv("FLASK_DEBUG", "False").lower() == "true")
+    HOST: str = field(default_factory=lambda: os.getenv("HOST", "0.0.0.0"))  # nosec B104
+    PORT: int = field(default_factory=lambda: int(os.getenv("PORT", "5000")))
+
     # Database - Supabase PostgreSQL is required (no SQLite fallback in production)
     DATABASE_URL: str = field(default_factory=lambda: _get_database_url())
-    
+
     # Connection Pool Settings for Production
     # Adjust based on your database plan limits:
     # - Supabase Free: pool_size=3, max_overflow=5
     # - Supabase Pro: pool_size=20, max_overflow=10
     # - Self-hosted: pool_size=20-50 based on resources
-    DB_POOL_SIZE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_SIZE', '20')))
-    DB_MAX_OVERFLOW: int = field(default_factory=lambda: int(os.getenv('DB_MAX_OVERFLOW', '10')))
-    DB_POOL_RECYCLE: int = field(default_factory=lambda: int(os.getenv('DB_POOL_RECYCLE', '1800')))  # 30 min default
-    DB_POOL_TIMEOUT: int = field(default_factory=lambda: int(os.getenv('DB_POOL_TIMEOUT', '30')))
-    DB_POOL_PRE_PING: bool = field(default_factory=lambda: os.getenv('DB_POOL_PRE_PING', 'True').lower() == 'true')
-    DB_ECHO_POOL: bool = field(default_factory=lambda: os.getenv('DB_ECHO_POOL', 'False').lower() == 'true')
-    
+    DB_POOL_SIZE: int = field(default_factory=lambda: int(os.getenv("DB_POOL_SIZE", "20")))
+    DB_MAX_OVERFLOW: int = field(default_factory=lambda: int(os.getenv("DB_MAX_OVERFLOW", "10")))
+    DB_POOL_RECYCLE: int = field(default_factory=lambda: int(os.getenv("DB_POOL_RECYCLE", "1800")))  # 30 min default
+    DB_POOL_TIMEOUT: int = field(default_factory=lambda: int(os.getenv("DB_POOL_TIMEOUT", "30")))
+    DB_POOL_PRE_PING: bool = field(default_factory=lambda: os.getenv("DB_POOL_PRE_PING", "True").lower() == "true")
+    DB_ECHO_POOL: bool = field(default_factory=lambda: os.getenv("DB_ECHO_POOL", "False").lower() == "true")
+
     # Database SSL Configuration
     # - require: Encrypted connection, no certificate verification (development default)
     # - verify-ca: Encrypted + verify CA certificate
     # - verify-full: Encrypted + verify CA + hostname check (production recommended)
     DB_SSL_MODE: str = field(default_factory=lambda: _get_db_ssl_mode())
-    DB_SSL_CA_CERT: str = field(default_factory=lambda: os.getenv('DB_SSL_CA_CERT', ''))
-    
+    DB_SSL_CA_CERT: str = field(default_factory=lambda: os.getenv("DB_SSL_CA_CERT", ""))
+
     # Security
-    RATE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true')
-    RATE_LIMIT_DEFAULT: int = field(default_factory=lambda: int(os.getenv('RATE_LIMIT_DEFAULT', '100')))
-    ENABLE_HTTPS: bool = field(default_factory=lambda: os.getenv('ENABLE_HTTPS', 'False').lower() == 'true')
-    
+    RATE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv("RATE_LIMIT_ENABLED", "True").lower() == "true")
+    RATE_LIMIT_DEFAULT: int = field(default_factory=lambda: int(os.getenv("RATE_LIMIT_DEFAULT", "100")))
+    ENABLE_HTTPS: bool = field(default_factory=lambda: os.getenv("ENABLE_HTTPS", "False").lower() == "true")
+
     # JWT Token Settings
     JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = field(
-        default_factory=lambda: int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES_MINUTES', '30'))
+        default_factory=lambda: int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "30"))
     )
     JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = field(
-        default_factory=lambda: int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES_DAYS', '7'))
+        default_factory=lambda: int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "7"))
     )
-    JWT_TOKEN_LOCATION: List[str] = field(
-        default_factory=lambda: os.getenv('JWT_TOKEN_LOCATION', 'headers').split(',')
-    )
-    JWT_ALGORITHM: str = field(default_factory=lambda: os.getenv('JWT_ALGORITHM', 'HS256'))
-    
+    JWT_TOKEN_LOCATION: List[str] = field(default_factory=lambda: os.getenv("JWT_TOKEN_LOCATION", "headers").split(","))
+    JWT_ALGORITHM: str = field(default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256"))
+
     # Model Security
-    MODEL_SIGNING_KEY: str = field(default_factory=lambda: os.getenv('MODEL_SIGNING_KEY', ''))
+    MODEL_SIGNING_KEY: str = field(default_factory=lambda: os.getenv("MODEL_SIGNING_KEY", ""))
     REQUIRE_MODEL_SIGNATURE: bool = field(
-        default_factory=lambda: os.getenv('REQUIRE_MODEL_SIGNATURE', 'false').lower() == 'true'
+        default_factory=lambda: os.getenv("REQUIRE_MODEL_SIGNATURE", "false").lower() == "true"
     )
     VERIFY_MODEL_INTEGRITY: bool = field(
-        default_factory=lambda: os.getenv('VERIFY_MODEL_INTEGRITY', 'true').lower() == 'true'
+        default_factory=lambda: os.getenv("VERIFY_MODEL_INTEGRITY", "true").lower() == "true"
     )
-    
+
     # CORS
-    CORS_ORIGINS: str = field(default_factory=lambda: os.getenv('CORS_ORIGINS', 'https://floodingnaque.vercel.app'))
-    
+    CORS_ORIGINS: str = field(default_factory=lambda: os.getenv("CORS_ORIGINS", "https://floodingnaque.vercel.app"))
+
     # External APIs
-    OWM_API_KEY: str = field(default_factory=lambda: os.getenv('OWM_API_KEY', ''))
-    WEATHERSTACK_API_KEY: str = field(default_factory=lambda: os.getenv('WEATHERSTACK_API_KEY', ''))
-    
+    OWM_API_KEY: str = field(default_factory=lambda: os.getenv("OWM_API_KEY", ""))
+    WEATHERSTACK_API_KEY: str = field(default_factory=lambda: os.getenv("WEATHERSTACK_API_KEY", ""))
+
     # Meteostat Configuration
-    METEOSTAT_ENABLED: bool = field(default_factory=lambda: os.getenv('METEOSTAT_ENABLED', 'True').lower() == 'true')
-    METEOSTAT_CACHE_MAX_AGE_DAYS: int = field(default_factory=lambda: int(os.getenv('METEOSTAT_CACHE_MAX_AGE_DAYS', '7')))
-    METEOSTAT_STATION_ID: str = field(default_factory=lambda: os.getenv('METEOSTAT_STATION_ID', ''))
-    METEOSTAT_AS_FALLBACK: bool = field(default_factory=lambda: os.getenv('METEOSTAT_AS_FALLBACK', 'True').lower() == 'true')
-    
+    METEOSTAT_ENABLED: bool = field(default_factory=lambda: os.getenv("METEOSTAT_ENABLED", "True").lower() == "true")
+    METEOSTAT_CACHE_MAX_AGE_DAYS: int = field(
+        default_factory=lambda: int(os.getenv("METEOSTAT_CACHE_MAX_AGE_DAYS", "7"))
+    )
+    METEOSTAT_STATION_ID: str = field(default_factory=lambda: os.getenv("METEOSTAT_STATION_ID", ""))
+    METEOSTAT_AS_FALLBACK: bool = field(
+        default_factory=lambda: os.getenv("METEOSTAT_AS_FALLBACK", "True").lower() == "true"
+    )
+
     # Model Configuration
-    MODEL_DIR: str = field(default_factory=lambda: os.getenv('MODEL_DIR', 'models'))
-    MODEL_NAME: str = field(default_factory=lambda: os.getenv('MODEL_NAME', 'flood_rf_model'))
-    
+    MODEL_DIR: str = field(default_factory=lambda: os.getenv("MODEL_DIR", "models"))
+    MODEL_NAME: str = field(default_factory=lambda: os.getenv("MODEL_NAME", "flood_rf_model"))
+
     # Logging
-    LOG_LEVEL: str = field(default_factory=lambda: os.getenv('LOG_LEVEL', 'INFO'))
-    LOG_FORMAT: str = field(default_factory=lambda: os.getenv('LOG_FORMAT', 'json'))
-    LOG_SAMPLING_ENABLED: bool = field(default_factory=lambda: os.getenv('LOG_SAMPLING_ENABLED', 'False').lower() == 'true')
-    LOG_SAMPLING_RATE: float = field(default_factory=lambda: float(os.getenv('LOG_SAMPLING_RATE', '0.1')))  # Sample 10% of logs
-    LOG_SAMPLING_EXCLUDE_ERRORS: bool = field(default_factory=lambda: os.getenv('LOG_SAMPLING_EXCLUDE_ERRORS', 'True').lower() == 'true')
-    
+    LOG_LEVEL: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
+    LOG_FORMAT: str = field(default_factory=lambda: os.getenv("LOG_FORMAT", "json"))
+    LOG_SAMPLING_ENABLED: bool = field(
+        default_factory=lambda: os.getenv("LOG_SAMPLING_ENABLED", "False").lower() == "true"
+    )
+    LOG_SAMPLING_RATE: float = field(
+        default_factory=lambda: float(os.getenv("LOG_SAMPLING_RATE", "0.1"))
+    )  # Sample 10% of logs
+    LOG_SAMPLING_EXCLUDE_ERRORS: bool = field(
+        default_factory=lambda: os.getenv("LOG_SAMPLING_EXCLUDE_ERRORS", "True").lower() == "true"
+    )
+
     # Default Location (Parañaque City)
-    DEFAULT_LATITUDE: float = field(default_factory=lambda: float(os.getenv('DEFAULT_LATITUDE', '14.4793')))
-    DEFAULT_LONGITUDE: float = field(default_factory=lambda: float(os.getenv('DEFAULT_LONGITUDE', '121.0198')))
-    
+    DEFAULT_LATITUDE: float = field(default_factory=lambda: float(os.getenv("DEFAULT_LATITUDE", "14.4793")))
+    DEFAULT_LONGITUDE: float = field(default_factory=lambda: float(os.getenv("DEFAULT_LONGITUDE", "121.0198")))
+
     def get_cors_origins_list(self) -> List[str]:
         """Get CORS origins as a list."""
         if not self.CORS_ORIGINS:
             return []
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(',') if origin.strip()]
-    
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
     def get_jwt_access_token_expires(self) -> timedelta:
         """Get JWT access token expiration as timedelta."""
         return timedelta(minutes=self.JWT_ACCESS_TOKEN_EXPIRES_MINUTES)
-    
+
     def get_jwt_refresh_token_expires(self) -> timedelta:
         """Get JWT refresh token expiration as timedelta."""
         return timedelta(days=self.JWT_REFRESH_TOKEN_EXPIRES_DAYS)
-    
+
     @classmethod
     def validate(cls) -> List[str]:
         """
         Validate configuration and return list of warnings/errors.
-        
+
         Returns:
             List of warning/error messages (empty if all valid)
         """
         warnings = []
         config = cls()
-        
+
         # Check required API keys in production
         if not config.DEBUG:
-            if not config.OWM_API_KEY or config.OWM_API_KEY == 'your_openweathermap_api_key_here':
+            if not config.OWM_API_KEY or config.OWM_API_KEY == "your_openweathermap_api_key_here":
                 warnings.append("OWM_API_KEY is not configured")
-            
-            if config.SECRET_KEY == 'change-me-in-production':
+
+            if config.SECRET_KEY == "change-me-in-production":  # nosec B105
                 warnings.append("SECRET_KEY should be changed in production")
-            
+
             if not config.CORS_ORIGINS:
                 warnings.append("CORS_ORIGINS should be configured in production")
-            
+
             if not config.ENABLE_HTTPS:
                 warnings.append("HTTPS should be enabled in production")
-            
+
             # JWT security checks
             if config.JWT_ACCESS_TOKEN_EXPIRES_MINUTES > 60:
                 warnings.append(
                     f"JWT_ACCESS_TOKEN_EXPIRES_MINUTES is {config.JWT_ACCESS_TOKEN_EXPIRES_MINUTES}. "
                     "Consider shorter expiration (15-30 minutes) for production."
                 )
-            
+
             # Model security checks
             if config.REQUIRE_MODEL_SIGNATURE and not config.MODEL_SIGNING_KEY:
-                warnings.append(
-                    "REQUIRE_MODEL_SIGNATURE is enabled but MODEL_SIGNING_KEY is not set"
-                )
-        
+                warnings.append("REQUIRE_MODEL_SIGNATURE is enabled but MODEL_SIGNING_KEY is not set")
+
         return warnings
-    
+
     @classmethod
-    def from_env(cls) -> 'Config':
+    def from_env(cls) -> "Config":
         """Create Config instance from environment variables."""
         load_env()
         return cls()

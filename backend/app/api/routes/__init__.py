@@ -25,52 +25,52 @@ Contains modular route definitions:
 - upload: /api/v1/upload (File upload endpoints)
 """
 
+from app.api.routes.alerts import alerts_bp
+from app.api.routes.batch import batch_bp
+from app.api.routes.celery import celery_bp
+from app.api.routes.csp_report import csp_report_bp
+from app.api.routes.dashboard import dashboard_bp
+from app.api.routes.data import data_bp
+from app.api.routes.export import export_bp
+from app.api.routes.graphql import graphql_bp
 from app.api.routes.health import health_bp
 from app.api.routes.health_k8s import health_k8s_bp
 from app.api.routes.ingest import ingest_bp
-from app.api.routes.predict import predict_bp
-from app.api.routes.data import data_bp
 from app.api.routes.models import models_bp
-from app.api.routes.batch import batch_bp
-from app.api.routes.export import export_bp
-from app.api.routes.webhooks import webhooks_bp
-from app.api.routes.celery import celery_bp
-from app.api.routes.rate_limits import rate_limits_bp
-from app.api.routes.tides import tides_bp
-from app.api.routes.graphql import graphql_bp
-from app.api.routes.security_txt import security_txt_bp
-from app.api.routes.csp_report import csp_report_bp
 from app.api.routes.performance import performance_bp
-from app.api.routes.users import users_bp
-from app.api.routes.alerts import alerts_bp
-from app.api.routes.dashboard import dashboard_bp
+from app.api.routes.predict import predict_bp
 from app.api.routes.predictions import predictions_bp
+from app.api.routes.rate_limits import rate_limits_bp
+from app.api.routes.security_txt import security_txt_bp
 from app.api.routes.sse import sse_bp
+from app.api.routes.tides import tides_bp
 from app.api.routes.upload import upload_bp
+from app.api.routes.users import users_bp
+from app.api.routes.webhooks import webhooks_bp
 
 __all__ = [
     # Core routes
-    'health_bp',
-    'health_k8s_bp',
-    'ingest_bp',
-    'predict_bp',
-    'data_bp',
-    'models_bp',
+    "health_bp",
+    "health_k8s_bp",
+    "ingest_bp",
+    "predict_bp",
+    "data_bp",
+    "models_bp",
     # Extended routes
-    'batch_bp',
-    'export_bp',
-    'webhooks_bp',
-    'celery_bp',
-    'rate_limits_bp',
-    'tides_bp',
-    'graphql_bp',
-    'security_txt_bp',
-    'csp_report_bp',
-    'performance_bp',
-    'users_bp',
-    'alerts_bp',
-    'dashboard_bp',
-    'predictions_bp',
-    'sse_bp',
-    'upload_bp',
+    "batch_bp",
+    "export_bp",
+    "webhooks_bp",
+    "celery_bp",
+    "rate_limits_bp",
+    "tides_bp",
+    "graphql_bp",
+    "security_txt_bp",
+    "csp_report_bp",
+    "performance_bp",
+    "users_bp",
+    "alerts_bp",
+    "dashboard_bp",
+    "predictions_bp",
+    "sse_bp",
+    "upload_bp",
 ]

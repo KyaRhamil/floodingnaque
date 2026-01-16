@@ -218,6 +218,7 @@ backend/*-service-account*.json
 backend/floodingnaque-*.json
 backend/google_oauth*.json
 backend/google_application_credentials_astral-archive-482008-g2-e31c78fffb69.json
+backend\astral-archive-482008-g2-b4f2279053c0.json
 
 # Earth Engine credentials
 .ee-credentials

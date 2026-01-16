@@ -385,4 +385,3 @@ For issues or questions:
 - Check logs in `logs/app.log`
 - Review API documentation at `/api/docs`
 - Check health status at `/health`
-

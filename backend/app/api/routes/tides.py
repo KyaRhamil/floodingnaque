@@ -5,21 +5,21 @@ Provides endpoints for accessing tidal data from WorldTides API
 for coastal flood prediction in Parañaque City.
 """
 
-import os
 import logging
 import uuid
-from flask import Blueprint, request, jsonify, g
-from app.utils.api_responses import api_success, api_error
-from app.utils.api_constants import HTTP_OK, HTTP_BAD_REQUEST, HTTP_SERVICE_UNAVAILABLE
+
+from app.utils.api_constants import HTTP_BAD_REQUEST, HTTP_OK, HTTP_SERVICE_UNAVAILABLE
+from app.utils.api_responses import api_error, api_success
+from flask import Blueprint, g, request
 
 logger = logging.getLogger(__name__)
 
-tides_bp = Blueprint('tides', __name__)
+tides_bp = Blueprint("tides", __name__)
 
 
 def _get_request_id():
     """Get request ID from Flask context or generate a new one."""
-    if hasattr(g, 'request_id'):
+    if hasattr(g, "request_id"):
         return g.request_id
     return str(uuid.uuid4())
 
@@ -28,218 +28,212 @@ def _get_worldtides_service():
     """Get the WorldTides service instance."""
     try:
         from app.services.worldtides_service import get_worldtides_service
+
         return get_worldtides_service()
     except ImportError:
         logger.error("WorldTides service not available")
         return None
 
 
-@tides_bp.route('/tides/current', methods=['GET'])
+@tides_bp.route("/tides/current", methods=["GET"])
 def get_current_tide():
     """
     Get current tide height for a location.
-    
+
     Query Parameters:
         lat: Latitude (default: Parañaque City)
         lon: Longitude (default: Parañaque City)
-    
+
     Returns:
         Current tide height and metadata
     """
     request_id = _get_request_id()
-    
+
     service = _get_worldtides_service()
     if not service or not service.is_available():
-        return api_error(
-            'TideServiceUnavailable',
-            'WorldTides service is not configured or unavailable',
+        return (
+            api_error(
+                "TideServiceUnavailable",
+                "WorldTides service is not configured or unavailable",
+                HTTP_SERVICE_UNAVAILABLE,
+                request_id,
+            ),
             HTTP_SERVICE_UNAVAILABLE,
-            request_id
-        ), HTTP_SERVICE_UNAVAILABLE
-    
+        )
+
     try:
-        lat = request.args.get('lat', type=float)
-        lon = request.args.get('lon', type=float)
-        
+        lat = request.args.get("lat", type=float)
+        lon = request.args.get("lon", type=float)
+
         tide = service.get_current_tide(lat, lon)
-        
+
         if not tide:
-            return api_error(
-                'TideDataNotFound',
-                'No tide data available for the specified location',
+            return (
+                api_error(
+                    "TideDataNotFound",
+                    "No tide data available for the specified location",
+                    HTTP_BAD_REQUEST,
+                    request_id,
+                ),
                 HTTP_BAD_REQUEST,
-                request_id
-            ), HTTP_BAD_REQUEST
-        
-        return api_success(
-            'CurrentTide',
-            'Current tide height retrieved successfully',
-            {
-                'height': tide.height,
-                'datum': tide.datum,
-                'timestamp': tide.timestamp.isoformat(),
-                'source': tide.source
-            },
-            request_id
-        ), HTTP_OK
-        
+            )
+
+        return (
+            api_success(
+                "CurrentTide",
+                "Current tide height retrieved successfully",
+                {
+                    "height": tide.height,
+                    "datum": tide.datum,
+                    "timestamp": tide.timestamp.isoformat(),
+                    "source": tide.source,
+                },
+                request_id,
+            ),
+            HTTP_OK,
+        )
+
     except Exception as e:
         logger.error(f"Error fetching current tide [{request_id}]: {e}")
-        return api_error(
-            'TideFetchError',
-            str(e),
-            HTTP_BAD_REQUEST,
-            request_id
-        ), HTTP_BAD_REQUEST
+        return api_error("TideFetchError", str(e), HTTP_BAD_REQUEST, request_id), HTTP_BAD_REQUEST
 
 
-@tides_bp.route('/tides/extremes', methods=['GET'])
+@tides_bp.route("/tides/extremes", methods=["GET"])
 def get_tide_extremes():
     """
     Get upcoming high and low tides.
-    
+
     Query Parameters:
         lat: Latitude (default: Parañaque City)
         lon: Longitude (default: Parañaque City)
         days: Number of days of predictions (1-7, default: 2)
-    
+
     Returns:
         List of tide extremes (high/low tides)
     """
     request_id = _get_request_id()
-    
+
     service = _get_worldtides_service()
     if not service or not service.is_available():
-        return api_error(
-            'TideServiceUnavailable',
-            'WorldTides service is not configured or unavailable',
+        return (
+            api_error(
+                "TideServiceUnavailable",
+                "WorldTides service is not configured or unavailable",
+                HTTP_SERVICE_UNAVAILABLE,
+                request_id,
+            ),
             HTTP_SERVICE_UNAVAILABLE,
-            request_id
-        ), HTTP_SERVICE_UNAVAILABLE
-    
+        )
+
     try:
-        lat = request.args.get('lat', type=float)
-        lon = request.args.get('lon', type=float)
-        days = request.args.get('days', default=2, type=int)
+        lat = request.args.get("lat", type=float)
+        lon = request.args.get("lon", type=float)
+        days = request.args.get("days", default=2, type=int)
         days = min(max(days, 1), 7)  # Clamp to 1-7
-        
+
         extremes = service.get_tide_extremes(lat, lon, days)
-        
-        return api_success(
-            'TideExtremes',
-            f'Retrieved {len(extremes)} tide extremes',
-            {
-                'extremes': [
-                    {
-                        'type': e.type,
-                        'height': e.height,
-                        'timestamp': e.timestamp.isoformat(),
-                        'datum': e.datum
-                    }
-                    for e in extremes
-                ],
-                'count': len(extremes),
-                'days': days
-            },
-            request_id
-        ), HTTP_OK
-        
+
+        return (
+            api_success(
+                "TideExtremes",
+                f"Retrieved {len(extremes)} tide extremes",
+                {
+                    "extremes": [
+                        {"type": e.type, "height": e.height, "timestamp": e.timestamp.isoformat(), "datum": e.datum}
+                        for e in extremes
+                    ],
+                    "count": len(extremes),
+                    "days": days,
+                },
+                request_id,
+            ),
+            HTTP_OK,
+        )
+
     except Exception as e:
         logger.error(f"Error fetching tide extremes [{request_id}]: {e}")
-        return api_error(
-            'TideFetchError',
-            str(e),
-            HTTP_BAD_REQUEST,
-            request_id
-        ), HTTP_BAD_REQUEST
+        return api_error("TideFetchError", str(e), HTTP_BAD_REQUEST, request_id), HTTP_BAD_REQUEST
 
 
-@tides_bp.route('/tides/prediction', methods=['GET'])
+@tides_bp.route("/tides/prediction", methods=["GET"])
 def get_tide_prediction():
     """
     Get tide data formatted for flood prediction.
-    
+
     Returns tide risk factors and trends that enhance flood prediction accuracy.
-    
+
     Query Parameters:
         lat: Latitude (default: Parañaque City)
         lon: Longitude (default: Parañaque City)
-    
+
     Returns:
         Tide data with risk factors for flood prediction
     """
     request_id = _get_request_id()
-    
+
     service = _get_worldtides_service()
     if not service or not service.is_available():
-        return api_error(
-            'TideServiceUnavailable',
-            'WorldTides service is not configured or unavailable',
+        return (
+            api_error(
+                "TideServiceUnavailable",
+                "WorldTides service is not configured or unavailable",
+                HTTP_SERVICE_UNAVAILABLE,
+                request_id,
+            ),
             HTTP_SERVICE_UNAVAILABLE,
-            request_id
-        ), HTTP_SERVICE_UNAVAILABLE
-    
+        )
+
     try:
-        lat = request.args.get('lat', type=float)
-        lon = request.args.get('lon', type=float)
-        
+        lat = request.args.get("lat", type=float)
+        lon = request.args.get("lon", type=float)
+
         tide_data = service.get_tide_data_for_prediction(lat, lon)
-        
+
         if not tide_data:
-            return api_error(
-                'TideDataNotFound',
-                'No tide prediction data available for the specified location',
+            return (
+                api_error(
+                    "TideDataNotFound",
+                    "No tide prediction data available for the specified location",
+                    HTTP_BAD_REQUEST,
+                    request_id,
+                ),
                 HTTP_BAD_REQUEST,
-                request_id
-            ), HTTP_BAD_REQUEST
-        
-        return api_success(
-            'TidePrediction',
-            'Tide prediction data retrieved successfully',
-            tide_data,
-            request_id
-        ), HTTP_OK
-        
+            )
+
+        return (
+            api_success("TidePrediction", "Tide prediction data retrieved successfully", tide_data, request_id),
+            HTTP_OK,
+        )
+
     except Exception as e:
         logger.error(f"Error fetching tide prediction data [{request_id}]: {e}")
-        return api_error(
-            'TideFetchError',
-            str(e),
-            HTTP_BAD_REQUEST,
-            request_id
-        ), HTTP_BAD_REQUEST
+        return api_error("TideFetchError", str(e), HTTP_BAD_REQUEST, request_id), HTTP_BAD_REQUEST
 
 
-@tides_bp.route('/tides/status', methods=['GET'])
+@tides_bp.route("/tides/status", methods=["GET"])
 def get_tide_service_status():
     """
     Get WorldTides service status.
-    
+
     Returns:
         Service configuration and status
     """
     request_id = _get_request_id()
-    
+
     service = _get_worldtides_service()
-    
+
     if not service:
-        return api_success(
-            'TideServiceStatus',
-            'WorldTides service is not installed',
-            {
-                'installed': False,
-                'enabled': False,
-                'message': 'WorldTides service module not found'
-            },
-            request_id
-        ), HTTP_OK
-    
+        return (
+            api_success(
+                "TideServiceStatus",
+                "WorldTides service is not installed",
+                {"installed": False, "enabled": False, "message": "WorldTides service module not found"},
+                request_id,
+            ),
+            HTTP_OK,
+        )
+
     status = service.get_service_status()
-    status['installed'] = True
-    
-    return api_success(
-        'TideServiceStatus',
-        'WorldTides service status retrieved',
-        status,
-        request_id
-    ), HTTP_OK
+    status["installed"] = True
+
+    return api_success("TideServiceStatus", "WorldTides service status retrieved", status, request_id), HTTP_OK

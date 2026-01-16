@@ -14,26 +14,26 @@ Usage:
         ErrorCategory,
         StructuredError
     )
-    
+
     @handle_errors(default_return=None)
     def risky_operation():
         ...
-    
+
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError))
     def external_api_call():
         ...
 """
 
 import functools
+import json
 import logging
 import time
 import traceback
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
-import json
-import uuid
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -42,31 +42,32 @@ logger = logging.getLogger(__name__)
 # ERROR CATEGORIES
 # =============================================================================
 
+
 class ErrorCategory(str, Enum):
     """Error categories for classification."""
-    
+
     # Recoverable errors - can retry or handle gracefully
-    TRANSIENT = "transient"          # Network timeouts, temporary DB issues
-    RATE_LIMITED = "rate_limited"    # API rate limits hit
+    TRANSIENT = "transient"  # Network timeouts, temporary DB issues
+    RATE_LIMITED = "rate_limited"  # API rate limits hit
     RESOURCE_BUSY = "resource_busy"  # Resource temporarily unavailable
-    
+
     # Client errors - user/input issues
-    VALIDATION = "validation"        # Input validation failures
+    VALIDATION = "validation"  # Input validation failures
     AUTHENTICATION = "authentication"  # Auth failures
     AUTHORIZATION = "authorization"  # Permission denied
-    NOT_FOUND = "not_found"          # Resource not found
-    
+    NOT_FOUND = "not_found"  # Resource not found
+
     # Server/system errors - internal issues
-    INTERNAL = "internal"            # Unexpected internal errors
+    INTERNAL = "internal"  # Unexpected internal errors
     CONFIGURATION = "configuration"  # Misconfiguration
-    DEPENDENCY = "dependency"        # External service failures
-    
+    DEPENDENCY = "dependency"  # External service failures
+
     # Data errors
     DATA_INTEGRITY = "data_integrity"  # Data corruption/inconsistency
-    DATA_FORMAT = "data_format"        # Malformed data
-    
+    DATA_FORMAT = "data_format"  # Malformed data
+
     # ML-specific errors
-    MODEL_LOADING = "model_loading"    # Model file issues
+    MODEL_LOADING = "model_loading"  # Model file issues
     MODEL_INFERENCE = "model_inference"  # Prediction failures
 
 
@@ -88,11 +89,13 @@ EXCEPTION_CATEGORY_MAP: Dict[Type[Exception], ErrorCategory] = {
 # STRUCTURED ERROR CLASS
 # =============================================================================
 
+
 @dataclass
 class StructuredError:
     """
     Structured error information for logging and reporting.
     """
+
     error_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     category: ErrorCategory = ErrorCategory.INTERNAL
     message: str = ""
@@ -103,7 +106,7 @@ class StructuredError:
     timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
     recoverable: bool = False
     retry_after_seconds: Optional[int] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -118,11 +121,11 @@ class StructuredError:
             "recoverable": self.recoverable,
             "retry_after_seconds": self.retry_after_seconds,
         }
-    
+
     def to_json(self) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict())
-    
+
     def log(self, level: int = logging.ERROR) -> None:
         """Log the structured error."""
         log_data = {
@@ -132,10 +135,10 @@ class StructuredError:
             "message": self.message,
             "exception_type": self.exception_type,
             "recoverable": self.recoverable,
-            **self.context
+            **self.context,
         }
         logger.log(level, json.dumps(log_data))
-        
+
         # Log traceback separately at debug level
         if self.traceback:
             logger.debug(f"Error {self.error_id} traceback:\n{self.traceback}")
@@ -144,15 +147,15 @@ class StructuredError:
 def categorize_exception(exc: Exception) -> Tuple[ErrorCategory, bool]:
     """
     Categorize an exception and determine if it's recoverable.
-    
+
     Args:
         exc: The exception to categorize
-        
+
     Returns:
         Tuple of (category, is_recoverable)
     """
     exc_type = type(exc)
-    
+
     # Check direct mapping first
     if exc_type in EXCEPTION_CATEGORY_MAP:
         category = EXCEPTION_CATEGORY_MAP[exc_type]
@@ -162,7 +165,7 @@ def categorize_exception(exc: Exception) -> Tuple[ErrorCategory, bool]:
             ErrorCategory.RESOURCE_BUSY,
         )
         return category, recoverable
-    
+
     # Check inheritance chain
     for base_type, category in EXCEPTION_CATEGORY_MAP.items():
         if isinstance(exc, base_type):
@@ -172,7 +175,7 @@ def categorize_exception(exc: Exception) -> Tuple[ErrorCategory, bool]:
                 ErrorCategory.RESOURCE_BUSY,
             )
             return category, recoverable
-    
+
     # Default to internal error
     return ErrorCategory.INTERNAL, False
 
@@ -181,22 +184,22 @@ def create_structured_error(
     exc: Exception,
     message: Optional[str] = None,
     context: Optional[Dict[str, Any]] = None,
-    include_traceback: bool = True
+    include_traceback: bool = True,
 ) -> StructuredError:
     """
     Create a StructuredError from an exception.
-    
+
     Args:
         exc: The exception
         message: Optional custom message
         context: Additional context dictionary
         include_traceback: Whether to include traceback
-        
+
     Returns:
         StructuredError instance
     """
     category, recoverable = categorize_exception(exc)
-    
+
     return StructuredError(
         category=category,
         message=message or str(exc),
@@ -212,9 +215,11 @@ def create_structured_error(
 # RETRY LOGIC
 # =============================================================================
 
+
 @dataclass
 class RetryConfig:
     """Configuration for retry behavior."""
+
     max_attempts: int = 3
     base_delay_seconds: float = 1.0
     max_delay_seconds: float = 60.0
@@ -223,27 +228,25 @@ class RetryConfig:
     retry_on: Tuple[Type[Exception], ...] = (ConnectionError, TimeoutError)
 
 
-def calculate_delay(
-    attempt: int,
-    config: RetryConfig
-) -> float:
+def calculate_delay(attempt: int, config: RetryConfig) -> float:
     """
     Calculate delay before next retry using exponential backoff.
-    
+
     Args:
         attempt: Current attempt number (1-indexed)
         config: Retry configuration
-        
+
     Returns:
         Delay in seconds
     """
     delay = config.base_delay_seconds * (config.exponential_base ** (attempt - 1))
     delay = min(delay, config.max_delay_seconds)
-    
+
     if config.jitter:
         import random
-        delay = delay * (0.5 + random.random())
-    
+
+        delay = delay * (0.5 + random.random())  # nosec B311
+
     return delay
 
 
@@ -252,18 +255,18 @@ def with_retry(
     base_delay: float = 1.0,
     max_delay: float = 60.0,
     retry_on: Tuple[Type[Exception], ...] = (ConnectionError, TimeoutError),
-    on_retry: Optional[Callable[[Exception, int], None]] = None
+    on_retry: Optional[Callable[[Exception, int], None]] = None,
 ):
     """
     Decorator to add retry logic to a function.
-    
+
     Args:
         max_attempts: Maximum number of attempts
         base_delay: Base delay between retries (seconds)
         max_delay: Maximum delay between retries (seconds)
         retry_on: Tuple of exception types to retry on
         on_retry: Optional callback called before each retry
-        
+
     Example:
         @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError))
         def fetch_weather_data():
@@ -275,21 +278,21 @@ def with_retry(
         max_delay_seconds=max_delay,
         retry_on=retry_on,
     )
-    
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             last_exception = None
-            
+
             for attempt in range(1, config.max_attempts + 1):
                 try:
                     return func(*args, **kwargs)
                 except retry_on as e:
                     last_exception = e
-                    
+
                     if attempt < config.max_attempts:
                         delay = calculate_delay(attempt, config)
-                        
+
                         structured_error = create_structured_error(
                             e,
                             message=f"Attempt {attempt}/{config.max_attempts} failed, retrying in {delay:.2f}s",
@@ -299,13 +302,13 @@ def with_retry(
                                 "max_attempts": config.max_attempts,
                                 "delay_seconds": delay,
                             },
-                            include_traceback=False
+                            include_traceback=False,
                         )
                         structured_error.log(logging.WARNING)
-                        
+
                         if on_retry:
                             on_retry(e, attempt)
-                        
+
                         time.sleep(delay)
                     else:
                         # Final attempt failed
@@ -315,15 +318,16 @@ def with_retry(
                             context={
                                 "function": func.__name__,
                                 "final_attempt": attempt,
-                            }
+                            },
                         )
                         structured_error.log(logging.ERROR)
-            
+
             # Raise the last exception if all retries failed
             if last_exception:
                 raise last_exception
-        
+
         return wrapper
+
     return decorator
 
 
@@ -331,7 +335,7 @@ def with_retry(
 # ERROR HANDLING DECORATOR
 # =============================================================================
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def handle_errors(
@@ -343,19 +347,20 @@ def handle_errors(
 ):
     """
     Decorator for structured error handling.
-    
+
     Args:
         default_return: Value to return if an error occurs
         log_level: Logging level for errors
         reraise: Whether to re-raise the exception after handling
         specific_handlers: Dict mapping exception types to handler functions
         context_provider: Optional callable that returns context dict
-        
+
     Example:
         @handle_errors(default_return=[], context_provider=lambda: {"service": "weather"})
         def get_weather_data():
             ...
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> T:
@@ -370,7 +375,7 @@ def handle_errors(
                 }
                 if context_provider:
                     context.update(context_provider())
-                
+
                 # Check for specific handlers
                 if specific_handlers:
                     for exc_type, handler in specific_handlers.items():
@@ -379,23 +384,25 @@ def handle_errors(
                                 return handler(e)
                             except Exception as handler_error:
                                 logger.error(f"Error handler failed: {handler_error}")
-                
+
                 # Create and log structured error
                 structured_error = create_structured_error(e, context=context)
                 structured_error.log(log_level)
-                
+
                 if reraise:
                     raise
-                
+
                 return default_return
-        
+
         return wrapper
+
     return decorator
 
 
 # =============================================================================
 # SPECIFIC ERROR HANDLERS
 # =============================================================================
+
 
 def handle_file_not_found(exc: FileNotFoundError) -> StructuredError:
     """Handle FileNotFoundError with enhanced context."""
@@ -431,36 +438,31 @@ def handle_connection_error(exc: ConnectionError) -> StructuredError:
 # CONTEXT MANAGERS
 # =============================================================================
 
+
 class ErrorContext:
     """
     Context manager for structured error handling.
-    
+
     Example:
         with ErrorContext("loading_model", model_path=path) as ctx:
             model = load_model(path)
             ctx.add_context("model_version", model.version)
     """
-    
-    def __init__(
-        self,
-        operation: str,
-        reraise: bool = True,
-        log_level: int = logging.ERROR,
-        **context
-    ):
+
+    def __init__(self, operation: str, reraise: bool = True, log_level: int = logging.ERROR, **context):
         self.operation = operation
         self.reraise = reraise
         self.log_level = log_level
         self.context = context
         self.error: Optional[StructuredError] = None
-    
+
     def add_context(self, key: str, value: Any) -> None:
         """Add additional context."""
         self.context[key] = value
-    
-    def __enter__(self) -> 'ErrorContext':
+
+    def __enter__(self) -> "ErrorContext":
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         if exc_val is not None:
             self.context["operation"] = self.operation
@@ -470,10 +472,10 @@ class ErrorContext:
                 context=self.context,
             )
             self.error.log(self.log_level)
-            
+
             if not self.reraise:
                 return True  # Suppress exception
-        
+
         return False  # Propagate exception
 
 
@@ -481,10 +483,11 @@ class ErrorContext:
 # ERROR AGGREGATOR FOR BATCH OPERATIONS
 # =============================================================================
 
+
 class ErrorAggregator:
     """
     Collect errors during batch operations.
-    
+
     Example:
         aggregator = ErrorAggregator("batch_predictions")
         for item in items:
@@ -492,49 +495,49 @@ class ErrorAggregator:
                 process(item)
             except Exception as e:
                 aggregator.add_error(e, item_id=item.id)
-        
+
         if aggregator.has_errors:
             aggregator.log_summary()
     """
-    
+
     def __init__(self, operation: str):
         self.operation = operation
         self.errors: List[StructuredError] = []
         self.total_processed: int = 0
-    
+
     def add_error(self, exc: Exception, **context) -> None:
         """Add an error to the aggregator."""
         error = create_structured_error(exc, context=context)
         self.errors.append(error)
-    
+
     def increment_processed(self) -> None:
         """Increment the processed count."""
         self.total_processed += 1
-    
+
     @property
     def has_errors(self) -> bool:
         """Check if any errors were collected."""
         return len(self.errors) > 0
-    
+
     @property
     def error_count(self) -> int:
         """Get the number of errors."""
         return len(self.errors)
-    
+
     @property
     def success_rate(self) -> float:
         """Calculate success rate."""
         if self.total_processed == 0:
             return 0.0
         return (self.total_processed - len(self.errors)) / self.total_processed
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get error summary."""
         by_category = {}
         for error in self.errors:
             cat = error.category.value
             by_category[cat] = by_category.get(cat, 0) + 1
-        
+
         return {
             "operation": self.operation,
             "total_processed": self.total_processed,
@@ -543,11 +546,8 @@ class ErrorAggregator:
             "errors_by_category": by_category,
             "recoverable_errors": sum(1 for e in self.errors if e.recoverable),
         }
-    
+
     def log_summary(self) -> None:
         """Log error summary."""
         summary = self.get_summary()
-        logger.warning(
-            f"Batch operation '{self.operation}' completed with errors: "
-            f"{json.dumps(summary)}"
-        )
+        logger.warning(f"Batch operation '{self.operation}' completed with errors: " f"{json.dumps(summary)}")

@@ -4,12 +4,13 @@ Unit tests for export routes.
 Tests data export functionality for weather and predictions.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 import sys
-from pathlib import Path
 from datetime import datetime
 from io import StringIO
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent.parent
@@ -18,16 +19,16 @@ sys.path.insert(0, str(backend_path))
 
 class TestExportWeather:
     """Tests for weather data export endpoint."""
-    
+
     @pytest.fixture
     def mock_db_session(self):
         """Create mock database session."""
-        with patch('app.api.routes.export.get_db_session') as mock:
+        with patch("app.api.routes.export.get_db_session") as mock:
             session = MagicMock()
             mock.return_value.__enter__ = Mock(return_value=session)
             mock.return_value.__exit__ = Mock(return_value=False)
             yield session
-    
+
     @pytest.fixture
     def mock_weather_data(self):
         """Create mock weather data records."""
@@ -43,10 +44,10 @@ class TestExportWeather:
             record.pressure = 1013.25
             record.latitude = 14.4793
             record.longitude = 121.0198
-            record.location = 'Paranaque City'
+            record.location = "Paranaque City"
             records.append(record)
         return records
-    
+
     def test_export_weather_json_format(self, client, mock_db_session, mock_weather_data):
         """Test weather export in JSON format."""
         mock_query = MagicMock()
@@ -56,17 +57,17 @@ class TestExportWeather:
         mock_query.limit.return_value = mock_query
         mock_query.all.return_value = mock_weather_data
         mock_db_session.query.return_value = mock_query
-        
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/weather?format=json')
-        
+
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/weather?format=json")
+
         assert response.status_code == 200
         data = response.get_json()
-        assert 'data' in data
-        assert 'count' in data
-        assert data['format'] == 'json'
-    
+        assert "data" in data
+        assert "count" in data
+        assert data["format"] == "json"
+
     def test_export_weather_csv_format(self, client, mock_db_session, mock_weather_data):
         """Test weather export in CSV format."""
         mock_query = MagicMock()
@@ -76,55 +77,55 @@ class TestExportWeather:
         mock_query.limit.return_value = mock_query
         mock_query.all.return_value = mock_weather_data
         mock_db_session.query.return_value = mock_query
-        
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/weather?format=csv')
-        
+
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/weather?format=csv")
+
         assert response.status_code == 200
-        assert response.content_type == 'text/csv; charset=utf-8'
-    
+        assert response.content_type == "text/csv; charset=utf-8"
+
     def test_export_weather_invalid_format(self, client):
         """Test weather export with invalid format returns error."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/weather?format=xml')
-        
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/weather?format=xml")
+
         assert response.status_code == 400
         data = response.get_json()
-        assert 'error' in data
-        assert 'Invalid format' in data['error']
-    
+        assert "error" in data
+        assert "Invalid format" in data["error"]
+
     def test_export_weather_limit_exceeded(self, client):
         """Test weather export with limit exceeding max."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/weather?limit=15000')
-        
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/weather?limit=15000")
+
         assert response.status_code == 400
         data = response.get_json()
-        assert 'error' in data
-        assert 'Limit exceeds maximum' in data['error']
-    
+        assert "error" in data
+        assert "Limit exceeds maximum" in data["error"]
+
     def test_export_weather_invalid_start_date(self, client):
         """Test weather export with invalid start date format."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                with patch('app.api.routes.export.get_db_session') as mock_session:
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                with patch("app.api.routes.export.get_db_session") as mock_session:
                     session = MagicMock()
                     mock_session.return_value.__enter__ = Mock(return_value=session)
                     mock_session.return_value.__exit__ = Mock(return_value=False)
-                    
+
                     mock_query = MagicMock()
                     mock_query.filter_by.return_value = mock_query
                     session.query.return_value = mock_query
-                    
-                    response = client.get('/api/export/weather?start_date=invalid')
-        
+
+                    response = client.get("/api/export/weather?start_date=invalid")
+
         assert response.status_code == 400
         data = response.get_json()
-        assert 'error' in data
-    
+        assert "error" in data
+
     def test_export_weather_no_data(self, client, mock_db_session):
         """Test weather export with no data found."""
         mock_query = MagicMock()
@@ -134,28 +135,28 @@ class TestExportWeather:
         mock_query.limit.return_value = mock_query
         mock_query.all.return_value = []
         mock_db_session.query.return_value = mock_query
-        
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/weather')
-        
+
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/weather")
+
         assert response.status_code == 200
         data = response.get_json()
-        assert data['count'] == 0
+        assert data["count"] == 0
 
 
 class TestExportPredictions:
     """Tests for predictions data export endpoint."""
-    
+
     @pytest.fixture
     def mock_db_session(self):
         """Create mock database session."""
-        with patch('app.api.routes.export.get_db_session') as mock:
+        with patch("app.api.routes.export.get_db_session") as mock:
             session = MagicMock()
             mock.return_value.__enter__ = Mock(return_value=session)
             mock.return_value.__exit__ = Mock(return_value=False)
             yield session
-    
+
     @pytest.fixture
     def mock_predictions(self):
         """Create mock prediction records."""
@@ -170,10 +171,10 @@ class TestExportPredictions:
             record.temperature = 298.15
             record.humidity = 75.0
             record.precipitation = 5.0
-            record.model_version = '1.0.0'
+            record.model_version = "1.0.0"
             records.append(record)
         return records
-    
+
     def test_export_predictions_json_format(self, client, mock_db_session, mock_predictions):
         """Test predictions export in JSON format."""
         mock_query = MagicMock()
@@ -183,16 +184,16 @@ class TestExportPredictions:
         mock_query.limit.return_value = mock_query
         mock_query.all.return_value = mock_predictions
         mock_db_session.query.return_value = mock_query
-        
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/predictions?format=json')
-        
+
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/predictions?format=json")
+
         assert response.status_code == 200
         data = response.get_json()
-        assert 'data' in data
-        assert 'count' in data
-    
+        assert "data" in data
+        assert "count" in data
+
     def test_export_predictions_csv_format(self, client, mock_db_session, mock_predictions):
         """Test predictions export in CSV format."""
         mock_query = MagicMock()
@@ -202,14 +203,14 @@ class TestExportPredictions:
         mock_query.limit.return_value = mock_query
         mock_query.all.return_value = mock_predictions
         mock_db_session.query.return_value = mock_query
-        
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/predictions?format=csv')
-        
+
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/predictions?format=csv")
+
         assert response.status_code == 200
-        assert response.content_type == 'text/csv; charset=utf-8'
-    
+        assert response.content_type == "text/csv; charset=utf-8"
+
     def test_export_predictions_with_risk_level_filter(self, client, mock_db_session, mock_predictions):
         """Test predictions export with risk level filter."""
         mock_query = MagicMock()
@@ -219,34 +220,34 @@ class TestExportPredictions:
         mock_query.limit.return_value = mock_query
         mock_query.all.return_value = mock_predictions
         mock_db_session.query.return_value = mock_query
-        
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/predictions?risk_level=0')
-        
+
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/predictions?risk_level=0")
+
         assert response.status_code == 200
-    
+
     def test_export_predictions_invalid_format(self, client):
         """Test predictions export with invalid format returns error."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                response = client.get('/api/export/predictions?format=xml')
-        
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                response = client.get("/api/export/predictions?format=xml")
+
         assert response.status_code == 400
 
 
 class TestExportDateFilters:
     """Tests for date filtering in export endpoints."""
-    
+
     def test_valid_date_range(self, client):
         """Test export with valid date range."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                with patch('app.api.routes.export.get_db_session') as mock_session:
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                with patch("app.api.routes.export.get_db_session") as mock_session:
                     session = MagicMock()
                     mock_session.return_value.__enter__ = Mock(return_value=session)
                     mock_session.return_value.__exit__ = Mock(return_value=False)
-                    
+
                     mock_query = MagicMock()
                     mock_query.filter_by.return_value = mock_query
                     mock_query.filter.return_value = mock_query
@@ -254,50 +255,46 @@ class TestExportDateFilters:
                     mock_query.limit.return_value = mock_query
                     mock_query.all.return_value = []
                     session.query.return_value = mock_query
-                    
-                    response = client.get(
-                        '/api/export/weather?start_date=2025-01-01&end_date=2025-01-31'
-                    )
-        
+
+                    response = client.get("/api/export/weather?start_date=2025-01-01&end_date=2025-01-31")
+
         assert response.status_code == 200
-    
+
     def test_invalid_end_date(self, client):
         """Test export with invalid end date format."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                with patch('app.api.routes.export.get_db_session') as mock_session:
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                with patch("app.api.routes.export.get_db_session") as mock_session:
                     session = MagicMock()
                     mock_session.return_value.__enter__ = Mock(return_value=session)
                     mock_session.return_value.__exit__ = Mock(return_value=False)
-                    
+
                     mock_query = MagicMock()
                     mock_query.filter_by.return_value = mock_query
                     mock_query.filter.return_value = mock_query
                     session.query.return_value = mock_query
-                    
-                    response = client.get(
-                        '/api/export/weather?start_date=2025-01-01&end_date=invalid'
-                    )
-        
+
+                    response = client.get("/api/export/weather?start_date=2025-01-01&end_date=invalid")
+
         assert response.status_code == 400
 
 
 class TestExportErrorHandling:
     """Tests for error handling in export endpoints."""
-    
+
     def test_export_database_error(self, client):
         """Test export handles database errors gracefully."""
-        with patch('app.api.routes.export.require_api_key', lambda f: f):
-            with patch('app.api.routes.export.limiter.limit', lambda x: lambda f: f):
-                with patch('app.api.routes.export.get_db_session') as mock_session:
+        with patch("app.api.routes.export.require_api_key", lambda f: f):
+            with patch("app.api.routes.export.limiter.limit", lambda x: lambda f: f):
+                with patch("app.api.routes.export.get_db_session") as mock_session:
                     mock_session.side_effect = Exception("Database error")
-                    
-                    response = client.get('/api/export/weather')
-        
+
+                    response = client.get("/api/export/weather")
+
         assert response.status_code == 500
         data = response.get_json()
-        assert 'error' in data
+        assert "error" in data
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

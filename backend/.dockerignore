@@ -64,6 +64,7 @@ floodingnaque-*.json
 google_application_credentials*.json
 *.iam.gserviceaccount.com.json
 earth*.json
+astral-archive-482008-g2-b4f2279053c0.json
 
 # IDE
 .vscode/

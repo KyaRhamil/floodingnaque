@@ -16,7 +16,7 @@ requests==2.32.3
 urllib3==2.2.3  # Pinned for reproducibility
 aiohttp==3.11.11  # Async HTTP client for external API calls
 aiohttp[speedups]==3.11.11  # Optional C extensions for better performance
-tenacity==9.0.0  # Retry logic with exponential backoff
+tenacity==9.1.2  # Retry logic with exponential backoff (>=9.1.2 required by schemathesis)
 
 # ============================================================================
 # DATA PROCESSING & MACHINE LEARNING
@@ -75,11 +75,12 @@ email-validator==2.2.0  # Enhanced email validation
 # ============================================================================
 # RATE LIMITING & CACHING
 # ============================================================================
-Flask-Limiter==3.8.0
+Flask-Limiter==4.1.1  # Updated: v4.x removes rich dependency, resolves conflicts
 Flask-Session==0.8.0  # Server-side session storage (Redis in production)
 redis==5.2.0  # For rate limiting, caching, and sessions
 limits==3.13.0  # Required by Flask-Limiter
 packaging==24.2  # Required by limits, pinned
+# rich is no longer required by Flask-Limiter 4.x, but still used by schemathesis
 
 # ============================================================================
 # PERFORMANCE OPTIMIZATION
