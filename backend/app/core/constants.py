@@ -47,26 +47,26 @@ RATE_LIMIT_DOCS = "200 per hour;40 per minute"
 # Risk Level Classifications
 RISK_LEVELS = {
     0: {
-        'label': 'Safe',
-        'color': '#28a745',
-        'description': 'No significant flood risk detected',
-        'threshold_min': 0.0,
-        'threshold_max': 0.35
+        "label": "Safe",
+        "color": "#28a745",
+        "description": "No significant flood risk detected",
+        "threshold_min": 0.0,
+        "threshold_max": 0.35,
     },
     1: {
-        'label': 'Alert',
-        'color': '#ffc107',
-        'description': 'Moderate flood risk - stay alert',
-        'threshold_min': 0.35,
-        'threshold_max': 0.65
+        "label": "Alert",
+        "color": "#ffc107",
+        "description": "Moderate flood risk - stay alert",
+        "threshold_min": 0.35,
+        "threshold_max": 0.65,
     },
     2: {
-        'label': 'Critical',
-        'color': '#dc3545',
-        'description': 'High flood risk - take immediate precautions',
-        'threshold_min': 0.65,
-        'threshold_max': 1.0
-    }
+        "label": "Critical",
+        "color": "#dc3545",
+        "description": "High flood risk - take immediate precautions",
+        "threshold_min": 0.65,
+        "threshold_max": 1.0,
+    },
 }
 
 # Model Configuration
@@ -80,13 +80,7 @@ DEFAULT_DB_MAX_OVERFLOW = 10
 DEFAULT_DB_POOL_RECYCLE = 3600  # 1 hour
 
 # Logging Levels
-LOG_LEVELS = {
-    'DEBUG': 10,
-    'INFO': 20,
-    'WARNING': 30,
-    'ERROR': 40,
-    'CRITICAL': 50
-}
+LOG_LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
 
 # HTTP Status Codes
 HTTP_OK = 200

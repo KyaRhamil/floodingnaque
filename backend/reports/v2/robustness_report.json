@@ -1,0 +1,63 @@
+{
+  "generated_at": "2026-01-17T02:49:19.151300",
+  "model_path": "models/flood_rf_model_v2.joblib",
+  "threshold_analysis": {
+    "no_flood_max": 18.0,
+    "flood_min": 40.0,
+    "gap": 22.0,
+    "perfectly_separable": true
+  },
+  "cross_validation": {
+    "accuracy_mean": 1.0,
+    "accuracy_std": 0.0,
+    "f1_mean": 1.0,
+    "f1_std": 0.0,
+    "precision_mean": 1.0,
+    "recall_mean": 1.0
+  },
+  "robustness": [
+    {
+      "noise_level": 0.0,
+      "accuracy": 0.6666666666666666,
+      "f1_score": 0.0,
+      "accuracy_drop": 0.0,
+      "f1_drop": 0.0
+    },
+    {
+      "noise_level": 0.05,
+      "accuracy": 0.6666666666666666,
+      "f1_score": 0.0,
+      "accuracy_drop": 0.0,
+      "f1_drop": 0.0
+    },
+    {
+      "noise_level": 0.1,
+      "accuracy": 0.6666666666666666,
+      "f1_score": 0.0,
+      "accuracy_drop": 0.0,
+      "f1_drop": 0.0
+    },
+    {
+      "noise_level": 0.15,
+      "accuracy": 0.6666666666666666,
+      "f1_score": 0.0,
+      "accuracy_drop": 0.0,
+      "f1_drop": 0.0
+    },
+    {
+      "noise_level": 0.2,
+      "accuracy": 0.6666666666666666,
+      "f1_score": 0.0,
+      "accuracy_drop": 0.0,
+      "f1_drop": 0.0
+    }
+  ],
+  "calibration": {
+    "brier_score": 0.09377097838401081,
+    "high_conf_flood": 0,
+    "high_conf_no_flood": 2300,
+    "uncertain": 1150,
+    "prob_mean": 0.15671783898240416,
+    "prob_std": 0.22125872833614485
+  }
+}

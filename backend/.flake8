@@ -1,0 +1,105 @@
+[flake8]
+# Flake8 configuration for Floodingnaque backend
+# Aligned with black/isort line length
+
+max-line-length = 120
+max-complexity = 25
+
+# Extend ignore to handle code style preferences
+extend-ignore =
+    # E501: line too long (black handles this, ignore in flake8)
+    E501,
+    # W503: line break before binary operator (conflicts with black)
+    W503,
+    # E203: whitespace before ':' (conflicts with black)
+    E203,
+    # E402: module level import not at top (many scripts need sys.path setup)
+    E402,
+    # E712: comparison to True/False (required for SQLAlchemy filter clauses)
+    E712,
+    # F401: imported but unused (may be used by tests or for re-exports)
+    F401,
+    # F541: f-string without placeholders (minor style issue)
+    F541,
+    # F841: local variable assigned but never used (may be for debugging or future use)
+    F841,
+    # SIM102: Use a single if-statement (sometimes readability is better with nested)
+    SIM102,
+    # SIM105: Use contextlib.suppress (explicit try/except can be clearer)
+    SIM105,
+    # SIM114: Combine conditions (can reduce readability)
+    SIM114,
+    # SIM904: Initialize dictionary directly (sometimes step-by-step is clearer)
+    SIM904,
+    # B039: ContextVar with mutable default (handled appropriately in codebase)
+    B039,
+    # B042: Exception class __init__ (existing pattern in codebase)
+    B042,
+    # C901: Function too complex (addressed separately when needed)
+    C901,
+    # C401: Unnecessary generator (minor style preference)
+    C401,
+    # C420: Unnecessary dict comprehension (minor style preference)
+    C420,
+    # SIM110: Use any() (explicit loops can be clearer)
+    SIM110,
+    # SIM113: Use enumerate (explicit indexing can be clearer)
+    SIM113,
+    # SIM115: Use context handler (sometimes explicit open/close is needed)
+    SIM115,
+    # SIM117: Multiple with statements (can be more readable when nested)
+    SIM117,
+    # B007: Loop control variable not used (underscore prefix is personal style)
+    B007,
+    # B014: Redundant exception types (IOError is OSError alias - explicit is clearer)
+    B014,
+    # B006: Mutable default arguments (handled appropriately with defensive copy)
+    B006,
+    # F824: Global unused (sometimes used for side effects or future use)
+    F824,
+    # SIM116: Use dict instead of multiple if/else (sometimes explicit is clearer)
+    SIM116,
+    # SIM300: Yoda conditions (minor style preference)
+    SIM300,
+    # SIM901: Use comparison directly (minor style preference)
+    SIM901,
+
+# Files and directories to exclude
+exclude = 
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    alembic/versions,
+    *.egg-info,
+    build,
+    dist,
+    .eggs,
+    htmlcov,
+    .pytest_cache,
+    .mypy_cache,
+
+# Per-file ignores for specific patterns
+per-file-ignores =
+    # __init__.py files often have unused imports for re-exports
+    __init__.py: F401,
+    # Test files can have longer lines and more flexibility, unused imports/variables in fixtures
+    tests/*: E501,F401,F841,
+    # Alembic files have specific patterns
+    alembic/env.py: E402,F401,
+    # Scripts often need sys.path setup before imports, may have unused imports for future use
+    scripts/*: E402,F401,F541,F841,
+    # Main module may need early imports
+    main.py: E402,
+    # Route files may have longer lines for complex decorators
+    app/api/routes/*: E501,
+    # Service files may have complex logic
+    app/services/*: E501,F841,
+    # Config files may have long lines
+    app/core/config.py: E501,
+    # Model files may have long column definitions
+    app/models/*: E501,
+    # Utility files may have complex patterns
+    app/utils/*: E402,E501,F401,F841,
+    # Load test files
+    tests/load/*: E402,F401,F541,

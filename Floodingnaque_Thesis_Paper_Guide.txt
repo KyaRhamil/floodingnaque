@@ -82,9 +82,39 @@ Bachelor of Science in Computer Science, Asian Institute of Computer Studies
 ¹edrian.andam07@gmail.com
 ²Christianbarba12@gmail.com
 ³Decastrobellebelle@gmail.com
-⁴
+⁴rengieedomingo025@gmail.com
 ⁵gjeffchristian@gmail.com
 ⁶iamdefinitely.ramil@gmail.com
 ⁷norielqry@gmail.com
 
 Generate the appropriate contents here:
+
+Abstract:
+--Abstract here--
+
+Keyword:
+--Keywords here--
+
+I. INTRODUCTION
+--Introduction here (Insert Figures/Tables if available)--
+
+II. REVIEW OF RELATED LITERATURE
+--Review of Related Literature here (Insert Figures/Tables if available)--
+A,B,C,D,E,F,G...
+
+III. METHODOLOGY
+--Methodology here (Insert Figures/Tables if available)--
+A,B,C,D,E,F,G...
+
+IV. RESULTS AND DISCUSSION
+--Results and Discussion here (Insert Figures/Tables if available)--
+A,B,C,D,E,F,G...
+
+V. CONCLUSION AND RECOMMENDATIONS
+--Conclusion and Recommendations here (Insert Figures/Tables if available)--
+
+ACKNOWLEDGMENT
+--Acknowledgment here--
+
+REFERENCES
+--References here (Use the provided references and suggest more relevant studies if necessary)--

@@ -4,15 +4,15 @@ Floodingnaque Backend - Main Entry Point
 A commercial-grade flood prediction API for Parañaque City.
 """
 
-import os
-import sys
-import signal
-import logging
 import atexit
+import logging
+import os
+import signal
+import sys
 from pathlib import Path
 
 # Add the app directory to Python path
-app_dir = Path(__file__).parent / 'app'
+app_dir = Path(__file__).parent / "app"
 sys.path.insert(0, str(app_dir))
 
 from app.api.app import create_app
@@ -32,55 +32,58 @@ def cleanup_connections():
     scheduler jobs, and other resources.
     """
     global _shutdown_in_progress
-    
+
     if _shutdown_in_progress:
         return
-    
+
     _shutdown_in_progress = True
     logger.info("Starting graceful shutdown...")
-    
+
     try:
         # Stop the scheduler if running
         from app.services import scheduler as scheduler_module
-        if hasattr(scheduler_module, 'scheduler') and hasattr(scheduler_module.scheduler, 'running'):
+
+        if hasattr(scheduler_module, "scheduler") and hasattr(scheduler_module.scheduler, "running"):
             if scheduler_module.scheduler.running:
                 scheduler_module.scheduler.shutdown(wait=False)
                 logger.info("Scheduler shutdown complete")
     except Exception as e:
-        logger.warning(f"Error stopping scheduler: {e}")
-    
+        logger.warning(f"Error stopping scheduler: {e}")  # OK: has curly braces
+
     try:
         # Dispose database engine connections
         from app.models.db import engine
+
         if engine:
             engine.dispose()
             logger.info("Database connections closed")
     except Exception as e:
-        logger.warning(f"Error closing database connections: {e}")
-    
+        logger.warning(f"Error closing database connections: {e}")  # OK: has curly braces
+
     try:
         # Close Redis connections if available
         from app.utils.cache import get_redis_client
+
         redis_client = get_redis_client()
         if redis_client:
             redis_client.close()
             logger.info("Redis connection closed")
     except Exception as e:
-        logger.warning(f"Error closing Redis connection: {e}")
-    
+        logger.warning(f"Error closing Redis connection: {e}")  # OK: has curly braces
+
     logger.info("Graceful shutdown complete")
 
 
 def signal_handler(signum, frame):
     """
     Handle SIGTERM and SIGINT for graceful shutdown.
-    
+
     Args:
         signum: Signal number
         frame: Current stack frame
     """
     signal_name = signal.Signals(signum).name
-    logger.info(f"Received {signal_name} signal, initiating graceful shutdown...")
+    logger.info(f"Received {signal_name} signal, initiating graceful shutdown...")  # OK: has curly braces
     cleanup_connections()
     sys.exit(0)
 
@@ -96,16 +99,16 @@ atexit.register(cleanup_connections)
 # This ensures the app is properly initialized when imported by Gunicorn
 application = create_app()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Get configuration from environment
-    port = int(os.getenv('PORT', 5000))
-    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv("PORT", 5000))
+    host = os.getenv("HOST", "0.0.0.0")  # nosec B104
     debug = is_debug_mode()  # Use centralized check
 
     # Only print once (not on reloader subprocess)
-    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        print(f"Starting Floodingnaque API on {host}:{port} (debug={debug})")
-    
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        print(f"Starting Floodingnaque API on {host}:{port} (debug={debug})")  # OK: has curly braces
+
     try:
         application.run(host=host, port=port, debug=debug)
     except KeyboardInterrupt:

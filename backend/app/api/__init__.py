@@ -9,54 +9,54 @@ Contains:
 - swagger_config: OpenAPI 3.1 documentation with schema validation
 """
 
-# Import schema validation decorator for use in routes
-from app.api.swagger_config import validate_openapi_schema
-
 # Import all route blueprints from the routes package
 from app.api.routes import (
+    batch_bp,
+    celery_bp,
+    csp_report_bp,
+    data_bp,
+    export_bp,
+    graphql_bp,
     health_bp,
     health_k8s_bp,
     ingest_bp,
-    predict_bp,
-    data_bp,
     models_bp,
-    batch_bp,
-    export_bp,
-    webhooks_bp,
-    celery_bp,
-    rate_limits_bp,
-    tides_bp,
-    graphql_bp,
-    security_txt_bp,
-    csp_report_bp,
     performance_bp,
+    predict_bp,
+    rate_limits_bp,
+    security_txt_bp,
     sse_bp,
+    tides_bp,
     upload_bp,
+    webhooks_bp,
 )
+
+# Import schema validation decorator for use in routes
+from app.api.swagger_config import validate_openapi_schema
 
 __all__ = [
     # Core routes
-    'health_bp',
-    'health_k8s_bp',
-    'ingest_bp',
-    'predict_bp',
-    'data_bp',
-    'models_bp',
+    "health_bp",
+    "health_k8s_bp",
+    "ingest_bp",
+    "predict_bp",
+    "data_bp",
+    "models_bp",
     # Extended routes
-    'batch_bp',
-    'export_bp',
-    'webhooks_bp',
-    'celery_bp',
-    'rate_limits_bp',
-    'tides_bp',
-    'graphql_bp',
-    'security_txt_bp',
-    'csp_report_bp',
-    'performance_bp',
+    "batch_bp",
+    "export_bp",
+    "webhooks_bp",
+    "celery_bp",
+    "rate_limits_bp",
+    "tides_bp",
+    "graphql_bp",
+    "security_txt_bp",
+    "csp_report_bp",
+    "performance_bp",
     # SSE for real-time alerts
-    'sse_bp',
+    "sse_bp",
     # File uploads
-    'upload_bp',
+    "upload_bp",
     # Schema validation
-    'validate_openapi_schema',
+    "validate_openapi_schema",
 ]

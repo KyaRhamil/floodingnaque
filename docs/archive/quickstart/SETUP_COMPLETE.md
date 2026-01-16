@@ -180,4 +180,3 @@ python scripts/train.py
 - All API calls have timeout protection (10 seconds)
 - Error messages are logged and returned to the client appropriately
 - The model is loaded lazily (only when first prediction is made)
-

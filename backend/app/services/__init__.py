@@ -9,46 +9,17 @@ This module provides comprehensive service layer functionality:
 - Async versions of external API services with connection pooling and retry logic
 """
 
-# Core prediction and ingestion services
-from app.services.ingest import ingest_data
-from app.services.predict import predict_flood, get_current_model_info, ModelLoader
+# Scheduler for periodic tasks
+from app.services import scheduler
 
 # Alert system
 from app.services.alerts import AlertSystem, get_alert_system, send_flood_alert
 
-# Meteostat weather service (synchronous)
-from app.services.meteostat_service import (
-    MeteostatService,
-    get_meteostat_service,
-    get_historical_weather,
-    get_meteostat_weather_for_ingest,
-    save_meteostat_data_to_db
-)
+# Celery background tasks
+from app.services.celery_app import celery_app
 
-# Meteostat weather service (async with retry logic)
-from app.services.meteostat_service_async import (
-    AsyncMeteostatService,
-    get_async_meteostat_service,
-    get_historical_weather_async,
-    get_meteostat_weather_for_ingest_async,
-    save_meteostat_data_to_db_async
-)
-
-# WorldTides service for coastal flood prediction (synchronous)
-from app.services.worldtides_service import (
-    WorldTidesService,
-    TideData,
-    TideExtreme,
-)
-
-# WorldTides service (async with aiohttp, connection pooling, and retry logic)
-from app.services.worldtides_service_async import (
-    AsyncWorldTidesService,
-    get_async_worldtides_service,
-    get_current_tide_async,
-    get_tide_for_prediction_async,
-    get_tide_extremes_async,
-)
+# System evaluation for thesis validation
+from app.services.evaluation import SystemEvaluator
 
 # Google Weather/Earth Engine service (synchronous)
 from app.services.google_weather_service import (
@@ -61,81 +32,110 @@ from app.services.google_weather_service import (
 from app.services.google_weather_service_async import (
     AsyncGoogleWeatherService,
     get_async_google_weather_service,
-    get_satellite_precipitation_async,
     get_google_weather_for_ingest_async,
+    get_satellite_precipitation_async,
 )
 
-# Celery background tasks
-from app.services.celery_app import celery_app
+# Core prediction and ingestion services
+from app.services.ingest import ingest_data
 
-# Scheduler for periodic tasks
-from app.services import scheduler
+# Meteostat weather service (synchronous)
+from app.services.meteostat_service import (
+    MeteostatService,
+    get_historical_weather,
+    get_meteostat_service,
+    get_meteostat_weather_for_ingest,
+    save_meteostat_data_to_db,
+)
 
-# System evaluation for thesis validation
-from app.services.evaluation import SystemEvaluator
+# Meteostat weather service (async with retry logic)
+from app.services.meteostat_service_async import (
+    AsyncMeteostatService,
+    get_async_meteostat_service,
+    get_historical_weather_async,
+    get_meteostat_weather_for_ingest_async,
+    save_meteostat_data_to_db_async,
+)
+from app.services.predict import ModelLoader, get_current_model_info, predict_flood
 
 # Risk classification
 from app.services.risk_classifier import (
-    classify_risk_level,
-    get_risk_thresholds,
-    format_alert_message,
-    RISK_LEVELS,
     RISK_LEVEL_COLORS,
     RISK_LEVEL_DESCRIPTIONS,
+    RISK_LEVELS,
+    classify_risk_level,
+    format_alert_message,
+    get_risk_thresholds,
+)
+
+# WorldTides service for coastal flood prediction (synchronous)
+from app.services.worldtides_service import (
+    TideData,
+    TideExtreme,
+    WorldTidesService,
+)
+
+# WorldTides service (async with aiohttp, connection pooling, and retry logic)
+from app.services.worldtides_service_async import (
+    AsyncWorldTidesService,
+    get_async_worldtides_service,
+    get_current_tide_async,
+    get_tide_extremes_async,
+    get_tide_for_prediction_async,
 )
 
 __all__ = [
     # Core services
-    'ingest_data',
-    'predict_flood',
-    'get_current_model_info',
-    'ModelLoader',
+    "ingest_data",
+    "predict_flood",
+    "get_current_model_info",
+    "ModelLoader",
     # Alert system
-    'AlertSystem',
-    'get_alert_system',
-    'send_flood_alert',
+    "AlertSystem",
+    "get_alert_system",
+    "send_flood_alert",
     # Meteostat service
-    'MeteostatService',
-    'get_meteostat_service',
-    'get_historical_weather',
-    'get_meteostat_weather_for_ingest',
-    'save_meteostat_data_to_db',
+    "MeteostatService",
+    "get_meteostat_service",
+    "get_historical_weather",
+    "get_meteostat_weather_for_ingest",
+    "save_meteostat_data_to_db",
     # Meteostat service (async)
-    'AsyncMeteostatService',
-    'get_async_meteostat_service',
-    'get_historical_weather_async',
-    'get_meteostat_weather_for_ingest_async',
-    'save_meteostat_data_to_db_async',
+    "AsyncMeteostatService",
+    "get_async_meteostat_service",
+    "get_historical_weather_async",
+    "get_meteostat_weather_for_ingest_async",
+    "save_meteostat_data_to_db_async",
     # WorldTides service
-    'WorldTidesService',
-    'TideData',
-    'TideExtreme',
+    "WorldTidesService",
+    "TideData",
+    "TideExtreme",
     # WorldTides service (async)
-    'AsyncWorldTidesService',
-    'get_async_worldtides_service',
-    'get_current_tide_async',
-    'get_tide_for_prediction_async',
-    'get_tide_extremes_async',
+    "AsyncWorldTidesService",
+    "get_async_worldtides_service",
+    "get_current_tide_async",
+    "get_tide_for_prediction_async",
+    "get_tide_extremes_async",
     # Google Weather service
-    'GoogleWeatherService',
-    'SatellitePrecipitation',
-    'WeatherReanalysis',
+    "GoogleWeatherService",
+    "SatellitePrecipitation",
+    "WeatherReanalysis",
     # Google Weather service (async)
-    'AsyncGoogleWeatherService',
-    'get_async_google_weather_service',
-    'get_satellite_precipitation_async',
-    'get_google_weather_for_ingest_async',
+    "AsyncGoogleWeatherService",
+    "get_async_google_weather_service",
+    "get_satellite_precipitation_async",
+    "get_google_weather_for_ingest_async",
     # Celery
-    'celery_app',
+    "celery_app",
     # Scheduler
-    'scheduler',
+    "scheduler",
     # Evaluation
-    'SystemEvaluator',
+    "SystemEvaluator",
     # Risk classification
-    'classify_risk_level',
-    'get_risk_thresholds',
-    'format_alert_message',
-    'RISK_LEVELS',
-    'RISK_LEVEL_COLORS',
-    'RISK_LEVEL_DESCRIPTIONS',
+    "classify_risk_level",
+    "get_risk_thresholds",
+    "format_alert_message",
+    "RISK_LEVELS",
+    "RISK_LEVEL_COLORS",
+    "RISK_LEVEL_DESCRIPTIONS",
 ]

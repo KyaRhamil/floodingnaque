@@ -10,13 +10,16 @@ def setup_logging():
 
 def error_handler(func):
     """Decorator for error handling."""
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
             logging.error(f"Error in {func.__name__}: {str(e)}")
             raise
+
     return wrapper
+
 
 def validate_coordinates(lat, lon):
     """Validate latitude and longitude coordinates."""

@@ -1,356 +1,358 @@
 """
-Progressive Model Training - Train models incrementally with cumulative data.
+Progressive Model Training for Thesis Demonstration
+====================================================
 
-This script implements a progressive training strategy where each model
-is trained on increasingly larger datasets:
-  - Model v1: 2022 data only
-  - Model v2: 2022 + 2023 data  
-  - Model v3: 2022 + 2023 + 2024 data
-  - Model v4: 2022 + 2023 + 2024 + 2025 data (complete)
+Trains multiple model versions progressively using cumulative datasets
+(2022 → 2023 → 2024 → 2025) to demonstrate model improvement over time.
 
-Perfect for thesis defense - shows clear model evolution and improvement!
+This is ideal for thesis presentations showing how the model evolves
+as more data becomes available.
+
+Output:
+    - flood_rf_model_v1.joblib (2022 only)
+    - flood_rf_model_v2.joblib (2022-2023)
+    - flood_rf_model_v3.joblib (2022-2024)
+    - flood_rf_model_v4.joblib (2022-2025)
+    - progression_report.json (comparison metrics)
+    - metrics_evolution.png (visualization)
+
+Usage:
+    python scripts/progressive_train.py
+    python scripts/progressive_train.py --grid-search
+    python scripts/progressive_train.py --cv-folds 10
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-import logging
+import argparse
 import json
+import logging
 from datetime import datetime
-import sys
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-# Import from existing train.py
-sys.path.insert(0, str(Path(__file__).parent))
-from train import train_model, calculate_comprehensive_metrics
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+import joblib
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score, train_test_split
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+# Paths
+SCRIPT_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = SCRIPT_DIR.parent
+MODELS_DIR = BACKEND_DIR / "models"
+REPORTS_DIR = BACKEND_DIR / "reports"
+DATA_DIR = BACKEND_DIR / "data"
+PROCESSED_DIR = DATA_DIR / "processed"
 
-def load_processed_data(year, data_dir='data/processed'):
-    """Load preprocessed flood records for a specific year."""
-    file_path = Path(data_dir) / f'processed_flood_records_{year}.csv'
-    
-    if not file_path.exists():
-        logger.error(f"Processed data not found: {file_path}")
-        logger.info("Please run preprocess_official_flood_records.py first!")
-        return None
-    
-    df = pd.read_csv(file_path)
-    logger.info(f"Loaded {year} data: {len(df)} records")
-    return df
+# Progressive versions configuration
+PROGRESSIVE_VERSIONS = [
+    {"version": 1, "data_file": "cumulative_up_to_2022.csv", "description": "Baseline: 2022 Only"},
+    {"version": 2, "data_file": "cumulative_up_to_2023.csv", "description": "2022-2023"},
+    {"version": 3, "data_file": "cumulative_up_to_2024.csv", "description": "2022-2024"},
+    {"version": 4, "data_file": "cumulative_up_to_2025.csv", "description": "Full Dataset: 2022-2025"},
+]
+
+# Model features
+TRAINING_FEATURES = [
+    "temperature",
+    "humidity",
+    "precipitation",
+    "is_monsoon_season",
+    "month",
+    "temp_humidity_interaction",
+    "humidity_precip_interaction",
+    "temp_precip_interaction",
+    "monsoon_precip_interaction",
+    "saturation_risk",
+]
+
+# Default parameters
+DEFAULT_PARAMS = {
+    "n_estimators": 200,
+    "max_depth": 15,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt",
+    "class_weight": "balanced",
+    "random_state": 42,
+    "n_jobs": -1,
+}
 
 
-def progressive_train(
-    years=[2022, 2023, 2024, 2025],
-    data_dir='data/processed',
-    models_dir='models',
-    use_grid_search=False,
-    cv_folds=5
-):
-    """
-    Train models progressively with cumulative data.
-    
-    Args:
-        years: List of years to include (in order)
-        data_dir: Directory containing processed CSV files
-        models_dir: Directory to save models
-        use_grid_search: If True, perform hyperparameter tuning
-        cv_folds: Number of cross-validation folds
-    
-    Returns:
-        dict: Training results for each model version
-    """
-    logger.info("="*80)
-    logger.info("PROGRESSIVE MODEL TRAINING")
-    logger.info("="*80)
-    logger.info(f"Training strategy: Cumulative (each model learns from more data)")
-    logger.info(f"Years: {years}")
-    logger.info(f"Grid search: {use_grid_search}")
-    logger.info(f"CV folds: {cv_folds}")
-    logger.info("="*80)
-    
-    results = {}
-    cumulative_data = None
-    
-    for i, year in enumerate(years, start=1):
-        logger.info(f"\n{'#'*80}")
-        logger.info(f"# TRAINING MODEL v{i} (Data up to {year})")
-        logger.info(f"{'#'*80}\n")
-        
-        # Load this year's data
-        year_data = load_processed_data(year, data_dir)
-        
-        if year_data is None:
-            logger.error(f"Skipping {year} - data not available")
-            continue
-        
-        # Cumulative approach: add this year's data to previous years
-        if cumulative_data is None:
-            cumulative_data = year_data
-        else:
-            cumulative_data = pd.concat([cumulative_data, year_data], ignore_index=True)
-        
-        logger.info(f"Cumulative dataset size: {len(cumulative_data)} records")
-        logger.info(f"Years included: {years[:i]}")
-        logger.info(f"Flood distribution: {cumulative_data['flood'].value_counts().to_dict()}")
-        
-        # Save cumulative dataset temporarily
-        temp_csv = Path(data_dir) / f'cumulative_up_to_{year}.csv'
-        cumulative_data.to_csv(temp_csv, index=False)
-        logger.info(f"Saved cumulative dataset to: {temp_csv}")
-        
+class ProgressiveTrainer:
+    """Trains models progressively across cumulative datasets."""
+
+    def __init__(self, models_dir: Path = MODELS_DIR, reports_dir: Path = REPORTS_DIR):
+        self.models_dir = Path(models_dir)
+        self.reports_dir = Path(reports_dir)
+        self.models_dir.mkdir(parents=True, exist_ok=True)
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+        self.results: List[Dict] = []
+
+    def load_data(self, data_file: str) -> pd.DataFrame:
+        """Load cumulative dataset."""
+        path = PROCESSED_DIR / data_file
+        if not path.exists():
+            raise FileNotFoundError(f"Data file not found: {path}")
+        return pd.read_csv(path)
+
+    def prepare_features(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+        """Prepare features for training."""
+        available = [f for f in TRAINING_FEATURES if f in df.columns]
+        X = df[available].copy().fillna(df[available].median())
+        y = df["flood"].copy()
+        return X, y
+
+    def train_version(
+        self, version_config: Dict, use_grid_search: bool = False, cv_folds: int = 5
+    ) -> Tuple[RandomForestClassifier, Dict]:
+        """Train a single model version."""
+        version = version_config["version"]
+        data_file = version_config["data_file"]
+        description = version_config["description"]
+
+        logger.info(f"\n{'='*60}")
+        logger.info(f"TRAINING VERSION {version}: {description}")
+        logger.info(f"{'='*60}")
+
+        # Load data
+        df = self.load_data(data_file)
+        X, y = self.prepare_features(df)
+
+        logger.info(f"Data: {len(df)} records, {len(X.columns)} features")
+        logger.info(f"Target distribution: {y.value_counts().to_dict()}")
+
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
         # Train model
-        logger.info(f"\nTraining Model v{i}...")
-        
-        try:
-            model, metrics, metadata = train_model(
-                version=i,  # Explicit version number
-                models_dir=models_dir,
-                data_file=str(temp_csv),
-                use_grid_search=use_grid_search,
-                n_folds=cv_folds,
-                merge_datasets=False  # Already merged
-            )
-            
-            # Store results
-            results[i] = {
-                'version': i,
-                'years_included': years[:i],
-                'final_year': year,
-                'dataset_size': len(cumulative_data),
-                'metrics': metrics,
-                'metadata_path': str(Path(models_dir) / f'flood_rf_model_v{i}.json')
+        if use_grid_search:
+            param_grid = {
+                "n_estimators": [100, 200, 300],
+                "max_depth": [10, 15, 20],
+                "min_samples_split": [2, 5],
             }
-            
-            logger.info(f"\n✓ Model v{i} training complete!")
-            logger.info(f"  Accuracy: {metrics['accuracy']:.4f}")
-            logger.info(f"  F1 Score: {metrics['f1_score']:.4f}")
-            
-        except Exception as e:
-            logger.error(f"Error training model v{i}: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            continue
-    
-    # Generate comparison report
-    logger.info(f"\n{'='*80}")
-    logger.info("PROGRESSIVE TRAINING COMPLETE!")
-    logger.info(f"{'='*80}\n")
-    
-    if results:
-        generate_progression_report(results, models_dir)
-    
-    return results
-
-
-def generate_progression_report(results, models_dir='models'):
-    """Generate a report showing model progression and improvement."""
-    logger.info("="*80)
-    logger.info("MODEL PROGRESSION REPORT")
-    logger.info("="*80)
-    
-    # Create comparison table
-    logger.info(f"\n{'Version':<10} {'Years':<20} {'Records':<10} {'Accuracy':<12} {'F1 Score':<12} {'Improvement'}")
-    logger.info("-"*80)
-    
-    previous_accuracy = None
-    previous_f1 = None
-    
-    for version, data in sorted(results.items()):
-        years_str = f"{data['years_included'][0]}-{data['final_year']}"
-        accuracy = data['metrics']['accuracy']
-        f1_score = data['metrics']['f1_score']
-        
-        # Calculate improvement
-        if previous_accuracy is not None:
-            acc_improvement = ((accuracy - previous_accuracy) / previous_accuracy) * 100
-            f1_improvement = ((f1_score - previous_f1) / previous_f1) * 100
-            improvement_str = f"+{acc_improvement:.2f}% / +{f1_improvement:.2f}%"
+            base_model = RandomForestClassifier(class_weight="balanced", random_state=42, n_jobs=-1)
+            grid_search = GridSearchCV(
+                base_model,
+                param_grid,
+                cv=StratifiedKFold(cv_folds, shuffle=True, random_state=42),
+                scoring="f1_weighted",
+                n_jobs=-1,
+            )
+            grid_search.fit(X_train, y_train)
+            model = grid_search.best_estimator_
+            best_params = grid_search.best_params_
         else:
-            improvement_str = "baseline"
-        
-        logger.info(f"v{version:<9} {years_str:<20} {data['dataset_size']:<10} "
-                   f"{accuracy:<12.4f} {f1_score:<12.4f} {improvement_str}")
-        
-        previous_accuracy = accuracy
-        previous_f1 = f1_score
-    
-    # Save detailed report
-    report_path = Path(models_dir) / 'progressive_training_report.json'
-    with open(report_path, 'w') as f:
-        json.dump({
-            'generated_at': datetime.now().isoformat(),
-            'training_strategy': 'Progressive Cumulative',
-            'results': results
-        }, f, indent=2)
-    
-    logger.info(f"\n✓ Detailed report saved to: {report_path}")
-    
-    # Best model summary
-    best_version = max(results.keys(), key=lambda k: results[k]['metrics']['f1_score'])
-    best_data = results[best_version]
-    
-    logger.info(f"\n{'='*80}")
-    logger.info("BEST MODEL")
-    logger.info(f"{'='*80}")
-    logger.info(f"Version: v{best_version}")
-    logger.info(f"Years: {best_data['years_included'][0]}-{best_data['final_year']}")
-    logger.info(f"Records: {best_data['dataset_size']}")
-    logger.info(f"Accuracy: {best_data['metrics']['accuracy']:.4f}")
-    logger.info(f"Precision: {best_data['metrics']['precision']:.4f}")
-    logger.info(f"Recall: {best_data['metrics']['recall']:.4f}")
-    logger.info(f"F1 Score: {best_data['metrics']['f1_score']:.4f}")
-    logger.info(f"{'='*80}")
+            model = RandomForestClassifier(**DEFAULT_PARAMS)
+            model.fit(X_train, y_train)
+            best_params = DEFAULT_PARAMS
 
+        # Evaluate
+        y_pred = model.predict(X_test)
+        y_pred_proba = model.predict_proba(X_test)[:, 1]
 
-def year_specific_train(
-    years=[2022, 2023, 2024, 2025],
-    data_dir='data/processed',
-    models_dir='models/year_specific',
-    use_grid_search=False,
-    cv_folds=5
-):
-    """
-    Train separate models for each year (alternative strategy).
-    
-    This creates year-specific models instead of cumulative ones.
-    Useful for analyzing year-specific patterns.
-    """
-    logger.info("="*80)
-    logger.info("YEAR-SPECIFIC MODEL TRAINING")
-    logger.info("="*80)
-    logger.info(f"Training strategy: Year-specific (one model per year)")
-    logger.info(f"Years: {years}")
-    logger.info("="*80)
-    
-    Path(models_dir).mkdir(parents=True, exist_ok=True)
-    
-    results = {}
-    
-    for year in years:
-        logger.info(f"\n{'#'*80}")
-        logger.info(f"# TRAINING MODEL FOR {year}")
-        logger.info(f"{'#'*80}\n")
-        
-        # Load year data
-        year_data = load_processed_data(year, data_dir)
-        
-        if year_data is None:
-            logger.error(f"Skipping {year} - data not available")
-            continue
-        
-        logger.info(f"Dataset size: {len(year_data)} records")
-        logger.info(f"Flood distribution: {year_data['flood'].value_counts().to_dict()}")
-        
-        # Save year dataset
-        temp_csv = Path(data_dir) / f'year_{year}_only.csv'
-        year_data.to_csv(temp_csv, index=False)
-        
-        # Train model
+        metrics = {
+            "accuracy": float(accuracy_score(y_test, y_pred)),
+            "precision": float(precision_score(y_test, y_pred, average="weighted", zero_division=0)),
+            "recall": float(recall_score(y_test, y_pred, average="weighted", zero_division=0)),
+            "f1_score": float(f1_score(y_test, y_pred, average="weighted", zero_division=0)),
+            "roc_auc": float(roc_auc_score(y_test, y_pred_proba)),
+        }
+
+        # Cross-validation
+        cv_scores = cross_val_score(model, X, y, cv=cv_folds, scoring="f1_weighted", n_jobs=-1)
+        metrics["cv_mean"] = float(cv_scores.mean())
+        metrics["cv_std"] = float(cv_scores.std())
+
+        logger.info(f"\nVersion {version} Results:")
+        logger.info(f"  Accuracy:  {metrics['accuracy']:.4f}")
+        logger.info(f"  Precision: {metrics['precision']:.4f}")
+        logger.info(f"  Recall:    {metrics['recall']:.4f}")
+        logger.info(f"  F1 Score:  {metrics['f1_score']:.4f}")
+        logger.info(f"  ROC-AUC:   {metrics['roc_auc']:.4f}")
+        logger.info(f"  CV Score:  {metrics['cv_mean']:.4f} (+/- {metrics['cv_std']*2:.4f})")
+
+        # Store result
+        result = {
+            "version": version,
+            "description": description,
+            "data_file": data_file,
+            "dataset_size": len(df),
+            "metrics": metrics,
+            "best_params": best_params,
+            "features": list(X.columns),
+        }
+        self.results.append(result)
+
+        return model, result
+
+    def save_model(self, model: RandomForestClassifier, result: Dict):
+        """Save model and metadata."""
+        version = result["version"]
+        model_path = self.models_dir / f"flood_rf_model_v{version}.joblib"
+        joblib.dump(model, model_path)
+
+        metadata = {
+            "version": version,
+            "model_type": "RandomForestClassifier",
+            "created_at": datetime.now().isoformat(),
+            "description": result["description"],
+            "training_data": {
+                "file": result["data_file"],
+                "shape": [result["dataset_size"], len(result["features"])],
+                "features": result["features"],
+            },
+            "metrics": result["metrics"],
+            "model_parameters": result["best_params"],
+            "cross_validation": {
+                "cv_folds": 5,
+                "cv_mean": result["metrics"].get("cv_mean"),
+                "cv_std": result["metrics"].get("cv_std"),
+            },
+        }
+
+        metadata_path = model_path.with_suffix(".json")
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        logger.info(f"Saved: {model_path}")
+
+        # Save latest version as default
+        if version == max(v["version"] for v in PROGRESSIVE_VERSIONS):
+            latest_path = self.models_dir / "flood_rf_model.joblib"
+            joblib.dump(model, latest_path)
+            logger.info(f"Saved as latest: {latest_path}")
+
+    def train_all(self, use_grid_search: bool = False, cv_folds: int = 5):
+        """Train all progressive versions."""
+        logger.info("\n" + "=" * 70)
+        logger.info("PROGRESSIVE MODEL TRAINING")
+        logger.info("Training models across cumulative datasets")
+        logger.info("=" * 70)
+
+        for version_config in PROGRESSIVE_VERSIONS:
+            try:
+                model, result = self.train_version(version_config, use_grid_search, cv_folds)
+                self.save_model(model, result)
+            except FileNotFoundError as e:
+                logger.warning(f"Skipping version {version_config['version']}: {e}")
+                continue
+
+        # Generate reports
+        self.generate_progression_report()
+        self.generate_progression_chart()
+
+    def generate_progression_report(self):
+        """Generate JSON report of progression results."""
+        report = {
+            "generated_at": datetime.now().isoformat(),
+            "versions": self.results,
+            "improvement_summary": self._calculate_improvements(),
+        }
+
+        report_path = self.reports_dir / "progression_report.json"
+        with open(report_path, "w") as f:
+            json.dump(report, f, indent=2)
+        logger.info(f"\nProgression report saved: {report_path}")
+
+    def _calculate_improvements(self) -> Dict:
+        """Calculate improvement metrics between versions."""
+        if len(self.results) < 2:
+            return {}
+
+        first = self.results[0]["metrics"]
+        last = self.results[-1]["metrics"]
+
+        return {
+            "accuracy_improvement": last["accuracy"] - first["accuracy"],
+            "f1_improvement": last["f1_score"] - first["f1_score"],
+            "roc_auc_improvement": last["roc_auc"] - first["roc_auc"],
+            "first_version": self.results[0]["version"],
+            "last_version": self.results[-1]["version"],
+        }
+
+    def generate_progression_chart(self):
+        """Generate visualization of model progression."""
         try:
-            model, metrics, metadata = train_model(
-                version=year,  # Use year as version
-                models_dir=models_dir,
-                data_file=str(temp_csv),
-                use_grid_search=use_grid_search,
-                n_folds=cv_folds,
-                merge_datasets=False
+            import matplotlib.pyplot as plt
+
+            if not self.results:
+                return
+
+            versions = [r["version"] for r in self.results]
+            accuracy = [r["metrics"]["accuracy"] for r in self.results]
+            f1_scores = [r["metrics"]["f1_score"] for r in self.results]
+            roc_auc = [r["metrics"]["roc_auc"] for r in self.results]
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+
+            ax.plot(versions, accuracy, "o-", label="Accuracy", linewidth=2, markersize=8)
+            ax.plot(versions, f1_scores, "s-", label="F1 Score", linewidth=2, markersize=8)
+            ax.plot(versions, roc_auc, "^-", label="ROC-AUC", linewidth=2, markersize=8)
+
+            ax.set_xlabel("Model Version", fontsize=12, fontweight="bold")
+            ax.set_ylabel("Score", fontsize=12, fontweight="bold")
+            ax.set_title(
+                "Model Performance Evolution\nProgressive Training (2022 → 2025)", fontsize=14, fontweight="bold"
             )
-            
-            results[year] = {
-                'year': year,
-                'dataset_size': len(year_data),
-                'metrics': metrics
-            }
-            
-            logger.info(f"\n✓ Model for {year} complete!")
-            logger.info(f"  Accuracy: {metrics['accuracy']:.4f}")
-            
-        except Exception as e:
-            logger.error(f"Error training {year} model: {str(e)}")
-            continue
-    
-    logger.info(f"\n{'='*80}")
-    logger.info("YEAR-SPECIFIC TRAINING COMPLETE!")
-    logger.info(f"{'='*80}\n")
-    
-    return results
+            ax.legend(loc="lower right", fontsize=11)
+            ax.grid(True, alpha=0.3)
+            ax.set_ylim([0, 1.1])
+            ax.set_xticks(versions)
+
+            plt.tight_layout()
+            chart_path = self.reports_dir / "metrics_evolution.png"
+            plt.savefig(chart_path, dpi=300, bbox_inches="tight")
+            plt.close()
+
+            logger.info(f"Progression chart saved: {chart_path}")
+
+        except ImportError:
+            logger.warning("matplotlib not available, skipping chart generation")
 
 
-if __name__ == '__main__':
-    import argparse
-    
-    parser = argparse.ArgumentParser(
-        description='Progressive model training with official flood records',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Training Strategies:
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description="Progressive model training for thesis demonstration")
+    parser.add_argument("--grid-search", action="store_true", help="Use grid search for each version")
+    parser.add_argument("--cv-folds", type=int, default=5, help="Number of cross-validation folds")
 
-1. PROGRESSIVE (Recommended for Thesis):
-   - Model v1: 2022 data
-   - Model v2: 2022 + 2023 data
-   - Model v3: 2022 + 2023 + 2024 data
-   - Model v4: 2022 + 2023 + 2024 + 2025 data
-   
-   Shows clear evolution and improvement over time!
-
-2. YEAR-SPECIFIC:
-   - Model 2022: Only 2022 data
-   - Model 2023: Only 2023 data
-   - Model 2024: Only 2024 data
-   - Model 2025: Only 2025 data
-   
-   Useful for year-to-year comparison.
-
-Examples:
-  Progressive training (recommended):
-    python progressive_train.py
-  
-  With hyperparameter tuning:
-    python progressive_train.py --grid-search --cv-folds 10
-  
-  Year-specific models:
-    python progressive_train.py --year-specific
-  
-  Custom years:
-    python progressive_train.py --years 2023 2024 2025
-        """
-    )
-    parser.add_argument('--years', nargs='+', type=int,
-                       default=[2022, 2023, 2024, 2025],
-                       help='Years to include in training')
-    parser.add_argument('--data-dir', type=str, default='data/processed',
-                       help='Directory containing processed data')
-    parser.add_argument('--models-dir', type=str, default='models',
-                       help='Directory to save models')
-    parser.add_argument('--grid-search', action='store_true',
-                       help='Perform hyperparameter tuning (slow but optimal)')
-    parser.add_argument('--cv-folds', type=int, default=5,
-                       help='Number of cross-validation folds')
-    parser.add_argument('--year-specific', action='store_true',
-                       help='Train separate models for each year instead of cumulative')
-    
     args = parser.parse_args()
-    
-    if args.year_specific:
-        # Year-specific training
-        year_specific_train(
-            years=args.years,
-            data_dir=args.data_dir,
-            models_dir=args.models_dir + '/year_specific',
-            use_grid_search=args.grid_search,
-            cv_folds=args.cv_folds
-        )
-    else:
-        # Progressive cumulative training (recommended)
-        progressive_train(
-            years=args.years,
-            data_dir=args.data_dir,
-            models_dir=args.models_dir,
-            use_grid_search=args.grid_search,
-            cv_folds=args.cv_folds
-        )
+
+    trainer = ProgressiveTrainer()
+    trainer.train_all(use_grid_search=args.grid_search, cv_folds=args.cv_folds)
+
+    # Print summary
+    print("\n" + "=" * 60)
+    print("PROGRESSIVE TRAINING COMPLETE")
+    print("=" * 60)
+
+    if trainer.results:
+        print("\nVersion Summary:")
+        for r in trainer.results:
+            print(f"  v{r['version']}: {r['description']}")
+            print(f"    F1: {r['metrics']['f1_score']:.4f}, Accuracy: {r['metrics']['accuracy']:.4f}")
+
+        improvements = trainer._calculate_improvements()
+        if improvements:
+            print(f"\nOverall Improvement (v{improvements['first_version']} → v{improvements['last_version']}):")
+            print(f"  Accuracy: {improvements['accuracy_improvement']:+.4f}")
+            print(f"  F1 Score: {improvements['f1_improvement']:+.4f}")
+            print(f"  ROC-AUC:  {improvements['roc_auc_improvement']:+.4f}")
+
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()

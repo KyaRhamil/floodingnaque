@@ -5,22 +5,22 @@ Provides live streaming of flood alerts to connected clients.
 Uses SSE protocol for efficient one-way real-time communication.
 """
 
-import queue
-import time
 import json
 import logging
+import queue
 import threading
-from typing import Generator, Dict, Any, Optional
+import time
 from datetime import datetime, timezone
-from flask import Blueprint, Response, request, g, stream_with_context
+from typing import Any, Dict, Generator
+
 from app.api.middleware.rate_limit import limiter
-from app.services.alerts import get_alert_system
 from app.models.db import AlertHistory, get_db_session
+from flask import Blueprint, Response, g, request, stream_with_context
 from sqlalchemy import desc
 
 logger = logging.getLogger(__name__)
 
-sse_bp = Blueprint('sse', __name__)
+sse_bp = Blueprint("sse", __name__)
 
 # Global connection tracking for SSE clients
 _sse_clients: Dict[str, queue.Queue] = {}
@@ -30,15 +30,15 @@ _sse_lock = threading.Lock()
 class SSEManager:
     """
     Manages Server-Sent Events connections and message broadcasting.
-    
+
     Thread-safe implementation for handling multiple concurrent SSE clients.
     """
-    
+
     def __init__(self):
         self._clients: Dict[str, queue.Queue] = {}
         self._lock = threading.Lock()
         self._running = True
-    
+
     def add_client(self, client_id: str) -> queue.Queue:
         """Register a new SSE client and return their message queue."""
         client_queue = queue.Queue(maxsize=100)  # Limit queue size to prevent memory issues
@@ -46,28 +46,28 @@ class SSEManager:
             self._clients[client_id] = client_queue
             logger.info(f"SSE client connected: {client_id}, total clients: {len(self._clients)}")
         return client_queue
-    
+
     def remove_client(self, client_id: str) -> None:
         """Remove a disconnected SSE client."""
         with self._lock:
             if client_id in self._clients:
                 del self._clients[client_id]
                 logger.info(f"SSE client disconnected: {client_id}, total clients: {len(self._clients)}")
-    
+
     def broadcast(self, event_type: str, data: Dict[str, Any]) -> int:
         """
         Broadcast a message to all connected SSE clients.
-        
+
         Args:
             event_type: The event type (e.g., 'alert', 'heartbeat')
             data: The data to send as JSON
-            
+
         Returns:
             Number of clients that received the message
         """
         message = self._format_sse(event_type, data)
         sent_count = 0
-        
+
         with self._lock:
             disconnected = []
             for client_id, client_queue in self._clients.items():
@@ -79,17 +79,17 @@ class SSEManager:
                     # Client queue is full, consider them slow/disconnected
                     disconnected.append(client_id)
                     logger.warning(f"SSE client queue full, marking for removal: {client_id}")
-            
+
             # Clean up disconnected clients
             for client_id in disconnected:
                 del self._clients[client_id]
-        
+
         return sent_count
-    
+
     def send_to_client(self, client_id: str, event_type: str, data: Dict[str, Any]) -> bool:
         """Send a message to a specific client."""
         message = self._format_sse(event_type, data)
-        
+
         with self._lock:
             if client_id in self._clients:
                 try:
@@ -98,12 +98,12 @@ class SSEManager:
                 except queue.Full:
                     return False
         return False
-    
+
     def get_client_count(self) -> int:
         """Get the current number of connected clients."""
         with self._lock:
             return len(self._clients)
-    
+
     @staticmethod
     def _format_sse(event_type: str, data: Dict[str, Any]) -> str:
         """Format data as SSE message."""
@@ -123,31 +123,28 @@ def get_sse_manager() -> SSEManager:
 def broadcast_alert(alert_data: Dict[str, Any]) -> int:
     """
     Broadcast a new alert to all connected SSE clients.
-    
+
     This function can be called from the alert service when a new alert is created.
-    
+
     Args:
         alert_data: Alert information to broadcast
-        
+
     Returns:
         Number of clients that received the alert
     """
-    return sse_manager.broadcast('alert', {
-        'timestamp': datetime.now(timezone.utc).isoformat(),
-        'alert': alert_data
-    })
+    return sse_manager.broadcast("alert", {"timestamp": datetime.now(timezone.utc).isoformat(), "alert": alert_data})
 
 
 def _generate_sse_stream(client_id: str, client_queue: queue.Queue) -> Generator[str, None, None]:
     """
     Generator function for SSE stream.
-    
+
     Yields SSE formatted messages from the client's queue.
     Includes periodic heartbeats to keep the connection alive.
     """
     last_heartbeat = time.time()
     heartbeat_interval = 30  # seconds
-    
+
     try:
         while True:
             try:
@@ -159,10 +156,9 @@ def _generate_sse_stream(client_id: str, client_queue: queue.Queue) -> Generator
                 # No message, check if we need to send heartbeat
                 current_time = time.time()
                 if current_time - last_heartbeat >= heartbeat_interval:
-                    yield sse_manager._format_sse('heartbeat', {
-                        'timestamp': datetime.now(timezone.utc).isoformat(),
-                        'status': 'connected'
-                    })
+                    yield sse_manager._format_sse(
+                        "heartbeat", {"timestamp": datetime.now(timezone.utc).isoformat(), "status": "connected"}
+                    )
                     last_heartbeat = current_time
     except GeneratorExit:
         # Client disconnected
@@ -171,22 +167,22 @@ def _generate_sse_stream(client_id: str, client_queue: queue.Queue) -> Generator
         sse_manager.remove_client(client_id)
 
 
-@sse_bp.route('/alerts', methods=['GET'])
+@sse_bp.route("/alerts", methods=["GET"])
 def stream_alerts():
     """
     Stream real-time flood alerts via Server-Sent Events.
-    
+
     Clients connect to this endpoint to receive live alert updates.
     The connection stays open and sends events as alerts occur.
-    
+
     Events:
         - alert: New flood alert notification
         - heartbeat: Keep-alive signal (every 30 seconds)
         - connected: Initial connection confirmation
-    
+
     Query Parameters:
         risk_level (int, optional): Filter alerts by minimum risk level (0-2)
-    
+
     Returns:
         SSE stream with real-time alert events
     ---
@@ -212,51 +208,51 @@ def stream_alerts():
     """
     # Generate unique client ID
     client_id = f"{request.remote_addr}_{time.time_ns()}"
-    request_id = getattr(g, 'request_id', 'unknown')
-    
+    request_id = getattr(g, "request_id", "unknown")
+
     logger.info(f"SSE connection request from {client_id} [{request_id}]")
-    
+
     # Create client queue and register
     client_queue = sse_manager.add_client(client_id)
-    
+
     # Send initial connection confirmation
     initial_data = {
-        'client_id': client_id,
-        'timestamp': datetime.now(timezone.utc).isoformat(),
-        'message': 'Connected to flood alert stream',
-        'request_id': request_id
+        "client_id": client_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "message": "Connected to flood alert stream",
+        "request_id": request_id,
     }
-    client_queue.put(sse_manager._format_sse('connected', initial_data))
-    
+    client_queue.put(sse_manager._format_sse("connected", initial_data))
+
     # Create the SSE response
     response = Response(
         stream_with_context(_generate_sse_stream(client_id, client_queue)),
-        mimetype='text/event-stream',
+        mimetype="text/event-stream",
         headers={
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'X-Accel-Buffering': 'no',  # Disable nginx buffering
-            'Access-Control-Allow-Origin': '*',
-            'X-Request-ID': request_id,
-        }
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "Access-Control-Allow-Origin": "*",
+            "X-Request-ID": request_id,
+        },
     )
-    
+
     return response
 
 
-@sse_bp.route('/alerts/test', methods=['POST'])
+@sse_bp.route("/alerts/test", methods=["POST"])
 @limiter.limit("5 per minute")
 def test_alert_broadcast():
     """
     Send a test alert to all connected SSE clients.
-    
+
     For development and testing purposes only.
-    
+
     Request Body:
         risk_level (int): Risk level 0-2
         message (str): Test alert message
         location (str): Test location
-    
+
     Returns:
         200: Test alert sent successfully
     ---
@@ -283,42 +279,42 @@ def test_alert_broadcast():
       200:
         description: Test alert broadcast result
     """
-    request_id = getattr(g, 'request_id', 'unknown')
-    
+    request_id = getattr(g, "request_id", "unknown")
+
     data = request.get_json() or {}
-    risk_level = data.get('risk_level', 1)
-    message = data.get('message', 'Test flood alert')
-    location = data.get('location', 'Test Location')
-    
-    risk_labels = {0: 'Safe', 1: 'Alert', 2: 'Critical'}
-    
+    risk_level = data.get("risk_level", 1)
+    message = data.get("message", "Test flood alert")
+    location = data.get("location", "Test Location")
+
+    risk_labels = {0: "Safe", 1: "Alert", 2: "Critical"}
+
     test_alert = {
-        'id': f"test_{int(time.time())}",
-        'risk_level': risk_level,
-        'risk_label': risk_labels.get(risk_level, 'Unknown'),
-        'location': location,
-        'message': message,
-        'is_test': True,
-        'created_at': datetime.now(timezone.utc).isoformat()
+        "id": f"test_{int(time.time())}",
+        "risk_level": risk_level,
+        "risk_label": risk_labels.get(risk_level, "Unknown"),
+        "location": location,
+        "message": message,
+        "is_test": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    
+
     sent_count = broadcast_alert(test_alert)
-    
+
     return {
-        'success': True,
-        'message': f'Test alert broadcast to {sent_count} connected clients',
-        'alert': test_alert,
-        'connected_clients': sse_manager.get_client_count(),
-        'request_id': request_id
+        "success": True,
+        "message": f"Test alert broadcast to {sent_count} connected clients",
+        "alert": test_alert,
+        "connected_clients": sse_manager.get_client_count(),
+        "request_id": request_id,
     }, 200
 
 
-@sse_bp.route('/status', methods=['GET'])
+@sse_bp.route("/status", methods=["GET"])
 @limiter.limit("60 per minute")
 def sse_status():
     """
     Get SSE connection status and statistics.
-    
+
     Returns:
         200: SSE service status including connected client count
     ---
@@ -339,30 +335,30 @@ def sse_status():
                 status:
                   type: string
     """
-    request_id = getattr(g, 'request_id', 'unknown')
-    
+    request_id = getattr(g, "request_id", "unknown")
+
     return {
-        'success': True,
-        'status': 'operational',
-        'connected_clients': sse_manager.get_client_count(),
-        'timestamp': datetime.now(timezone.utc).isoformat(),
-        'request_id': request_id
+        "success": True,
+        "status": "operational",
+        "connected_clients": sse_manager.get_client_count(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "request_id": request_id,
     }, 200
 
 
-@sse_bp.route('/alerts/recent', methods=['GET'])
+@sse_bp.route("/alerts/recent", methods=["GET"])
 @limiter.limit("30 per minute")
 def get_recent_alerts_for_stream():
     """
     Get recent alerts for SSE clients on initial connection.
-    
+
     Clients can call this when they first connect to get recent alerts
     that may have occurred before their connection.
-    
+
     Query Parameters:
         limit (int): Maximum alerts to return (default: 10, max: 50)
         since (str): ISO timestamp to get alerts after (optional)
-    
+
     Returns:
         200: List of recent alerts
     ---
@@ -385,48 +381,39 @@ def get_recent_alerts_for_stream():
       200:
         description: Recent alerts list
     """
-    request_id = getattr(g, 'request_id', 'unknown')
-    
+    request_id = getattr(g, "request_id", "unknown")
+
     try:
-        limit = min(request.args.get('limit', 10, type=int), 50)
-        since = request.args.get('since', type=str)
-        
+        limit = min(request.args.get("limit", 10, type=int), 50)
+        since = request.args.get("since", type=str)
+
         with get_db_session() as session:
-            query = session.query(AlertHistory).filter(
-                AlertHistory.is_deleted == False
-            )
-            
+            query = session.query(AlertHistory).filter(AlertHistory.is_deleted == False)
+
             if since:
                 try:
-                    since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+                    since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                     query = query.filter(AlertHistory.created_at > since_dt)
                 except ValueError:
                     pass  # Ignore invalid date format
-            
+
             alerts = query.order_by(desc(AlertHistory.created_at)).limit(limit).all()
-            
+
             alerts_data = []
             for alert in alerts:
-                alerts_data.append({
-                    'id': alert.id,
-                    'risk_level': alert.risk_level,
-                    'risk_label': alert.risk_label,
-                    'location': alert.location,
-                    'message': alert.message,
-                    'created_at': alert.created_at.isoformat() if alert.created_at else None,
-                })
-        
-        return {
-            'success': True,
-            'alerts': alerts_data,
-            'count': len(alerts_data),
-            'request_id': request_id
-        }, 200
-        
+                alerts_data.append(
+                    {
+                        "id": alert.id,
+                        "risk_level": alert.risk_level,
+                        "risk_label": alert.risk_label,
+                        "location": alert.location,
+                        "message": alert.message,
+                        "created_at": alert.created_at.isoformat() if alert.created_at else None,
+                    }
+                )
+
+        return {"success": True, "alerts": alerts_data, "count": len(alerts_data), "request_id": request_id}, 200
+
     except Exception as e:
         logger.error(f"Error fetching recent alerts for SSE [{request_id}]: {str(e)}", exc_info=True)
-        return {
-            'success': False,
-            'error': 'Failed to fetch recent alerts',
-            'request_id': request_id
-        }, 500
+        return {"success": False, "error": "Failed to fetch recent alerts", "request_id": request_id}, 500
