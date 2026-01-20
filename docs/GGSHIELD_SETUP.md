@@ -71,10 +71,10 @@ This opens a browser for GitGuardian authentication.
 
 ```powershell
 # PowerShell (current session)
-$env:GITGUARDIAN_API_KEY = "your-api-key-here"
+$env:GITGUARDIAN_API_KEY = "your-api-key-here"  # pragma: allowlist secret
 
 # PowerShell (permanent - user level)
-[Environment]::SetEnvironmentVariable("GITGUARDIAN_API_KEY", "your-api-key-here", "User")
+[Environment]::SetEnvironmentVariable("GITGUARDIAN_API_KEY", "your-api-key-here", "User")  # pragma: allowlist secret
 ```
 
 For CI/CD, add `GITGUARDIAN_API_KEY` as a secret in your pipeline configuration.
@@ -169,8 +169,8 @@ ggshield secret scan commit HEAD
 3. **Use environment variables** instead:
    ```python
    # Bad
-   API_KEY = "sk-1234567890abcdef"
-   
+   API_KEY = "sk-1234567890abcdef"  # pragma: allowlist secret
+
    # Good
    import os
    API_KEY = os.environ.get("API_KEY")
@@ -186,7 +186,7 @@ If ggshield flags something that isn't actually a secret:
 Add a comment to ignore a specific line:
 
 ```python
-password = "not-a-real-secret"  # ggshield:ignore
+password = "not-a-real-secret"  # ggshield:ignore  # pragma: allowlist secret
 ```
 
 #### Option 2: Create a .gitguardian.yaml Config
@@ -200,7 +200,7 @@ secret:
     - "**/test_*.py"
     - "**/*_test.py"
     - "**/fixtures/**"
-  
+
   ignored-matches:
     - name: "Test API key"
       match: "test-api-key-.*"
@@ -230,7 +230,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required for scanning commits
-      
+
       - name: GitGuardian Scan
         uses: GitGuardian/ggshield-action@v1
         env:
@@ -279,7 +279,7 @@ Either authenticate or set the environment variable:
 ```powershell
 ggshield auth login
 # or
-$env:GITGUARDIAN_API_KEY = "your-key"
+$env:GITGUARDIAN_API_KEY = "your-key"  # pragma: allowlist secret
 ```
 
 ### Scanning is Slow
