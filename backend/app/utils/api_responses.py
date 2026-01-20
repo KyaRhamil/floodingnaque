@@ -149,7 +149,7 @@ def _sanitize_details(details: Dict[str, Any]) -> Dict[str, Any]:
     for key, value in details.items():
         # Remove dangerous fields entirely
         if key.lower() in _DANGEROUS_FIELDS or key in _DANGEROUS_FIELDS:
-            logger.debug(f"Removed dangerous field from details: {key}")
+            logger.debug("Removed dangerous field from details")
             continue
 
         key_lower = key.lower()
@@ -157,7 +157,7 @@ def _sanitize_details(details: Dict[str, Any]) -> Dict[str, Any]:
         # Check if key suggests exception/error content
         if key_lower in sensitive_keys or "error" in key_lower or "exception" in key_lower:
             # Replace with generic message
-            logger.debug(f"Sanitized sensitive key in details: {key}")
+            logger.debug("Sanitized sensitive key in details")
             if isinstance(value, str):
                 sanitized[key] = "Error details logged server-side"
             elif isinstance(value, dict):
@@ -212,7 +212,7 @@ def _sanitize_errors_list(errors: list) -> list:
             for key, value in error.items():
                 # Skip dangerous fields
                 if key.lower() in _DANGEROUS_FIELDS or key in _DANGEROUS_FIELDS:
-                    logger.debug(f"Removed dangerous field from error list: {key}")
+                    logger.debug("Removed dangerous field from error list")
                     continue
 
                 if key in ("message", "detail", "error") and isinstance(value, str):
@@ -254,7 +254,7 @@ def _remove_dangerous_fields(data: Dict[str, Any]) -> Dict[str, Any]:
     for key, value in data.items():
         # Skip dangerous fields
         if key.lower() in _DANGEROUS_FIELDS or key in _DANGEROUS_FIELDS:
-            logger.debug(f"Removed dangerous field: {key}")
+            logger.debug("Removed dangerous field from response")
             continue
 
         # Recursively clean nested dicts

@@ -69,7 +69,7 @@ def hash_api_key(api_key: str) -> str:
     """
     if BCRYPT_AVAILABLE:
         # bcrypt includes salt and is resistant to rainbow table attacks
-        return bcrypt.hashpw(api_key.encode(), bcrypt.gensalt(rounds=12)).decode()
+        return bcrypt.hashpw(api_key.encode(), bcrypt.gensalt(rounds=12)).decode()  # type: ignore[possibly-undefined]
     else:
         # Fallback to PBKDF2-SHA256 with high iteration count
         secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
@@ -89,7 +89,7 @@ def verify_api_key(api_key: str, hashed_key: str) -> bool:
     """
     if BCRYPT_AVAILABLE:
         try:
-            return bcrypt.checkpw(api_key.encode(), hashed_key.encode())
+            return bcrypt.checkpw(api_key.encode(), hashed_key.encode())  # type: ignore[possibly-undefined]
         except (ValueError, TypeError):
             return False
     else:
@@ -238,7 +238,7 @@ def hash_password(password: str) -> str:
     """
     if not BCRYPT_AVAILABLE:
         raise RuntimeError("bcrypt is required for password hashing. Install with: pip install bcrypt")
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")  # type: ignore[possibly-undefined]
 
 
 def verify_password(password: str, password_hash: str) -> bool:
@@ -255,12 +255,12 @@ def verify_password(password: str, password_hash: str) -> bool:
     if not BCRYPT_AVAILABLE:
         return False
     try:
-        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))  # type: ignore[possibly-undefined]
     except (ValueError, TypeError):
         return False
 
 
-def create_access_token(user_id: int, email: str, role: str = "user", expires_minutes: int = None) -> str:
+def create_access_token(user_id: int, email: str, role: str = "user", expires_minutes: Optional[int] = None) -> str:
     """
     Create a JWT access token.
 
@@ -292,10 +292,10 @@ def create_access_token(user_id: int, email: str, role: str = "user", expires_mi
         "jti": secrets.token_hex(16),  # Unique token ID for revocation
     }
 
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)  # type: ignore[possibly-undefined]
 
 
-def create_refresh_token(user_id: int, expires_days: int = None) -> Tuple[str, str]:
+def create_refresh_token(user_id: int, expires_days: Optional[int] = None) -> Tuple[str, str]:
     """
     Create a JWT refresh token.
 
@@ -318,7 +318,7 @@ def create_refresh_token(user_id: int, expires_days: int = None) -> Tuple[str, s
 
     payload = {"sub": str(user_id), "type": "refresh", "iat": now, "exp": expire, "jti": token_id}
 
-    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)  # type: ignore[possibly-undefined]
     token_hash = hashlib.sha256(token.encode()).hexdigest()
 
     return token, token_hash
@@ -338,12 +338,14 @@ def decode_token(token: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         return None, "JWT support not available"
 
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])  # type: ignore[possibly-undefined]
         return payload, None
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:  # type: ignore[possibly-undefined]
         return None, "Token has expired"
-    except jwt.InvalidTokenError as e:
-        return None, f"Invalid token: {str(e)}"
+    except jwt.InvalidTokenError as e:  # type: ignore[possibly-undefined]
+        # Log detailed invalid token error server-side, but return a generic message to the client
+        logger.warning("Invalid JWT token: %s", str(e))
+        return None, "Invalid token"
 
 
 def create_password_reset_token() -> Tuple[str, datetime]:
