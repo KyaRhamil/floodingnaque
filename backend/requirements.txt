@@ -12,7 +12,7 @@ waitress==3.0.2  # Windows alternative (updated: fixes DoS CVE-2024-49768, race 
 # ============================================================================
 # HTTP & EXTERNAL APIs
 # ============================================================================
-requests==2.32.3
+requests==2.32.4
 urllib3==2.3.0  # Updated: fixes decompression bomb CVE-2024-37891, redirect handling CVE-2024-6923
 aiohttp==3.11.12  # Updated: fixes HTTP parser zip bomb, DoS vulnerabilities CVE-2024-52303, CVE-2024-52304
 aiohttp[speedups]==3.11.12  # Optional C extensions for better performance
