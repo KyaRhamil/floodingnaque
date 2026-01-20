@@ -192,22 +192,28 @@ def get_valid_api_keys() -> Set[str]:
         return set()
 
     valid_keys = set()
+    key_count = 0
+    rejected_count = 0
     for raw_key in keys_str.split(","):
         stripped_key = raw_key.strip()
         if not stripped_key:
             continue
+        key_count += 1
         if len(stripped_key) < MIN_API_KEY_LENGTH:
-            # Log without exposing the key value - only metadata
-            logger.warning(
-                "API key rejected: length %d below minimum %d characters. "
-                'Generate secure keys with: python -c "import secrets; print(secrets.token_urlsafe(32))"',
-                len(stripped_key),
-                MIN_API_KEY_LENGTH,
-            )
+            rejected_count += 1
             continue
         valid_keys.add(stripped_key)
-    # Clear sensitive variable from scope
-    del stripped_key, raw_key
+        # Clear sensitive variable immediately after use
+        stripped_key = None  # nosec - intentionally clearing sensitive data
+    # Log summary without exposing any key data
+    if rejected_count > 0:
+        logger.warning(
+            "API keys rejected: %d of %d keys below minimum %d characters. "
+            'Generate secure keys with: python -c "import secrets; print(secrets.token_urlsafe(32))"',
+            rejected_count,
+            key_count,
+            MIN_API_KEY_LENGTH,
+        )
 
     return valid_keys
 

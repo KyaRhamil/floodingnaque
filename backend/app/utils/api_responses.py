@@ -4,7 +4,9 @@ Standardized response formatting functions for consistent API responses.
 Follows RFC 7807 Problem Details format for errors.
 """
 
+import html
 import logging
+import re
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Tuple
 
@@ -14,6 +16,48 @@ if TYPE_CHECKING:
     from app.utils.api_errors import AppException
 
 logger = logging.getLogger(__name__)
+
+# Patterns that might indicate sensitive information in error messages
+_SENSITIVE_PATTERNS = [
+    r"password",
+    r"secret",
+    r"token",
+    r"key",
+    r"credential",
+    r"auth",
+    r"/[a-zA-Z]:/",  # Windows paths
+    r"/home/",  # Unix home paths
+    r"/usr/",  # Unix system paths
+    r"\\\\[a-zA-Z]",  # UNC paths
+    r"postgresql://",  # Database connection strings
+    r"mysql://",
+    r"mongodb://",
+    r"redis://",
+    r"amqp://",
+]
+
+
+def _sanitize_error_message(message: str) -> str:
+    """Sanitize error message to prevent information disclosure."""
+    if not message:
+        return message
+
+    # HTML escape to prevent XSS
+    sanitized = html.escape(str(message))
+
+    # Check for sensitive patterns
+    message_lower = sanitized.lower()
+    for pattern in _SENSITIVE_PATTERNS:
+        if re.search(pattern, message_lower, re.IGNORECASE):
+            # If sensitive pattern detected, return generic message
+            logger.debug(f"Sanitized potentially sensitive error message")
+            return "An error occurred. Please contact support with your request ID."
+
+    # Truncate overly long messages that might contain stack traces
+    if len(sanitized) > 500:
+        return sanitized[:500] + "..."
+
+    return sanitized
 
 
 def _get_request_context() -> Dict[str, str]:
@@ -87,13 +131,16 @@ def api_error(
     req_id = request_id or ctx.get("request_id")
     trace_id = ctx.get("trace_id")
 
+    # Sanitize error message to prevent information disclosure
+    safe_message = _sanitize_error_message(message)
+
     response = {
         "success": False,
         "error": {
             "type": f'/errors/{error_code.lower().replace("error", "").replace("_", "-")}',
             "title": _get_error_title(error_code),
             "status": status_code,
-            "detail": message,
+            "detail": safe_message,
             "code": error_code,
             "timestamp": datetime.utcnow().isoformat() + "Z",
         },

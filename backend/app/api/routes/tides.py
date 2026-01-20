@@ -196,8 +196,32 @@ def get_tide_prediction():
         )
 
     try:
-        lat = request.args.get("lat", type=float)
-        lon = request.args.get("lon", type=float)
+        # Validate and sanitize coordinate parameters
+        try:
+            lat = float(request.args.get("lat", 0))
+            lon = float(request.args.get("lon", 0))
+        except (ValueError, TypeError):
+            return (
+                api_error(
+                    "ValidationError",
+                    "Invalid coordinate parameters. lat and lon must be valid numbers.",
+                    HTTP_BAD_REQUEST,
+                    request_id,
+                ),
+                HTTP_BAD_REQUEST,
+            )
+
+        # Validate coordinate ranges to prevent injection via extreme values
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            return (
+                api_error(
+                    "ValidationError",
+                    "Coordinates out of range. lat: -90 to 90, lon: -180 to 180.",
+                    HTTP_BAD_REQUEST,
+                    request_id,
+                ),
+                HTTP_BAD_REQUEST,
+            )
 
         tide_data = service.get_tide_data_for_prediction(lat, lon)
 

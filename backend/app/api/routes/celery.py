@@ -50,6 +50,8 @@ def retrain_model():
         result = trigger_model_retraining(sanitized_model_id)
 
         # Sanitize result data that could come from external sources
+        # Double-escape model_id to ensure XSS prevention even after validation
+        safe_model_id = html.escape(sanitized_model_id) if sanitized_model_id else None
         return (
             api_success(
                 "ModelRetrainingTriggered",
@@ -58,7 +60,7 @@ def retrain_model():
                     "task_id": html.escape(str(result.get("task_id", "")))[:100],
                     "status": html.escape(str(result.get("status", "")))[:50],
                     "message": html.escape(str(result.get("message", "")))[:200],
-                    "model_id": sanitized_model_id,
+                    "model_id": safe_model_id,
                 },
                 request_id,
             ),

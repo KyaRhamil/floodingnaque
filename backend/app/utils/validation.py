@@ -11,6 +11,7 @@ Security Features:
 - SQL injection pattern detection
 """
 
+import html
 import logging
 import re
 import unicodedata
@@ -377,10 +378,18 @@ def validate_json_schema(schema: Dict[str, Any]):
                             {"field": field_name, "message": f"Maximum value is {max_val}", "code": "max_value"}
                         )
 
-                # Enum validation
+                # Enum validation - sanitize enum values in error message
                 enum_values = field_schema.get("enum")
                 if enum_values and value not in enum_values:
-                    errors.append({"field": field_name, "message": f"Must be one of: {enum_values}", "code": "enum"})
+                    # Limit displayed enum values to prevent information disclosure
+                    safe_enum_display = str(enum_values[:5]) if len(enum_values) > 5 else str(enum_values)
+                    errors.append(
+                        {
+                            "field": html.escape(str(field_name)),
+                            "message": f"Must be one of the allowed values",
+                            "code": "enum",
+                        }
+                    )
 
                 validated_data[field_name] = value
 
