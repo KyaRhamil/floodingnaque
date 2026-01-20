@@ -268,6 +268,24 @@ def _remove_dangerous_fields(data: Dict[str, Any]) -> Dict[str, Any]:
     return cleaned
 
 
+def _validate_no_stack_trace(response: Dict[str, Any]) -> None:
+    """
+    Final validation to ensure no stack trace patterns exist in response.
+
+    Args:
+        response: Response dictionary to validate
+
+    Raises:
+        AssertionError: If stack trace patterns are detected (only in debug mode)
+    """
+    if __debug__:
+        response_str = str(response)
+        for pattern in _STACK_TRACE_PATTERNS:
+            if re.search(pattern, response_str, re.MULTILINE):
+                logger.error("Stack trace pattern detected in final response")
+                raise AssertionError("Stack trace pattern detected in sanitized response")
+
+
 def _get_request_context() -> Dict[str, Optional[str]]:
     """
     Get request and trace IDs from Flask g context.
@@ -483,6 +501,9 @@ def api_error_from_exception(
         if key in response.get("error", {}):
             logger.warning(f"Removed dangerous field that survived sanitization: {key}")
             response["error"].pop(key, None)
+
+    # SECURITY LAYER 9: Final validation before sending response
+    _validate_no_stack_trace(response)
 
     logger.warning(
         f"API Exception [{response['error'].get('request_id')}]: {exception.error_code}",
