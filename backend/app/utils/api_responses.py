@@ -312,18 +312,36 @@ def api_error_from_exception(
     # SECURITY: Never include debug details in client response to prevent
     # stack trace exposure (CWE-209: Information Exposure Through Error Message)
     response = exception.to_dict(include_debug=False)
+
+    # Ensure we have the error dict structure
+    if "error" not in response:
+        response["error"] = {}
+
+    # Set/sanitize request and trace IDs
     response["error"]["request_id"] = request_id or ctx.get("request_id")
+    if ctx.get("trace_id"):
+        response["error"]["trace_id"] = ctx["trace_id"]
 
     # Sanitize the error message itself
     if "detail" in response.get("error", {}):
         response["error"]["detail"] = _sanitize_error_message(response["error"]["detail"])
 
-    # Remove any debug/details that might have been added
-    response["error"].pop("debug", None)
-    response["error"].pop("details", None)
+    # Sanitize any details that might have been included
+    if "details" in response.get("error", {}):
+        response["error"]["details"] = _sanitize_details(response["error"]["details"])
 
-    if ctx.get("trace_id"):
-        response["error"]["trace_id"] = ctx["trace_id"]
+    # Sanitize any errors list that might have been included
+    if "errors" in response.get("error", {}):
+        response["error"]["errors"] = _sanitize_errors_list(response["error"]["errors"])
+
+    # Remove any fields that could contain stack traces or sensitive info
+    # Even with include_debug=False, these might slip through
+    response["error"].pop("debug", None)
+    response["error"].pop("stack_trace", None)
+    response["error"].pop("traceback", None)
+    response["error"].pop("exception", None)
+    response["error"].pop("exception_type", None)
+    response["error"].pop("exception_message", None)
 
     logger.warning(
         f"API Exception [{response['error'].get('request_id')}]: {exception.error_code}",
