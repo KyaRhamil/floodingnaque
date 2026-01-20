@@ -1,0 +1,418 @@
+# =============================================================================
+# Floodingnaque Enterprise Training Configuration
+# =============================================================================
+# This centralized configuration file controls all training parameters.
+# Environment-specific overrides can be applied via environment variables.
+# =============================================================================
+
+# General Settings
+general:
+  project_name: "floodingnaque"
+  random_state: 42
+  log_level: "INFO"
+  enable_mlflow: true
+  enable_data_validation: true
+
+# Data Settings
+data:
+  processed_dir: "data/processed"
+  raw_dir: "data"
+  test_size: 0.2
+  validation_size: 0.1
+  stratify: true
+  
+  # Data quality thresholds
+  min_samples: 100
+  max_missing_ratio: 0.1
+  
+  # Feature columns
+  core_features:
+    - temperature
+    - humidity
+    - precipitation
+    
+  interaction_features:
+    - temp_humidity_interaction
+    - humidity_precip_interaction
+    - temp_precip_interaction
+    - monsoon_precip_interaction
+    - saturation_risk
+    
+  rolling_features:
+    - precip_3day_sum
+    - precip_7day_sum
+    - precip_14day_sum
+    - precip_lag1
+    - precip_lag2
+    - rain_streak
+    
+  categorical_features:
+    - is_monsoon_season
+    - month
+    - weather_type
+    - season
+    - station_id
+
+# Model Settings
+model:
+  type: "RandomForestClassifier"
+  
+  # Default parameters (enterprise standard)
+  default_params:
+    n_estimators: 200
+    max_depth: 15
+    min_samples_split: 5
+    min_samples_leaf: 2
+    class_weight: "balanced_subsample"  # Enterprise: handles imbalance per tree
+    max_features: "sqrt"
+    n_jobs: -1
+    
+  # Optuna hyperparameter optimization
+  optuna:
+    enabled: true
+    n_trials: 50
+    timeout_minutes: 30
+    sampler: "TPE"  # Tree-structured Parzen Estimator
+    pruner: "MedianPruner"
+    
+    # Search space
+    search_space:
+      n_estimators: [100, 400]
+      max_depth: [5, 30]
+      min_samples_split: [2, 20]
+      min_samples_leaf: [1, 10]
+      max_features: ["sqrt", "log2", 0.5, 0.7]
+    
+  # Grid search parameters (fallback if Optuna disabled)
+  grid_search:
+    enabled: false
+    n_iter: 50  # For RandomizedSearchCV
+    cv_folds: 10
+    scoring: "f1_weighted"
+    
+    param_grid:
+      n_estimators: [100, 150, 200, 250, 300]
+      max_depth: [10, 15, 20, 25, null]
+      min_samples_split: [2, 5, 10]
+      min_samples_leaf: [1, 2, 4]
+      max_features: ["sqrt", "log2", 0.5, 0.7]
+      
+  # Model calibration
+  calibration:
+    enabled: true
+    method: "isotonic"  # or "sigmoid" - isotonic better for large datasets
+    cv_folds: 5
+
+# Imbalance Handling
+imbalance:
+  # Primary strategy: class_weight (built into RandomForest)
+  strategy: "class_weight"  # Options: "class_weight", "smotenc", "hybrid"
+  
+  # SMOTENC settings (if strategy is "smotenc" or "hybrid")
+  smotenc:
+    enabled: false  # Enable via --with-smote flag
+    k_neighbors: 5
+    sampling_strategy: "auto"
+    # Categorical feature indices determined automatically
+
+# Metrics Configuration
+metrics:
+  # F2 score prioritizes recall (missing floods is worse than false alarms)
+  primary: "f2"  # Options: "f1", "f2", "recall", "roc_auc"
+  
+  # All metrics to track
+  track:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - f2_score  # Recall-weighted F-score
+    - roc_auc
+    - brier_score  # Probability calibration quality
+    
+  # Thresholds for alerts
+  alerts:
+    min_f2_score: 0.80
+    min_recall: 0.85  # Critical: must detect floods
+    max_brier_score: 0.25
+
+# Cross-Validation Settings
+cross_validation:
+  folds: 10
+  shuffle: true
+  
+  # Temporal walk-forward validation
+  temporal:
+    enabled: true
+    n_splits: 5
+    gap: 0  # No gap between train and test
+
+# Ensemble Settings (Phase 8)
+ensemble:
+  # Stacking classifier configuration
+  stacking:
+    enabled: true
+    cv_folds: 5
+    stack_method: "predict_proba"  # Use probabilities, not hard predictions
+    passthrough: false  # Only use model predictions, not raw features
+    
+  # Meta-learner
+  meta_learner:
+    type: "LogisticRegression"
+    max_iter: 1000
+    class_weight: "balanced"
+    
+  # Base models from phases
+  base_phases: [4, 5, 6]  # Official, PAGASA, External APIs
+  include_station_models: true
+
+# Station-Specific Models (Phase 7)
+stations:
+  - name: "Port Area"
+    lat: 14.588
+    lon: 120.968
+    elevation_m: 15
+    notes: "Coastal, tidal influence"
+    
+  - name: "NAIA"
+    lat: 14.505
+    lon: 121.005
+    elevation_m: 21
+    notes: "Airport area, drainage infrastructure"
+    
+  - name: "Science Garden"
+    lat: 14.645
+    lon: 121.044
+    elevation_m: 42
+    notes: "Elevated, reference station"
+
+# MLflow Tracking Settings
+mlflow:
+  tracking_uri: "mlruns"  # Local directory or remote URI
+  experiment_name: "floodingnaque_progressive_training"
+  auto_log: true
+  log_models: true
+  
+  # Tags for experiment organization
+  tags:
+    project: "floodingnaque"
+    team: "ml-engineering"
+    domain: "flood-prediction"
+    pipeline: "progressive"
+
+# Model Registry Settings
+registry:
+  models_dir: "models"
+  stages:
+    - development
+    - staging
+    - production
+    
+  # Promotion criteria (updated for F2 primary metric)
+  promotion_criteria:
+    staging:
+      min_f2_score: 0.85
+      min_f1_score: 0.80
+      min_roc_auc: 0.85
+      max_cv_std: 0.05
+    production:
+      min_f2_score: 0.90
+      min_f1_score: 0.85
+      min_roc_auc: 0.90
+      max_cv_std: 0.03
+      
+  # Artifact retention
+  retention:
+    max_versions_per_stage: 5
+    archive_old_models: true
+
+# Drift Detection
+drift:
+  enabled: true
+  
+  # Population Stability Index (PSI) thresholds
+  psi:
+    warning_threshold: 0.1  # Minor drift
+    alert_threshold: 0.2    # Significant drift - trigger retraining
+    
+  # Features to monitor
+  monitored_features:
+    - temperature
+    - humidity
+    - precipitation
+    - precip_3day_sum
+    
+  # Retraining triggers
+  retrain_on:
+    - psi_alert
+    - performance_degradation
+    - scheduled  # Monthly
+
+# Data Validation Settings
+validation:
+  # Feature value ranges (updated: temperature in Celsius)
+  feature_ranges:
+    temperature:
+      min: 15.0   # Celsius (tropical climate)
+      max: 45.0   # Celsius
+    humidity:
+      min: 0.0
+      max: 100.0
+    precipitation:
+      min: 0.0
+      max: 500.0  # mm (extreme events)
+    is_monsoon_season:
+      values: [0, 1]
+    month:
+      min: 1
+      max: 12
+    precip_3day_sum:
+      min: 0.0
+      max: 1000.0
+    precip_7day_sum:
+      min: 0.0
+      max: 1500.0
+      
+  # Target validation
+  target:
+    column: "flood"
+    values: [0, 1]
+
+# =============================================================================
+# PROGRESSIVE TRAINING PHASES
+# =============================================================================
+# 8-phase progressive pipeline from baseline to ultimate ensemble
+
+phases:
+  phase_1:
+    name: "Baseline_2022"
+    description: "Official Records 2022 Only"
+    data_file: "cumulative_up_to_2022.csv"
+    data_type: "official_records"
+    features: ["temperature", "humidity", "precipitation", "is_monsoon_season", "month"]
+    
+  phase_2:
+    name: "Extended_2023"
+    description: "Official Records 2022-2023"
+    data_file: "cumulative_up_to_2023.csv"
+    data_type: "official_records"
+    features: ["temperature", "humidity", "precipitation", "is_monsoon_season", "month"]
+    
+  phase_3:
+    name: "Extended_2024"
+    description: "Official Records 2022-2024"
+    data_file: "cumulative_up_to_2024.csv"
+    data_type: "official_records"
+    features: ["temperature", "humidity", "precipitation", "is_monsoon_season", "month"]
+    
+  phase_4:
+    name: "Full_Official"
+    description: "Official Records 2022-2025 (Complete)"
+    data_file: "cumulative_up_to_2025.csv"
+    data_type: "official_records"
+    features:
+      - temperature
+      - humidity
+      - precipitation
+      - is_monsoon_season
+      - month
+      - temp_humidity_interaction
+      - humidity_precip_interaction
+      - saturation_risk
+    
+  phase_5:
+    name: "PAGASA_Merged"
+    description: "Official + PAGASA Weather Data Merged"
+    data_files:
+      - "cumulative_up_to_2025.csv"
+      - "pagasa_training_dataset.csv"
+    data_type: "pagasa_merged"
+    features:
+      - temperature
+      - humidity
+      - precipitation
+      - is_monsoon_season
+      - month
+      - precip_3day_sum
+      - precip_7day_sum
+      - precip_14day_sum
+      - rain_streak
+      - temp_humidity_interaction
+      - humidity_precip_interaction
+      - monsoon_precip_interaction
+    
+  phase_6:
+    name: "External_APIs"
+    description: "All sources + External APIs (GEE, Meteostat, WorldTides)"
+    data_files:
+      - "cumulative_up_to_2025.csv"
+      - "pagasa_training_dataset.csv"
+      - "fetched_googlecloud.csv"
+      - "fetched_meteostat.csv"
+      - "fetched_worldtides.csv"
+    data_type: "external_merged"
+    features:
+      - temperature
+      - humidity
+      - precipitation
+      - is_monsoon_season
+      - month
+      - precip_3day_sum
+      - precip_7day_sum
+      - rain_streak
+      - tide_height
+      - temp_humidity_interaction
+      - monsoon_precip_interaction
+      - saturation_risk
+    
+  phase_7:
+    name: "Station_Specific"
+    description: "Station-specific models (Port Area, NAIA, Science Garden)"
+    data_file: "pagasa_training_dataset.csv"
+    data_type: "station_specific"
+    model_type: "station_specific"
+    stations: ["Port Area", "NAIA", "Science Garden"]
+    
+  phase_8:
+    name: "ULTIMATE_Ensemble"
+    description: "Stacking Ensemble with Calibration"
+    data_type: "ensemble"
+    model_type: "stacking"
+    base_phases: [4, 5, 6]
+    station_phase: 7
+    calibrate: true
+
+# Logging Settings
+logging:
+  format: "json"  # "json" or "text"
+  level: "INFO"
+  file:
+    enabled: true
+    path: "logs/training.log"
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+  console:
+    enabled: true
+    colorize: true
+
+# Resource Management
+resources:
+  # Memory limits (GB)
+  max_memory_gb: 8
+  
+  # CPU management
+  max_workers: -1  # -1 for auto (n_cpus - 1)
+  
+  # GPU settings (for future use)
+  use_gpu: false
+  gpu_device: 0
+
+# Monitoring & Alerts
+monitoring:
+  # Training duration thresholds
+  max_training_minutes: 60
+  warn_training_minutes: 30
+  
+  # Performance alerts
+  alert_on_degradation: true
+  degradation_threshold: 0.05  # 5% drop in F1

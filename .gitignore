@@ -238,3 +238,28 @@ yarn-error.log*
 
 # Static files (generated)
 backend/static/
+
+# ===================
+# Additional Secret Protection
+# ===================
+# Prevent accidental commits of files containing secrets
+*.env.backup
+*.env.bak
+
+# Supabase tokens pattern
+*sb_secret*
+*sb_publishable*
+
+# Generic secret patterns
+*_secret_key*
+*_api_key.txt
+*.secrets
+
+# Secrets cleanup file
+secrets-to-remove.txt
+
+# ===================
+# Documentation PDFs
+AICS_generalDocumentationFormat.pdf
+AICS_thesis-journal-template.pdf
+Floodingnaque_Thesis_Paper_Guide.txt
