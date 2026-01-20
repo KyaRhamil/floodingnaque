@@ -36,21 +36,44 @@ _SENSITIVE_PATTERNS = [
     r"amqp://",
 ]
 
+# Patterns that indicate stack trace content (CWE-209)
+_STACK_TRACE_PATTERNS = [
+    r"Traceback \(most recent call last\)",  # Python traceback header
+    r"File \"[^\"]+\", line \d+",  # Python stack frame
+    r"^\s*at\s+[\w.$]+\(",  # Java/JS style stack trace
+    r"Exception in thread",  # Java exception
+    r"\.py\", line \d+, in \w+",  # Python file references
+    r"raise \w+Error",  # Python raise statements
+    r"Error:\s+\w+Error:",  # Chained exceptions
+]
+
 
 def _sanitize_error_message(message: str) -> str:
-    """Sanitize error message to prevent information disclosure."""
+    """
+    Sanitize error message to prevent information disclosure.
+
+    Detects and removes stack traces, sensitive patterns, and
+    other information that could aid attackers (CWE-209, CWE-497).
+    """
     if not message:
         return message
 
     # HTML escape to prevent XSS
     sanitized = html.escape(str(message))
 
+    # Check for stack trace patterns first (most dangerous for info disclosure)
+    for pattern in _STACK_TRACE_PATTERNS:
+        if re.search(pattern, sanitized, re.MULTILINE):
+            # Log the original for debugging, return generic message
+            logger.debug("Sanitized stack trace from error message (server-side logged)")
+            return "An internal error occurred. Please contact support with your request ID."
+
     # Check for sensitive patterns
     message_lower = sanitized.lower()
     for pattern in _SENSITIVE_PATTERNS:
         if re.search(pattern, message_lower, re.IGNORECASE):
             # If sensitive pattern detected, return generic message
-            logger.debug(f"Sanitized potentially sensitive error message")
+            logger.debug("Sanitized potentially sensitive error message")
             return "An error occurred. Please contact support with your request ID."
 
     # Truncate overly long messages that might contain stack traces
@@ -105,6 +128,40 @@ def _sanitize_details(details: Dict[str, Any]) -> Dict[str, Any]:
         else:
             # Pass through non-string primitive values
             sanitized[key] = value
+
+    return sanitized
+
+
+def _sanitize_errors_list(errors: list) -> list:
+    """
+    Sanitize a list of field-level errors to prevent information exposure.
+
+    Each error item is expected to be a dict with fields like:
+    - field: The field name (safe)
+    - message: The error message (needs sanitization)
+    - code: Error code (safe)
+    """
+    if not errors:
+        return errors
+
+    sanitized = []
+    for error in errors:
+        if isinstance(error, dict):
+            sanitized_error = {}
+            for key, value in error.items():
+                if key in ("message", "detail", "error") and isinstance(value, str):
+                    # Sanitize message fields
+                    sanitized_error[key] = _sanitize_error_message(value)
+                elif isinstance(value, str):
+                    # Other string fields - basic sanitization
+                    sanitized_error[key] = html.escape(value)
+                else:
+                    sanitized_error[key] = value
+            sanitized.append(sanitized_error)
+        elif isinstance(error, str):
+            sanitized.append(_sanitize_error_message(error))
+        else:
+            sanitized.append(error)
 
     return sanitized
 
@@ -210,7 +267,8 @@ def api_error(
         response["error"]["details"] = _sanitize_details(details)
 
     if errors:
-        response["error"]["errors"] = errors
+        # Sanitize errors list to prevent stack trace exposure (CWE-209)
+        response["error"]["errors"] = _sanitize_errors_list(errors)
 
     if help_url:
         response["error"]["help_url"] = help_url
