@@ -450,7 +450,7 @@ def upload_csv():
         )
 
     except Exception as e:
-        logger.error(f"CSV upload failed [{request_id}]: {str(e)}", exc_info=True)
+        logger.error(f"CSV upload failed [{request_id}]", exc_info=True)
         return api_error("UploadFailed", "Failed to process CSV file", HTTP_INTERNAL_ERROR, request_id)
 
 
@@ -587,7 +587,7 @@ def upload_excel():
         )
 
     except Exception as e:
-        logger.error(f"Excel upload failed [{request_id}]: {str(e)}", exc_info=True)
+        logger.error(f"Excel upload failed [{request_id}]", exc_info=True)
         return api_error("UploadFailed", "Failed to process Excel file", HTTP_INTERNAL_ERROR, request_id)
 
 
@@ -698,5 +698,5 @@ def validate_upload():
         )
 
     except Exception as e:
-        logger.error(f"File validation failed [{request_id}]: {str(e)}", exc_info=True)
+        logger.error(f"File validation failed [{request_id}]", exc_info=True)
         return api_error("ValidationFailed", "Failed to validate file", HTTP_INTERNAL_ERROR, request_id)

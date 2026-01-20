@@ -544,8 +544,8 @@ def validate_tier_configuration() -> bool:
         logger.info("Rate limiting tier configuration is valid")
         return True
 
-    except Exception as e:
-        logger.error(f"Error validating tier configuration: {str(e)}")
+    except Exception:
+        logger.error("Error validating tier configuration")
         return False
 
 

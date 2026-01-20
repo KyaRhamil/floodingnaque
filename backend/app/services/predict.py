@@ -187,18 +187,12 @@ def verify_model_integrity(model_path: str, expected_checksum: Optional[str] = N
         expected_hmac = metadata.get("hmac_signature")
         if expected_hmac:
             if not verify_model_hmac_signature(model_path, expected_hmac, _MODEL_SIGNING_KEY):
-                logger.error(
-                    f"SECURITY: HMAC signature verification FAILED for {model_path}! "
-                    "Model may have been tampered with."
-                )
+                logger.error("SECURITY: HMAC signature verification FAILED! " "Model may have been tampered with.")
                 return False
-            logger.info(f"Model HMAC signature verified: {model_path}")
+            logger.info("Model HMAC signature verified successfully")
             return True
         else:
-            logger.warning(
-                f"No HMAC signature in metadata for {model_path}. "
-                "Re-train model with signing enabled for better security."
-            )
+            logger.warning("No HMAC signature in metadata. " "Re-train model with signing enabled for better security.")
     elif os.getenv("REQUIRE_MODEL_SIGNATURE", "false").lower() == "true":
         logger.error(
             "SECURITY: REQUIRE_MODEL_SIGNATURE is enabled but "
@@ -212,17 +206,15 @@ def verify_model_integrity(model_path: str, expected_checksum: Optional[str] = N
             expected_checksum = metadata.get("checksum")
 
     if not expected_checksum:
-        logger.warning(f"No checksum available for model: {model_path}")
+        logger.warning("No checksum available for model verification")
         return True  # Allow if no checksum to verify against
 
     actual_checksum = compute_model_checksum(model_path)
     if actual_checksum != expected_checksum:
-        logger.error(
-            f"Model integrity check FAILED for {model_path}! " f"Expected: {expected_checksum}, Got: {actual_checksum}"
-        )
+        logger.error("Model integrity check FAILED! Checksum mismatch detected.")
         return False
 
-    logger.info(f"Model integrity verified: {model_path}")
+    logger.info("Model integrity verified successfully")
     return True
 
 
@@ -363,10 +355,10 @@ def _load_model(model_path: Optional[str] = None, force_reload: bool = False, ve
 
             loader.set_model(model, model_path, metadata, checksum)
 
-            logger.info(f"Model loaded successfully from {model_path}")
+            logger.info("Model loaded successfully")
             if metadata:
                 logger.info(f"Model version: {metadata.get('version', 'unknown')}")
-            logger.info(f"Model checksum: {checksum[:16]}...")
+            logger.debug("Model checksum verified")
 
         except (IOError, OSError) as e:
             logger.error(f"Error loading model: {str(e)}")

@@ -205,8 +205,8 @@ def get_tide_prediction():
             HTTP_OK,
         )
 
-    except Exception as e:
-        logger.error(f"Error fetching tide prediction data [{request_id}]: {e}")
+    except Exception:
+        logger.error(f"Error fetching tide prediction data [{request_id}]", exc_info=True)
         return api_error("TideFetchError", "Failed to fetch tide data", HTTP_BAD_REQUEST, request_id), HTTP_BAD_REQUEST
 
 

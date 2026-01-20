@@ -115,8 +115,8 @@ def api_error(
         response["error"]["help_url"] = help_url
 
     logger.warning(
-        f"API Error [{req_id}]: {error_code} - {message}",
-        extra={"error_code": error_code, "status_code": status_code, "request_id": req_id, "trace_id": trace_id},
+        f"API Error [{req_id}]: {error_code}",
+        extra={"error_code": error_code, "status_code": status_code, "request_id": req_id},
     )
 
     return jsonify(response), status_code
@@ -145,12 +145,11 @@ def api_error_from_exception(
         response["error"]["trace_id"] = ctx["trace_id"]
 
     logger.warning(
-        f"API Exception [{response['error'].get('request_id')}]: {exception.error_code} - {exception.message}",
+        f"API Exception [{response['error'].get('request_id')}]: {exception.error_code}",
         extra={
             "error_code": exception.error_code,
             "status_code": exception.status_code,
             "request_id": response["error"].get("request_id"),
-            "trace_id": ctx.get("trace_id"),
         },
     )
 

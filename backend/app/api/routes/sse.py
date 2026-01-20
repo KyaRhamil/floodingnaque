@@ -283,7 +283,13 @@ def test_alert_broadcast():
     request_id = getattr(g, "request_id", "unknown")
 
     data = request.get_json() or {}
-    risk_level = data.get("risk_level", 1)
+    # Validate and sanitize risk_level to prevent injection
+    try:
+        risk_level = int(data.get("risk_level", 1))
+        if risk_level not in [0, 1, 2]:
+            risk_level = 1  # Default to Alert level
+    except (ValueError, TypeError):
+        risk_level = 1
     # Sanitize user-provided strings to prevent XSS
     message = html.escape(str(data.get("message", "Test flood alert"))[:200])
     location = html.escape(str(data.get("location", "Test Location"))[:100])

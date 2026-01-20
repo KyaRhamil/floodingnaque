@@ -72,8 +72,8 @@ def check_database_health() -> dict:
         latency_ms = (time.time() - start) * 1000
 
         return {"status": "healthy", "connected": True, "latency_ms": round(latency_ms, 2)}
-    except Exception as e:
-        logger.error(f"Database health check failed: {str(e)}")
+    except Exception:
+        logger.error("Database health check failed", exc_info=True)
         # Don't expose raw exception details in response - log only
         return {"status": "unhealthy", "connected": False, "error": "Database connection failed"}
 
@@ -133,8 +133,8 @@ def check_redis_health() -> dict:
 
     except ImportError:
         return {"status": "unavailable", "error": "redis package not installed"}
-    except Exception as e:
-        logger.error(f"Redis health check failed: {str(e)}")
+    except Exception:
+        logger.error("Redis health check failed", exc_info=True)
         # Don't expose raw exception details in response - log only
         return {"status": "unhealthy", "connected": False, "error": "Redis connection failed"}
 
@@ -152,8 +152,8 @@ def check_cache_health() -> dict:
         return get_cache_stats()
     except ImportError:
         return {"status": "not_available", "message": "Cache module not available"}
-    except Exception as e:
-        logger.error(f"Cache health check failed: {str(e)}")
+    except Exception:
+        logger.error("Cache health check failed", exc_info=True)
         # Don't expose raw exception details in response - log only
         return {"status": "error", "error": "Cache check failed"}
 

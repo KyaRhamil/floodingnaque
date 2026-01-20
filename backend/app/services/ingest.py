@@ -97,7 +97,7 @@ def ingest_data(lat=None, lon=None):
         # Fetch from OpenWeatherMap with circuit breaker protection
         # Note: OWM requires appid in query string, but we redact in logs
         owm_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={owm_api_key}"
-        logger.debug(f"Fetching weather data from: {_safe_log_url(owm_url)}")
+        logger.debug("Fetching weather data from OpenWeatherMap")
 
         @retry_with_backoff(max_retries=2, base_delay=1.0, exceptions=(requests.exceptions.RequestException,))
         def fetch_owm():
@@ -143,7 +143,7 @@ def ingest_data(lat=None, lon=None):
                 weatherstack_url = (
                     f"https://api.weatherstack.com/current?access_key={weatherstack_api_key}&query={lat},{lon}&units=m"
                 )
-                logger.debug(f"Fetching precipitation from: {_safe_log_url(weatherstack_url)}")
+                logger.debug("Fetching precipitation data from Weatherstack")
 
                 @retry_with_backoff(max_retries=2, base_delay=1.0, exceptions=(requests.exceptions.RequestException,))
                 def fetch_weatherstack():
@@ -166,12 +166,12 @@ def ingest_data(lat=None, lon=None):
                     if precip_value is not None:
                         precipitation = float(precip_value)
                         logger.info(f"Got precipitation from Weatherstack: {precipitation} mm")
-        except CircuitOpenError as e:
-            logger.warning(f"Weatherstack circuit breaker open (using fallback): {str(e)}")
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Error fetching data from Weatherstack API (continuing with OpenWeatherMap): {str(e)}")
-        except (KeyError, ValueError, TypeError) as e:
-            logger.warning(f"Error parsing Weatherstack response (continuing with OpenWeatherMap): {str(e)}")
+        except CircuitOpenError:
+            logger.warning("Weatherstack circuit breaker open (using fallback)")
+        except requests.exceptions.RequestException:
+            logger.warning("Error fetching data from Weatherstack API (continuing with OpenWeatherMap)")
+        except (KeyError, ValueError, TypeError):
+            logger.warning("Error parsing Weatherstack response (continuing with OpenWeatherMap)")
 
     # Fallback to OpenWeatherMap rain data if Weatherstack didn't provide precipitation
     if precipitation == 0:
@@ -182,8 +182,8 @@ def ingest_data(lat=None, lon=None):
             elif "rain" in owm_data and "1h" in owm_data["rain"]:
                 precipitation = owm_data["rain"]["1h"]
                 logger.info(f"Got precipitation from OpenWeatherMap: {precipitation} mm/h")
-        except (KeyError, TypeError) as e:
-            logger.debug(f"No rain data in OpenWeatherMap response: {str(e)}")
+        except (KeyError, TypeError):
+            logger.debug("No rain data in OpenWeatherMap response")
 
     data["precipitation"] = precipitation
     data["timestamp"] = datetime.now()

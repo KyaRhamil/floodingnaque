@@ -112,7 +112,7 @@ def _validate_api_key_format(api_key: str) -> Tuple[bool, str]:
     # Check entropy
     entropy = _calculate_entropy(api_key)
     if entropy < API_KEY_MIN_ENTROPY:
-        logger.warning(f"API key rejected: low entropy ({entropy:.2f} bits, minimum {API_KEY_MIN_ENTROPY})")
+        logger.warning(f"API key rejected: low entropy (below minimum {API_KEY_MIN_ENTROPY} bits)")
         return False, "API key does not meet entropy requirements"
 
     # Check for common weak patterns
@@ -157,10 +157,17 @@ def _verify_api_key_bcrypt(api_key: str, hashed: bytes) -> bool:
 
 
 def _hash_api_key_sha256(api_key: str) -> str:
-    """Legacy: Hash an API key using HMAC-SHA256 (fallback when bcrypt unavailable)."""
-    # Use HMAC-SHA256 with a secret salt for better security than plain SHA-256
+    """
+    Legacy: Hash an API key using HMAC-SHA256 (fallback when bcrypt unavailable).
+
+    Note: HMAC-SHA256 with a secret key is cryptographically secure for API key
+    verification. It provides keyed hashing which is resistant to rainbow tables.
+    """
+    # HMAC-SHA256 with secret salt is secure for API key verification
     secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
-    return hmac.new(secret_salt, api_key.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.new(
+        secret_salt, api_key.encode("utf-8"), hashlib.sha256
+    ).hexdigest()  # nosec B324 - HMAC-SHA256 is secure
 
 
 def _timing_safe_compare(a: str, b: str) -> bool:
@@ -193,7 +200,7 @@ def get_valid_api_keys() -> Set[str]:
             continue
         if len(key) < MIN_API_KEY_LENGTH:
             logger.warning(
-                f"API key rejected: length {len(key)} is below minimum {MIN_API_KEY_LENGTH} characters. "
+                f"API key rejected: length below minimum {MIN_API_KEY_LENGTH} characters. "
                 f'Generate secure keys with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
             )
             continue
@@ -559,7 +566,7 @@ def require_api_key(f):
         ip_address = request.remote_addr
         is_locked, remaining_seconds = _check_ip_lockout(ip_address)
         if is_locked:
-            logger.warning(f"Locked out IP attempted access: {ip_address}, " f"remaining lockout: {remaining_seconds}s")
+            logger.warning(f"Locked out IP attempted access (remaining lockout: {remaining_seconds}s)")
             return (
                 jsonify(
                     {

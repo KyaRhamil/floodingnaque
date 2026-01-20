@@ -156,8 +156,8 @@ def performance_dashboard():
 
         return jsonify(dashboard), 200
 
-    except Exception as e:
-        logger.error(f"Error generating performance dashboard: {e}")
+    except Exception:
+        logger.error("Error generating performance dashboard", exc_info=True)
         return (
             jsonify(
                 {
@@ -227,8 +227,8 @@ def get_response_times():
 
         return jsonify(result), 200
 
-    except Exception as e:
-        logger.error(f"Error getting response times: {e}")
+    except Exception:
+        logger.error("Error getting response times", exc_info=True)
         return (
             jsonify(
                 {
@@ -263,8 +263,8 @@ def cache_statistics():
 
         return jsonify(stats), 200
 
-    except Exception as e:
-        logger.error(f"Error getting cache statistics: {e}")
+    except Exception:
+        logger.error("Error getting cache statistics", exc_info=True)
         return (
             jsonify(
                 {
@@ -301,8 +301,8 @@ def trigger_cache_warming():
 
         return jsonify(results), 200
 
-    except Exception as e:
-        logger.error(f"Error warming cache: {e}")
+    except Exception:
+        logger.error("Error warming cache", exc_info=True)
         return (
             jsonify(
                 {
@@ -348,8 +348,8 @@ def slow_query_log():
             200,
         )
 
-    except Exception as e:
-        logger.error(f"Error getting slow queries: {e}")
+    except Exception:
+        logger.error("Error getting slow queries", exc_info=True)
         return (
             jsonify(
                 {
@@ -388,8 +388,8 @@ def clear_slow_queries():
             200,
         )
 
-    except Exception as e:
-        logger.error(f"Error clearing slow queries: {e}")
+    except Exception:
+        logger.error("Error clearing slow queries", exc_info=True)
         return (
             jsonify(
                 {
@@ -428,8 +428,8 @@ def database_performance():
             200,
         )
 
-    except Exception as e:
-        logger.error(f"Error getting database performance: {e}")
+    except Exception:
+        logger.error("Error getting database performance", exc_info=True)
         return (
             jsonify(
                 {
@@ -460,8 +460,8 @@ def database_health():
 
             return jsonify(health), 200
 
-    except Exception as e:
-        logger.error(f"Error checking database health: {e}")
+    except Exception:
+        logger.error("Error checking database health", exc_info=True)
         return (
             jsonify(
                 {
@@ -502,8 +502,8 @@ def database_index_stats():
                 200,
             )
 
-    except Exception as e:
-        logger.error(f"Error getting index stats: {e}")
+    except Exception:
+        logger.error("Error getting index stats", exc_info=True)
         return (
             jsonify(
                 {
@@ -542,8 +542,8 @@ def database_table_stats():
                 200,
             )
 
-    except Exception as e:
-        logger.error(f"Error getting table stats: {e}")
+    except Exception:
+        logger.error("Error getting table stats", exc_info=True)
         return (
             jsonify(
                 {
@@ -583,8 +583,8 @@ def database_maintenance():
                 200,
             )
 
-    except Exception as e:
-        logger.error(f"Error getting maintenance recommendations: {e}")
+    except Exception:
+        logger.error("Error getting maintenance recommendations", exc_info=True)
         return (
             jsonify(
                 {

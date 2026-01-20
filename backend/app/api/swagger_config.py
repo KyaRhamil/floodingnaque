@@ -896,6 +896,8 @@ def init_swagger(app):
             return {"valid": False, "errors": ["Schema not found"]}, 404
 
         errors = _validate_against_schema(data, schema)
-        return {"valid": len(errors) == 0, "errors": errors, "schema_name": schema_name}
+        # Sanitize error messages to prevent XSS when reflecting validation results
+        sanitized_errors = [html.escape(str(err)[:500]) for err in errors]
+        return {"valid": len(errors) == 0, "errors": sanitized_errors, "schema_name": schema_name}
 
     return swagger

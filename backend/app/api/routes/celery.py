@@ -58,8 +58,8 @@ def retrain_model():
             HTTP_OK,
         )
 
-    except Exception as e:
-        logger.error(f"Failed to trigger model retraining [{request_id}]: {str(e)}")
+    except Exception:
+        logger.error(f"Failed to trigger model retraining [{request_id}]", exc_info=True)
         return api_error("TaskTriggerFailed", "Failed to trigger model retraining", HTTP_BAD_REQUEST, request_id)
 
 
