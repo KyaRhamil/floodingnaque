@@ -344,9 +344,7 @@ def _load_model(model_path: Optional[str] = None, force_reload: bool = False, ve
                         "The model file may have been tampered with."
                     )
             else:
-                logger.warning(
-                    f"No checksum in metadata for {model_path}. " "Consider re-training with checksum enabled."
-                )
+                logger.warning("No checksum in metadata for model. Consider re-training with checksum enabled.")
 
         try:
             model = joblib.load(model_path)

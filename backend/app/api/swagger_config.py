@@ -884,20 +884,28 @@ def init_swagger(app):
                     type: string
         """
         req_data = request.get_json()
-        schema_name = req_data.get("schema_name")
+        raw_schema_name = req_data.get("schema_name")
         data = req_data.get("data", {})
 
-        # Sanitize schema_name to prevent XSS
-        if schema_name:
-            schema_name = html.escape(str(schema_name)[:100])
+        # Validate and sanitize schema_name to prevent XSS
+        # Only allow alphanumeric characters and underscores for schema names
+        if raw_schema_name:
+            # Strip any potentially malicious content first
+            safe_schema_name = str(raw_schema_name)[:100]
+            # Only allow safe characters for schema lookup
+            if not all(c.isalnum() or c in "_-" for c in safe_schema_name):
+                return {"valid": False, "errors": ["Invalid schema name format"]}, 400
+        else:
+            return {"valid": False, "errors": ["Schema name is required"]}, 400
 
-        schema = SWAGGER_TEMPLATE.get("components", {}).get("schemas", {}).get(schema_name)
+        schema = SWAGGER_TEMPLATE.get("components", {}).get("schemas", {}).get(safe_schema_name)
         if not schema:
             return {"valid": False, "errors": ["Schema not found"]}, 404
 
         errors = _validate_against_schema(data, schema)
         # Sanitize error messages to prevent XSS when reflecting validation results
         sanitized_errors = [html.escape(str(err)[:500]) for err in errors]
-        return {"valid": len(errors) == 0, "errors": sanitized_errors, "schema_name": schema_name}
+        # Return sanitized schema name in response
+        return {"valid": len(errors) == 0, "errors": sanitized_errors, "schema_name": html.escape(safe_schema_name)}
 
     return swagger

@@ -56,21 +56,21 @@ def generate_api_key() -> str:
 
 def hash_api_key(api_key: str) -> str:
     """
-    Hash an API key for secure storage using HMAC-SHA256.
+    Hash an API key for secure storage using HMAC-SHA384.
 
-    Note: HMAC-SHA256 with a secret key is cryptographically secure for
+    Note: HMAC-SHA384 with a secret key is cryptographically secure for
     API key verification. For password storage, use bcrypt instead.
 
     Args:
         api_key: The API key to hash
 
     Returns:
-        str: HMAC-SHA256 hash of the API key
+        str: HMAC-SHA384 hash of the API key
     """
-    # HMAC-SHA256 with secret salt is secure for API key verification
+    # HMAC-SHA384 with secret salt is secure for API key verification
     # (different from plain SHA-256 which would be weak)
     secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
-    return hmac.new(secret_salt, api_key.encode(), hashlib.sha256).hexdigest()  # nosec B324 - HMAC-SHA256 is secure
+    return hmac.new(secret_salt, api_key.encode(), hashlib.sha384).hexdigest()  # nosec B324 - HMAC-SHA384 is secure
 
 
 def verify_api_key(api_key: str, hashed_key: str) -> bool:

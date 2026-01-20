@@ -35,23 +35,30 @@ def retrain_model():
 
     try:
         data = request.get_json() or {}
-        model_id = data.get("model_id")
-        # Sanitize model_id if provided to prevent XSS
-        if model_id is not None:
-            model_id = html.escape(str(model_id)[:100])
+        raw_model_id = data.get("model_id")
+        # Validate and sanitize model_id to prevent XSS
+        # Only allow alphanumeric characters, dashes, and underscores
+        sanitized_model_id = None
+        if raw_model_id is not None:
+            model_id_str = str(raw_model_id)[:100]
+            if all(c.isalnum() or c in "_-" for c in model_id_str):
+                sanitized_model_id = model_id_str
+            else:
+                return api_error("ValidationError", "Invalid model_id format", HTTP_BAD_REQUEST, request_id)
 
         # Trigger retraining task
-        result = trigger_model_retraining(model_id)
+        result = trigger_model_retraining(sanitized_model_id)
 
+        # Sanitize result data that could come from external sources
         return (
             api_success(
                 "ModelRetrainingTriggered",
                 "Model retraining task queued successfully",
                 {
-                    "task_id": result["task_id"],
-                    "status": result["status"],
-                    "message": result["message"],
-                    "model_id": model_id,
+                    "task_id": html.escape(str(result.get("task_id", "")))[:100],
+                    "status": html.escape(str(result.get("status", "")))[:50],
+                    "message": html.escape(str(result.get("message", "")))[:200],
+                    "model_id": sanitized_model_id,
                 },
                 request_id,
             ),
@@ -59,7 +66,7 @@ def retrain_model():
         )
 
     except Exception:
-        logger.error(f"Failed to trigger model retraining [{request_id}]", exc_info=True)
+        logger.error(f"Failed to trigger model retraining [{request_id}]")
         return api_error("TaskTriggerFailed", "Failed to trigger model retraining", HTTP_BAD_REQUEST, request_id)
 
 

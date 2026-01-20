@@ -395,10 +395,9 @@ def health():
             "external_apis": external_apis,
             "sentry_enabled": is_sentry_enabled(),
         },
+        # System info sanitized to avoid information disclosure
         "system": {
-            "python_version": sys.version.split()[0],
-            "platform": platform.system(),
-            "platform_version": platform.version()[:50] if platform.version() else "unknown",
+            "python_version": ".".join(sys.version.split()[0].split(".")[:2]),  # Major.minor only
         },
     }
 
@@ -406,8 +405,8 @@ def health():
         response["model"] = {
             "loaded": True,
             "type": model_info.get("model_type"),
-            "path": model_info.get("model_path"),
-            "features": model_info.get("features", []),
+            # Don't expose internal file paths
+            "features_count": len(model_info.get("features", [])),
         }
         if model_info.get("metadata"):
             metadata = model_info["metadata"]

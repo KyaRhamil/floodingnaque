@@ -5,6 +5,7 @@ Provides endpoints for accessing tidal data from WorldTides API
 for coastal flood prediction in Parañaque City.
 """
 
+import html
 import logging
 import uuid
 
@@ -22,6 +23,17 @@ def _get_request_id():
     if hasattr(g, "request_id"):
         return g.request_id
     return str(uuid.uuid4())
+
+
+def _sanitize_external_data(data):
+    """Sanitize data from external APIs to prevent XSS."""
+    if isinstance(data, dict):
+        return {k: _sanitize_external_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [_sanitize_external_data(item) for item in data]
+    elif isinstance(data, str):
+        return html.escape(data)
+    return data
 
 
 def _get_worldtides_service():
@@ -200,8 +212,11 @@ def get_tide_prediction():
                 HTTP_BAD_REQUEST,
             )
 
+        # Sanitize external API data to prevent XSS
+        sanitized_data = _sanitize_external_data(tide_data)
+
         return (
-            api_success("TidePrediction", "Tide prediction data retrieved successfully", tide_data, request_id),
+            api_success("TidePrediction", "Tide prediction data retrieved successfully", sanitized_data, request_id),
             HTTP_OK,
         )
 

@@ -112,7 +112,7 @@ def _validate_api_key_format(api_key: str) -> Tuple[bool, str]:
     # Check entropy
     entropy = _calculate_entropy(api_key)
     if entropy < API_KEY_MIN_ENTROPY:
-        logger.warning(f"API key rejected: low entropy (below minimum {API_KEY_MIN_ENTROPY} bits)")
+        logger.warning("API key rejected: insufficient entropy")
         return False, "API key does not meet entropy requirements"
 
     # Check for common weak patterns
@@ -156,18 +156,18 @@ def _verify_api_key_bcrypt(api_key: str, hashed: bytes) -> bool:
         return False
 
 
-def _hash_api_key_sha256(api_key: str) -> str:
+def _hash_api_key_sha384(api_key: str) -> str:
     """
-    Legacy: Hash an API key using HMAC-SHA256 (fallback when bcrypt unavailable).
+    Legacy: Hash an API key using HMAC-SHA384 (fallback when bcrypt unavailable).
 
-    Note: HMAC-SHA256 with a secret key is cryptographically secure for API key
+    Note: HMAC-SHA384 with a secret key is cryptographically secure for API key
     verification. It provides keyed hashing which is resistant to rainbow tables.
     """
-    # HMAC-SHA256 with secret salt is secure for API key verification
+    # HMAC-SHA384 with secret salt is secure for API key verification
     secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
     return hmac.new(
-        secret_salt, api_key.encode("utf-8"), hashlib.sha256
-    ).hexdigest()  # nosec B324 - HMAC-SHA256 is secure
+        secret_salt, api_key.encode("utf-8"), hashlib.sha384
+    ).hexdigest()  # nosec B324 - HMAC-SHA384 is secure
 
 
 def _timing_safe_compare(a: str, b: str) -> bool:
@@ -232,10 +232,10 @@ def get_hashed_api_keys() -> Dict[str, bytes]:
                 _hashed_api_keys[key_id] = _hash_api_key_bcrypt(key)
             logger.info(f"Initialized {len(_hashed_api_keys)} API keys with bcrypt hashing")
         else:
-            # Fallback to SHA-256 (less secure)
+            # Fallback to SHA-384 (still secure)
             _hashed_api_keys = {}
-            _legacy_hashed_keys = {_hash_api_key_sha256(key) for key in valid_keys}
-            logger.warning("Using SHA-256 for API keys (bcrypt not available)")
+            _legacy_hashed_keys = {_hash_api_key_sha384(key) for key in valid_keys}
+            logger.warning("Using SHA-384 for API keys (bcrypt not available)")
 
     return _hashed_api_keys
 
@@ -260,7 +260,7 @@ def revoke_api_key(api_key: str) -> bool:
         bool: True if revoked successfully
     """
     global _revoked_api_keys
-    key_hash = _hash_api_key_sha256(api_key)[:16]  # Use truncated hash as identifier
+    key_hash = _hash_api_key_sha384(api_key)[:16]  # Use truncated hash as identifier
     _revoked_api_keys[key_hash] = time.time()
     logger.info(f"API key revoked: {key_hash[:8]}...")
     return True
@@ -276,7 +276,7 @@ def is_api_key_revoked(api_key: str) -> bool:
     Returns:
         bool: True if revoked
     """
-    key_hash = _hash_api_key_sha256(api_key)[:16]
+    key_hash = _hash_api_key_sha384(api_key)[:16]
     return key_hash in _revoked_api_keys
 
 
@@ -289,7 +289,7 @@ def set_api_key_expiration(api_key: str, expires_at: float) -> None:
         expires_at: Unix timestamp when key expires
     """
     global _api_key_expirations
-    key_hash = _hash_api_key_sha256(api_key)[:16]
+    key_hash = _hash_api_key_sha384(api_key)[:16]
     _api_key_expirations[key_hash] = expires_at
 
 
@@ -303,7 +303,7 @@ def is_api_key_expired(api_key: str) -> bool:
     Returns:
         bool: True if expired
     """
-    key_hash = _hash_api_key_sha256(api_key)[:16]
+    key_hash = _hash_api_key_sha384(api_key)[:16]
 
     if key_hash not in _api_key_expirations:
         # Check environment for default expiration
@@ -462,8 +462,8 @@ def validate_api_key(api_key: str, check_expiration: bool = True, check_revocati
             return False, "Invalid API key"
         return True, ""
     elif _legacy_hashed_keys:
-        # Fallback to SHA-256 comparison
-        hashed_input = _hash_api_key_sha256(api_key)
+        # Fallback to SHA-384 comparison
+        hashed_input = _hash_api_key_sha384(api_key)
         valid = False
         for hashed_key in _legacy_hashed_keys:
             if _timing_safe_compare(hashed_input, hashed_key):
@@ -582,9 +582,11 @@ def require_api_key(f):
         is_valid, error_reason = validate_api_key(api_key)
         if not is_valid:
             failure_count = _record_failed_attempt(ip_address)
+            # Mask IP address for privacy - only show last octet
+            masked_ip = "*.*.*" + ip_address.rsplit(".", 1)[-1] if "." in ip_address else "[masked]"
             logger.warning(
                 f"Invalid API key attempt for {request.method} {request.path} "
-                f"from {ip_address} (reason: {error_reason}, attempts: {failure_count})"
+                f"from {masked_ip} (attempts: {failure_count})"
             )
 
             # Don't reveal specific reason in response (info leakage)
@@ -599,7 +601,7 @@ def require_api_key(f):
 
         # Set authentication context
         g.authenticated = True
-        g.api_key_hash = _hash_api_key_sha256(api_key)[:8]  # Store truncated hash for logging
+        g.api_key_hash = _hash_api_key_sha384(api_key)[:8]  # Store truncated hash for logging
 
         return f(*args, **kwargs)
 
@@ -628,7 +630,7 @@ def optional_api_key(f):
             is_valid, _ = validate_api_key(api_key)
             if is_valid:
                 g.authenticated = True
-                g.api_key_hash = _hash_api_key_sha256(api_key)[:8]
+                g.api_key_hash = _hash_api_key_sha384(api_key)[:8]
 
         return f(*args, **kwargs)
 

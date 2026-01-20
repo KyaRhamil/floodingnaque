@@ -157,15 +157,14 @@ def ingest_data(lat=None, lon=None):
 
                 # Check for errors in Weatherstack response
                 if "error" in weatherstack_data:
-                    logger.warning(
-                        f"Weatherstack API error: {weatherstack_data.get('error', {}).get('info', 'Unknown error')}"
-                    )
+                    # Don't log external API error details - may contain sensitive info
+                    logger.warning("Weatherstack API returned an error response")
                 elif "current" in weatherstack_data:
                     # Weatherstack provides precipitation in 'precip' field (mm)
                     precip_value = weatherstack_data["current"].get("precip", 0)
                     if precip_value is not None:
                         precipitation = float(precip_value)
-                        logger.info(f"Got precipitation from Weatherstack: {precipitation} mm")
+                        logger.info("Retrieved precipitation data from Weatherstack")
         except CircuitOpenError:
             logger.warning("Weatherstack circuit breaker open (using fallback)")
         except requests.exceptions.RequestException:
@@ -178,10 +177,10 @@ def ingest_data(lat=None, lon=None):
         try:
             if "rain" in owm_data and "3h" in owm_data["rain"]:
                 precipitation = owm_data["rain"]["3h"] / 3.0  # Convert 3h to hourly rate
-                logger.info(f"Got precipitation from OpenWeatherMap: {precipitation} mm/h")
+                logger.info("Retrieved precipitation data from OpenWeatherMap (3h)")
             elif "rain" in owm_data and "1h" in owm_data["rain"]:
                 precipitation = owm_data["rain"]["1h"]
-                logger.info(f"Got precipitation from OpenWeatherMap: {precipitation} mm/h")
+                logger.info("Retrieved precipitation data from OpenWeatherMap (1h)")
         except (KeyError, TypeError):
             logger.debug("No rain data in OpenWeatherMap response")
 

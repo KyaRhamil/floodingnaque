@@ -391,7 +391,7 @@ def get_tier_limits(tier_name: str) -> RateLimitTier:
     """
     tier = RATE_LIMIT_TIERS.get(tier_name.lower())
     if not tier:
-        logger.warning(f"Unknown tier '{tier_name}', defaulting to free tier")
+        logger.warning("Unknown tier requested, defaulting to free tier")
         return RATE_LIMIT_TIERS["free"]
 
     return tier
