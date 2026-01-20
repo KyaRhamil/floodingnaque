@@ -5,6 +5,7 @@ Provides live streaming of flood alerts to connected clients.
 Uses SSE protocol for efficient one-way real-time communication.
 """
 
+import html
 import json
 import logging
 import queue
@@ -283,8 +284,9 @@ def test_alert_broadcast():
 
     data = request.get_json() or {}
     risk_level = data.get("risk_level", 1)
-    message = data.get("message", "Test flood alert")
-    location = data.get("location", "Test Location")
+    # Sanitize user-provided strings to prevent XSS
+    message = html.escape(str(data.get("message", "Test flood alert"))[:200])
+    location = html.escape(str(data.get("location", "Test Location"))[:100])
 
     risk_labels = {0: "Safe", 1: "Alert", 2: "Critical"}
 

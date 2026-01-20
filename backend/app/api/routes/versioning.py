@@ -100,7 +100,7 @@ def list_model_versions():
     except Exception as e:
         request_id = getattr(request, "request_id", "unknown")
         logger.error(f"Error listing versions [{request_id}]: {str(e)}")
-        return jsonify({"error": str(e), "request_id": request_id}), 500
+        return jsonify({"error": "Failed to list model versions", "request_id": request_id}), 500
 
 
 @versioning_bp.route("/api/models/versions/current", methods=["GET"])
@@ -130,7 +130,7 @@ def get_current_version():
 
     except Exception as e:
         logger.error(f"Error getting current version: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to get current version"}), 500
 
 
 @versioning_bp.route("/api/models/versions/next", methods=["GET"])
@@ -178,7 +178,7 @@ def get_next_version():
 
     except Exception as e:
         logger.error(f"Error calculating next version: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to calculate next version"}), 500
 
 
 @versioning_bp.route("/api/models/versions/<version>/promote", methods=["POST"])
@@ -251,7 +251,7 @@ def promote_version(version: str):
 
     except Exception as e:
         logger.error(f"Error promoting version {version}: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to promote version"}), 500
 
 
 # =============================================================================
@@ -296,7 +296,7 @@ def list_ab_tests():
 
     except Exception as e:
         logger.error(f"Error listing A/B tests: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to list A/B tests"}), 500
 
 
 @versioning_bp.route("/api/ab-tests", methods=["POST"])
@@ -370,10 +370,10 @@ def create_ab_test():
         )
 
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "Invalid request parameters"}), 400
     except Exception as e:
         logger.error(f"Error creating A/B test: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to create A/B test"}), 500
 
 
 @versioning_bp.route("/api/ab-tests/<test_id>", methods=["GET"])
@@ -405,7 +405,7 @@ def get_ab_test(test_id: str):
 
     except Exception as e:
         logger.error(f"Error getting A/B test {test_id}: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to get A/B test"}), 500
 
 
 @versioning_bp.route("/api/ab-tests/<test_id>/start", methods=["POST"])
@@ -456,7 +456,7 @@ def start_ab_test(test_id: str):
 
     except Exception as e:
         logger.error(f"Error starting A/B test {test_id}: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to start A/B test"}), 500
 
 
 @versioning_bp.route("/api/ab-tests/<test_id>/conclude", methods=["POST"])
@@ -499,10 +499,10 @@ def conclude_ab_test(test_id: str):
         )
 
     except ValueError as e:
-        return jsonify({"error": str(e)}), 404
+        return jsonify({"error": "Test not found or invalid parameters"}), 404
     except Exception as e:
         logger.error(f"Error concluding A/B test {test_id}: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to conclude A/B test"}), 500
 
 
 @versioning_bp.route("/api/ab-tests/<test_id>/feedback", methods=["POST"])
@@ -539,7 +539,7 @@ def record_ab_feedback(test_id: str):
 
     except Exception as e:
         logger.error(f"Error recording A/B feedback: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to record feedback"}), 500
 
 
 # =============================================================================
@@ -567,7 +567,7 @@ def get_performance():
 
     except Exception as e:
         logger.error(f"Error getting performance: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to get performance metrics"}), 500
 
 
 @versioning_bp.route("/api/models/performance/history", methods=["GET"])
@@ -599,7 +599,7 @@ def get_performance_history():
 
     except Exception as e:
         logger.error(f"Error getting performance history: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to get performance history"}), 500
 
 
 @versioning_bp.route("/api/models/performance/thresholds", methods=["GET"])
@@ -625,7 +625,7 @@ def get_thresholds():
 
     except Exception as e:
         logger.error(f"Error getting thresholds: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to get thresholds"}), 500
 
 
 @versioning_bp.route("/api/models/performance/thresholds", methods=["PUT"])
@@ -690,7 +690,7 @@ def update_thresholds():
 
     except Exception as e:
         logger.error(f"Error updating thresholds: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to update thresholds"}), 500
 
 
 @versioning_bp.route("/api/models/rollback", methods=["POST"])
@@ -750,10 +750,10 @@ def manual_rollback():
         )
 
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "Invalid version format"}), 400
     except Exception as e:
         logger.error(f"Error executing rollback: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to execute rollback"}), 500
 
 
 @versioning_bp.route("/api/models/rollback/history", methods=["GET"])
@@ -785,7 +785,7 @@ def get_rollback_history():
 
     except Exception as e:
         logger.error(f"Error getting rollback history: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to get rollback history"}), 500
 
 
 @versioning_bp.route("/api/models/feedback", methods=["POST"])
@@ -819,4 +819,4 @@ def record_prediction_feedback():
 
     except Exception as e:
         logger.error(f"Error recording feedback: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to record feedback"}), 500

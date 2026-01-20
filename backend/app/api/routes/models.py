@@ -138,7 +138,7 @@ def list_models():
     except Exception as e:
         request_id = getattr(request, "request_id", "unknown")
         logger.error(f"Error listing models [{request_id}]: {str(e)}")
-        return jsonify({"error": str(e), "request_id": request_id}), 500
+        return jsonify({"error": "Failed to list models", "request_id": request_id}), 500
 
 
 @models_bp.route("/api/docs", methods=["GET"])

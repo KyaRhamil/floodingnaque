@@ -162,7 +162,7 @@ def performance_dashboard():
             jsonify(
                 {
                     "error": "PerformanceDashboardError",
-                    "message": str(e),
+                    "message": "Failed to generate performance dashboard",
                     "request_id": request_id,
                 }
             ),
@@ -233,7 +233,7 @@ def get_response_times():
             jsonify(
                 {
                     "error": "ResponseTimeError",
-                    "message": str(e),
+                    "message": "Failed to retrieve response times",
                     "request_id": request_id,
                 }
             ),
@@ -269,7 +269,7 @@ def cache_statistics():
             jsonify(
                 {
                     "error": "CacheStatsError",
-                    "message": str(e),
+                    "message": "Failed to retrieve cache statistics",
                     "request_id": request_id,
                 }
             ),
@@ -307,7 +307,7 @@ def trigger_cache_warming():
             jsonify(
                 {
                     "error": "CacheWarmError",
-                    "message": str(e),
+                    "message": "Failed to warm cache",
                     "request_id": request_id,
                 }
             ),
@@ -354,7 +354,7 @@ def slow_query_log():
             jsonify(
                 {
                     "error": "SlowQueryError",
-                    "message": str(e),
+                    "message": "Failed to retrieve slow queries",
                     "request_id": request_id,
                 }
             ),
@@ -394,7 +394,7 @@ def clear_slow_queries():
             jsonify(
                 {
                     "error": "ClearSlowQueryError",
-                    "message": str(e),
+                    "message": "Failed to clear slow queries",
                     "request_id": request_id,
                 }
             ),
@@ -434,7 +434,7 @@ def database_performance():
             jsonify(
                 {
                     "error": "DatabasePerfError",
-                    "message": str(e),
+                    "message": "Failed to retrieve database performance",
                     "request_id": request_id,
                 }
             ),
@@ -466,7 +466,7 @@ def database_health():
             jsonify(
                 {
                     "error": "HealthCheckError",
-                    "message": str(e),
+                    "message": "Failed to check database health",
                     "request_id": request_id,
                 }
             ),
@@ -508,7 +508,7 @@ def database_index_stats():
             jsonify(
                 {
                     "error": "IndexStatsError",
-                    "message": str(e),
+                    "message": "Failed to retrieve index statistics",
                     "request_id": request_id,
                 }
             ),
@@ -548,7 +548,7 @@ def database_table_stats():
             jsonify(
                 {
                     "error": "TableStatsError",
-                    "message": str(e),
+                    "message": "Failed to retrieve table statistics",
                     "request_id": request_id,
                 }
             ),
@@ -589,7 +589,7 @@ def database_maintenance():
             jsonify(
                 {
                     "error": "MaintenanceError",
-                    "message": str(e),
+                    "message": "Failed to get maintenance recommendations",
                     "request_id": request_id,
                 }
             ),

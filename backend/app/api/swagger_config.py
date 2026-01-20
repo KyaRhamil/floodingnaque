@@ -888,7 +888,7 @@ def init_swagger(app):
 
         schema = SWAGGER_TEMPLATE.get("components", {}).get("schemas", {}).get(schema_name)
         if not schema:
-            return {"valid": False, "errors": [f"Schema {schema_name} not found"]}, 404
+            return {"valid": False, "errors": ["Schema not found"]}, 404
 
         errors = _validate_against_schema(data, schema)
         return {"valid": len(errors) == 0, "errors": errors, "schema_name": schema_name}

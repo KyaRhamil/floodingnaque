@@ -327,4 +327,4 @@ def csp_report_summary():
 
     except Exception as e:
         logger.error(f"Error reading CSP report summary: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to read CSP reports"}), 500

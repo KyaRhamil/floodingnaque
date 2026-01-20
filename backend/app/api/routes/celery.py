@@ -4,6 +4,8 @@ Celery Task Management Routes.
 Provides endpoints for managing and monitoring background tasks.
 """
 
+import html
+
 from app.services.celery_app import celery_app
 from app.services.tasks import get_task_status, trigger_data_processing, trigger_model_retraining
 from app.utils.api_constants import HTTP_BAD_REQUEST, HTTP_NOT_FOUND, HTTP_OK
@@ -34,6 +36,9 @@ def retrain_model():
     try:
         data = request.get_json() or {}
         model_id = data.get("model_id")
+        # Sanitize model_id if provided to prevent XSS
+        if model_id is not None:
+            model_id = html.escape(str(model_id)[:100])
 
         # Trigger retraining task
         result = trigger_model_retraining(model_id)
