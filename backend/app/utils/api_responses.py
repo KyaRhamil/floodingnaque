@@ -8,7 +8,7 @@ import html
 import logging
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from flask import Response, g, jsonify
 
@@ -60,13 +60,66 @@ def _sanitize_error_message(message: str) -> str:
     return sanitized
 
 
-def _get_request_context() -> Dict[str, str]:
+def _sanitize_details(details: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Sanitize details dictionary to prevent information exposure.
+
+    Removes or sanitizes values that might contain sensitive information
+    such as exception messages, stack traces, or system paths.
+    """
+    if not details:
+        return details
+
+    # Keys that are known to potentially contain exception info
+    sensitive_keys = {"error", "exception", "traceback", "stack_trace", "error_type", "import_error"}
+
+    sanitized = {}
+    for key, value in details.items():
+        key_lower = key.lower()
+
+        # Check if key suggests exception/error content
+        if key_lower in sensitive_keys or "error" in key_lower or "exception" in key_lower:
+            # Replace with generic message
+            if isinstance(value, str):
+                sanitized[key] = "Error details logged server-side"
+            elif isinstance(value, dict):
+                sanitized[key] = {"message": "Error details logged server-side"}
+            else:
+                sanitized[key] = "Error details logged server-side"
+        elif isinstance(value, str):
+            # Sanitize string values
+            sanitized[key] = _sanitize_error_message(value)
+        elif isinstance(value, dict):
+            # Recursively sanitize nested dicts
+            sanitized[key] = _sanitize_details(value)
+        elif isinstance(value, list):
+            # Sanitize list items
+            sanitized[key] = [
+                (
+                    _sanitize_error_message(item)
+                    if isinstance(item, str)
+                    else _sanitize_details(item) if isinstance(item, dict) else item
+                )
+                for item in value
+            ]
+        else:
+            # Pass through non-string primitive values
+            sanitized[key] = value
+
+    return sanitized
+
+
+def _get_request_context() -> Dict[str, Optional[str]]:
     """Get request and trace IDs from Flask g context."""
     return {"request_id": getattr(g, "request_id", None), "trace_id": getattr(g, "trace_id", None)}
 
 
 def api_success(
-    data: Any = None, message: str = None, status_code: int = 200, request_id: str = None, meta: Dict[str, Any] = None
+    data: Any = None,
+    message: Optional[str] = None,
+    status_code: int = 200,
+    request_id: Optional[str] = None,
+    meta: Optional[Dict[str, Any]] = None,
 ) -> tuple:
     """
     Create a standardized success response.
@@ -107,10 +160,10 @@ def api_error(
     error_code: str,
     message: str,
     status_code: int = 400,
-    request_id: str = None,
-    details: Dict[str, Any] = None,
-    errors: list = None,
-    help_url: str = None,
+    request_id: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
+    errors: Optional[list] = None,
+    help_url: Optional[str] = None,
 ) -> tuple:
     """
     Create a standardized RFC 7807 error response.
@@ -153,7 +206,8 @@ def api_error(
         response["error"]["trace_id"] = trace_id
 
     if details:
-        response["error"]["details"] = details
+        # Sanitize details to prevent information exposure
+        response["error"]["details"] = _sanitize_details(details)
 
     if errors:
         response["error"]["errors"] = errors
@@ -170,7 +224,7 @@ def api_error(
 
 
 def api_error_from_exception(
-    exception: "AppException", request_id: str = None, include_debug: bool = False
+    exception: "AppException", request_id: Optional[str] = None, include_debug: bool = False
 ) -> Tuple[Response, int]:
     """
     Create a standardized RFC 7807 error response from an AppException.
@@ -188,6 +242,12 @@ def api_error_from_exception(
     response = exception.to_dict(include_debug=include_debug)
     response["error"]["request_id"] = request_id or ctx.get("request_id")
 
+    # Sanitize any details that might be included
+    if "debug" in response.get("error", {}):
+        response["error"]["debug"] = _sanitize_details(response["error"]["debug"])
+    if "details" in response.get("error", {}):
+        response["error"]["details"] = _sanitize_details(response["error"]["details"])
+
     if ctx.get("trace_id"):
         response["error"]["trace_id"] = ctx["trace_id"]
 
@@ -203,8 +263,9 @@ def api_error_from_exception(
     resp = jsonify(response)
 
     # Add Retry-After header if applicable
-    if hasattr(exception, "retry_after") and exception.retry_after:
-        resp.headers["Retry-After"] = str(exception.retry_after)
+    retry_after = getattr(exception, "retry_after", None)
+    if retry_after:
+        resp.headers["Retry-After"] = str(retry_after)
 
     return resp, exception.status_code
 
@@ -241,7 +302,10 @@ def _get_error_title(error_code: str) -> str:
 
 
 def api_created(
-    data: Any = None, message: str = "Resource created successfully", location: str = None, request_id: str = None
+    data: Any = None,
+    message: str = "Resource created successfully",
+    location: Optional[str] = None,
+    request_id: Optional[str] = None,
 ) -> tuple:
     """
     Create a standardized response for created resources (201 Created).
@@ -272,7 +336,9 @@ def api_created(
     return jsonify(response), 201, headers
 
 
-def api_accepted(data: Any = None, message: str = "Request accepted for processing", request_id: str = None) -> tuple:
+def api_accepted(
+    data: Any = None, message: str = "Request accepted for processing", request_id: Optional[str] = None
+) -> tuple:
     """
     Create a standardized response for accepted requests (202 Accepted).
 
@@ -307,7 +373,7 @@ def api_no_content() -> tuple:
     return "", 204
 
 
-def api_paginated(data: list, page: int, page_size: int, total: int, request_id: str = None) -> tuple:
+def api_paginated(data: list, page: int, page_size: int, total: int, request_id: Optional[str] = None) -> tuple:
     """
     Create a standardized paginated response.
 

@@ -157,17 +157,15 @@ def performance_dashboard():
         return jsonify(dashboard), 200
 
     except Exception:
+        # Log the full exception details server-side only (not exposed to client)
         logger.error("Error generating performance dashboard", exc_info=True)
-        return (
-            jsonify(
-                {
-                    "error": "PerformanceDashboardError",
-                    "message": "Failed to generate performance dashboard",
-                    "request_id": request_id,
-                }
-            ),
-            500,
-        )
+        # Return a generic error message without any exception details
+        error_response = {
+            "error": "PerformanceDashboardError",
+            "message": "Failed to generate performance dashboard",
+            "request_id": request_id,
+        }
+        return jsonify(error_response), 500
 
 
 @performance_bp.route("/response-times", methods=["GET"])

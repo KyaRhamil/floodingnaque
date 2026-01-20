@@ -280,8 +280,9 @@ def get_cache_stats() -> dict:
             "used_memory_peak_human": info.get("used_memory_peak_human", "unknown"),
             "keys_count": keys_count,
         }
-    except Exception as e:
-        return {"enabled": True, "connected": False, "error": str(e)}
+    except Exception:
+        logger.error("Error getting cache stats", exc_info=True)
+        return {"enabled": True, "connected": False, "error": "Failed to retrieve cache statistics"}
 
 
 # ============================================================================
@@ -374,7 +375,7 @@ def warm_cache(warmers: Optional[list] = None) -> dict:
             results["failed"].append(
                 {
                     "name": name,
-                    "reason": str(e),
+                    "reason": "Cache warming operation failed",
                 }
             )
 

@@ -205,17 +205,24 @@ def get_valid_api_keys() -> Set[str]:
         valid_keys.add(stripped_key)
         # Clear sensitive variable immediately after use
         stripped_key = None  # nosec - intentionally clearing sensitive data
-    # Log summary without exposing any key data
-    if rejected_count > 0:
-        logger.warning(
-            "API keys rejected: %d of %d keys below minimum %d characters. "
-            'Generate secure keys with: python -c "import secrets; print(secrets.token_urlsafe(32))"',
-            rejected_count,
-            key_count,
-            MIN_API_KEY_LENGTH,
-        )
+
+    # Delegate logging to separate function to isolate from sensitive data context
+    _log_key_validation_summary(rejected_count, key_count)
 
     return valid_keys
+
+
+def _log_key_validation_summary(rejected: int, total: int) -> None:
+    """Log API key validation summary without access to sensitive data."""
+    if rejected > 0:
+        # This function has no access to actual key values - only counts
+        logger.warning(
+            "API key configuration: %d of %d keys rejected (below minimum length %d). "
+            "See documentation for key generation guidelines.",
+            rejected,
+            total,
+            MIN_API_KEY_LENGTH,
+        )
 
 
 def get_hashed_api_keys() -> Dict[str, bytes]:

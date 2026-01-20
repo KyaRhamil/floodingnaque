@@ -333,8 +333,15 @@ def validate_json_schema(schema: Dict[str, Any]):
                 field_type = field_schema.get("type", "any")
                 try:
                     value = _validate_field_type(value, field_type, field_name)
-                except ValidationError as e:
-                    errors.append({"field": field_name, "message": str(e), "code": "type_error"})
+                except ValidationError:
+                    # Use a safe, generic error message instead of exception details
+                    errors.append(
+                        {
+                            "field": field_name,
+                            "message": f"Invalid type for {field_name}, expected {field_type}",
+                            "code": "type_error",
+                        }
+                    )
                     continue
 
                 # String-specific validations
@@ -344,8 +351,15 @@ def validate_json_schema(schema: Dict[str, Any]):
                         check_patterns = field_schema.get("check_patterns", [])
                         try:
                             value = sanitize_input(value, check_patterns=check_patterns)
-                        except ValidationError as e:
-                            errors.append({"field": field_name, "message": str(e), "code": "sanitization_failed"})
+                        except ValidationError:
+                            # Use a safe, generic error message instead of exception details
+                            errors.append(
+                                {
+                                    "field": field_name,
+                                    "message": f"Input sanitization failed for {field_name}",
+                                    "code": "sanitization_failed",
+                                }
+                            )
                             continue
 
                     # Length checks

@@ -378,10 +378,10 @@ def explain_query(session: Session, query: Query, analyze: bool = True) -> Dict[
                 }
 
         return {"error": "No plan returned"}
-    except Exception as e:
-        logger.error(f"Error running EXPLAIN: {e}")
+    except Exception:
+        logger.error("Error running EXPLAIN", exc_info=True)
         # Fallback for SQLite or non-PostgreSQL databases
-        return {"error": str(e), "hint": "EXPLAIN ANALYZE is PostgreSQL-specific"}
+        return {"error": "Query analysis unavailable", "hint": "EXPLAIN ANALYZE is PostgreSQL-specific"}
 
 
 def _extract_index_from_plan(plan: Dict) -> Optional[str]:
@@ -489,9 +489,9 @@ def get_index_usage_stats(session: Session) -> List[Dict[str, Any]]:
             }
             for row in result
         ]
-    except Exception as e:
-        logger.error(f"Error getting index stats: {e}")
-        return [{"error": str(e)}]
+    except Exception:
+        logger.error("Error getting index stats", exc_info=True)
+        return [{"error": "Failed to retrieve index statistics"}]
 
 
 def get_unused_indexes(session: Session, min_table_scans: int = 100) -> List[Dict[str, Any]]:
@@ -541,9 +541,9 @@ def get_unused_indexes(session: Session, min_table_scans: int = 100) -> List[Dic
             }
             for row in result
         ]
-    except Exception as e:
-        logger.error(f"Error finding unused indexes: {e}")
-        return [{"error": str(e)}]
+    except Exception:
+        logger.error("Error finding unused indexes", exc_info=True)
+        return [{"error": "Failed to find unused indexes"}]
 
 
 def get_table_statistics(session: Session) -> List[Dict[str, Any]]:
@@ -604,9 +604,9 @@ def get_table_statistics(session: Session) -> List[Dict[str, Any]]:
             }
             for row in result
         ]
-    except Exception as e:
-        logger.error(f"Error getting table stats: {e}")
-        return [{"error": str(e)}]
+    except Exception:
+        logger.error("Error getting table stats", exc_info=True)
+        return [{"error": "Failed to retrieve table statistics"}]
 
 
 # ============================================================================
@@ -699,8 +699,9 @@ def get_database_health(session: Session) -> Dict[str, Any]:
             if health["status"] == "healthy":
                 health["status"] = "warning"
             health["recommendations"].append("Connection pool usage is high. Monitor for potential bottlenecks.")
-    except Exception as e:
-        health["checks"]["connection_pool"] = {"error": str(e)}
+    except Exception:
+        logger.error("Error checking connection pool health", exc_info=True)
+        health["checks"]["connection_pool"] = {"error": "Unable to check connection pool status"}
         health["status"] = "error"
 
     # 2. Query cache health
@@ -713,8 +714,9 @@ def get_database_health(session: Session) -> Dict[str, Any]:
             health["recommendations"].append(
                 f"Query cache hit rate is {hit_rate}%. Consider increasing cache TTL or reviewing query patterns."
             )
-    except Exception as e:
-        health["checks"]["query_cache"] = {"error": str(e)}
+    except Exception:
+        logger.error("Error checking query cache health", exc_info=True)
+        health["checks"]["query_cache"] = {"error": "Unable to check query cache status"}
 
     # 3. Slow queries
     try:
@@ -730,8 +732,9 @@ def get_database_health(session: Session) -> Dict[str, Any]:
             health["recommendations"].append(
                 f"{slow_query_count} slow queries detected. Review /api/performance/slow-queries for details."
             )
-    except Exception as e:
-        health["checks"]["slow_queries"] = {"error": str(e)}
+    except Exception:
+        logger.error("Error checking slow queries", exc_info=True)
+        health["checks"]["slow_queries"] = {"error": "Unable to check slow query status"}
 
     # 4. Database connectivity (simple query)
     try:
@@ -748,8 +751,9 @@ def get_database_health(session: Session) -> Dict[str, Any]:
             health["recommendations"].append(
                 f"Database latency is {latency_ms:.0f}ms. Consider optimizing network or using connection pooling."
             )
-    except Exception as e:
-        health["checks"]["connectivity"] = {"status": "disconnected", "error": str(e)}
+    except Exception:
+        logger.error("Database connectivity check failed", exc_info=True)
+        health["checks"]["connectivity"] = {"status": "disconnected", "error": "Unable to connect to database"}
         health["status"] = "critical"
 
     # 5. Table statistics (PostgreSQL only)
@@ -766,8 +770,9 @@ def get_database_health(session: Session) -> Dict[str, Any]:
                 health["recommendations"].append(
                     f"{len(tables_needing_vacuum)} tables have high dead row ratios. Consider running VACUUM ANALYZE."
                 )
-    except Exception as e:
-        health["checks"]["tables"] = {"error": str(e)}
+    except Exception:
+        logger.error("Error checking table statistics", exc_info=True)
+        health["checks"]["tables"] = {"error": "Unable to check table statistics"}
 
     return health
 
@@ -811,8 +816,11 @@ def run_maintenance_recommendations(session: Session) -> List[str]:
         if not recommendations:
             recommendations.append("-- Database is in good health. No maintenance required.")
 
-    except Exception as e:
-        recommendations.append(f"-- Error analyzing database: {str(e)}")
+    except Exception:
+        # Log full error details server-side only
+        logger.error("Error analyzing database for maintenance", exc_info=True)
+        # Return generic message to avoid exposing exception details
+        recommendations.append("-- Error analyzing database: Unable to complete analysis")
 
     return recommendations
 

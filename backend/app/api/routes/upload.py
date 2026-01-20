@@ -58,6 +58,40 @@ def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _sanitize_error_messages(errors: List[str], max_errors: int = 50) -> List[str]:
+    """
+    Sanitize error messages to prevent information exposure.
+
+    Ensures only safe, generic error messages are returned to clients.
+    Truncates to max_errors to limit response size.
+    """
+    # Define allowed safe message patterns
+    safe_patterns = [
+        "Row ",
+        "Data validation failed",
+        "CSV parsing error",
+        "Excel parsing error",
+        "Missing required columns",
+        "Maximum row limit",
+        "Invalid CSV format",
+        "Invalid file format",
+        "is empty",
+        "has no headers",
+    ]
+
+    sanitized = []
+    for error in errors[:max_errors]:
+        # Check if error matches safe patterns
+        is_safe = any(pattern in error for pattern in safe_patterns)
+        if is_safe:
+            sanitized.append(error)
+        else:
+            # Replace with generic message for unknown error patterns
+            sanitized.append("Data validation error")
+
+    return sanitized
+
+
 def parse_csv_content(content: str) -> Tuple[List[Dict[str, Any]], List[str]]:
     """
     Parse CSV content and validate rows.
@@ -92,11 +126,13 @@ def parse_csv_content(content: str) -> Tuple[List[Dict[str, Any]], List[str]]:
                 parsed_row = _parse_row(row, header_map, row_num)
                 if parsed_row:
                     valid_rows.append(parsed_row)
-            except ValueError as e:
-                errors.append(f"Row {row_num}: {str(e)}")
+            except ValueError:
+                # Use generic message to avoid exposing exception details
+                errors.append(f"Row {row_num}: Data validation failed")
 
-    except csv.Error as e:
-        errors.append(f"CSV parsing error: {str(e)}")
+    except csv.Error:
+        # Use generic message to avoid exposing exception details
+        errors.append("CSV parsing error: Invalid CSV format")
 
     return valid_rows, errors
 
@@ -226,13 +262,15 @@ def parse_excel_content(file_content: bytes) -> Tuple[List[Dict[str, Any]], List
                 parsed_row = _parse_excel_row(row, row_num + 2)  # +2 for 1-indexing and header
                 if parsed_row:
                     valid_rows.append(parsed_row)
-            except ValueError as e:
-                errors.append(f"Row {row_num + 2}: {str(e)}")
+            except ValueError:
+                # Use generic message to avoid exposing exception details
+                errors.append(f"Row {row_num + 2}: Data validation failed")
 
     except ImportError:
         errors.append("Excel processing requires pandas and openpyxl. Install with: pip install pandas openpyxl")
-    except Exception as e:
-        errors.append(f"Excel parsing error: {str(e)}")
+    except Exception:
+        # Use generic message to avoid exposing exception details
+        errors.append("Excel parsing error: Invalid file format or corrupted data")
 
     return valid_rows, errors
 
@@ -390,7 +428,11 @@ def upload_csv():
 
         if not valid_rows and errors:
             return api_error(
-                "ValidationError", "No valid rows found", HTTP_BAD_REQUEST, request_id, details={"errors": errors}
+                "ValidationError",
+                "No valid rows found",
+                HTTP_BAD_REQUEST,
+                request_id,
+                details={"errors": _sanitize_error_messages(errors)},
             )
 
         if errors and not skip_errors:
@@ -399,7 +441,7 @@ def upload_csv():
                 "Validation errors found",
                 HTTP_BAD_REQUEST,
                 request_id,
-                details={"errors": errors, "valid_rows": len(valid_rows)},
+                details={"errors": _sanitize_error_messages(errors), "valid_rows": len(valid_rows)},
             )
 
         # Insert valid rows into database
@@ -441,7 +483,7 @@ def upload_csv():
                         "total_rows_processed": len(valid_rows) + len(errors),
                         "rows_inserted": inserted_count,
                         "rows_skipped": len(errors),
-                        "errors": errors if skip_errors and errors else [],
+                        "errors": _sanitize_error_messages(errors) if skip_errors and errors else [],
                     },
                     "request_id": request_id,
                 }
@@ -527,7 +569,11 @@ def upload_excel():
 
         if not valid_rows and errors:
             return api_error(
-                "ValidationError", "No valid rows found", HTTP_BAD_REQUEST, request_id, details={"errors": errors}
+                "ValidationError",
+                "No valid rows found",
+                HTTP_BAD_REQUEST,
+                request_id,
+                details={"errors": _sanitize_error_messages(errors)},
             )
 
         if errors and not skip_errors:
@@ -536,7 +582,7 @@ def upload_excel():
                 "Validation errors found",
                 HTTP_BAD_REQUEST,
                 request_id,
-                details={"errors": errors, "valid_rows": len(valid_rows)},
+                details={"errors": _sanitize_error_messages(errors), "valid_rows": len(valid_rows)},
             )
 
         # Insert valid rows
@@ -578,7 +624,7 @@ def upload_excel():
                         "total_rows_processed": len(valid_rows) + len(errors),
                         "rows_inserted": inserted_count,
                         "rows_skipped": len(errors),
-                        "errors": errors if skip_errors and errors else [],
+                        "errors": _sanitize_error_messages(errors) if skip_errors and errors else [],
                     },
                     "request_id": request_id,
                 }
@@ -688,7 +734,7 @@ def validate_upload():
                         "total_rows": len(valid_rows) + len(errors),
                         "valid_rows": len(valid_rows),
                         "invalid_rows": len(errors),
-                        "errors": errors[:50],  # Limit errors to first 50
+                        "errors": _sanitize_error_messages(errors),  # Sanitize to prevent info exposure
                         "errors_truncated": len(errors) > 50,
                     },
                     "request_id": request_id,
