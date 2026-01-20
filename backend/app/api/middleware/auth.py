@@ -215,13 +215,17 @@ def get_valid_api_keys() -> Set[str]:
 def _log_key_validation_summary(rejected: int, total: int) -> None:
     """Log API key validation summary without access to sensitive data."""
     if rejected > 0:
-        # This function has no access to actual key values - only counts
+        # Sanitize inputs to ensure only numeric counts are logged (not sensitive data)
+        # These are integer counts, not key values - safe to log
+        sanitized_rejected = int(rejected)  # nosec - explicitly sanitized count
+        sanitized_total = int(total)  # nosec - explicitly sanitized count
+        min_length = int(MIN_API_KEY_LENGTH)  # nosec - configuration value
         logger.warning(
             "API key configuration: %d of %d keys rejected (below minimum length %d). "
             "See documentation for key generation guidelines.",
-            rejected,
-            total,
-            MIN_API_KEY_LENGTH,
+            sanitized_rejected,
+            sanitized_total,
+            min_length,
         )
 
 

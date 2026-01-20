@@ -229,24 +229,40 @@ def api_error_from_exception(
     """
     Create a standardized RFC 7807 error response from an AppException.
 
+    Note: Debug details are NEVER included in client responses to prevent
+    information disclosure. Stack traces and detailed error info are logged
+    server-side only.
+
     Args:
         exception: The AppException instance
         request_id: Request tracking ID (auto-detected if None)
-        include_debug: Whether to include debug details
+        include_debug: Deprecated - debug details are never sent to clients
 
     Returns:
         Tuple of (Flask JSON response, status code)
     """
     ctx = _get_request_context()
 
-    response = exception.to_dict(include_debug=include_debug)
+    # Log full exception details server-side for debugging
+    # This keeps sensitive info in logs, not in client responses
+    if include_debug and exception.details:
+        logger.debug(
+            f"Exception details (server-side only): {exception.error_code}",
+            extra={"exception_details": exception.details},
+        )
+
+    # SECURITY: Never include debug details in client response to prevent
+    # stack trace exposure (CWE-209: Information Exposure Through Error Message)
+    response = exception.to_dict(include_debug=False)
     response["error"]["request_id"] = request_id or ctx.get("request_id")
 
-    # Sanitize any details that might be included
-    if "debug" in response.get("error", {}):
-        response["error"]["debug"] = _sanitize_details(response["error"]["debug"])
-    if "details" in response.get("error", {}):
-        response["error"]["details"] = _sanitize_details(response["error"]["details"])
+    # Sanitize the error message itself
+    if "detail" in response.get("error", {}):
+        response["error"]["detail"] = _sanitize_error_message(response["error"]["detail"])
+
+    # Remove any debug/details that might have been added
+    response["error"].pop("debug", None)
+    response["error"].pop("details", None)
 
     if ctx.get("trace_id"):
         response["error"]["trace_id"] = ctx["trace_id"]
