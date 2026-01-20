@@ -174,8 +174,14 @@ def predict():
         try:
             validated_data = InputValidator.validate_prediction_input(input_data)
         except ValidationError as e:
-            logger.warning(f"Input validation failed [{request_id}]: {str(e)}")
-            return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+            logger.warning(f"Input validation failed [{request_id}]: {e}")
+            return api_error(
+                "ValidationError",
+                "Input validation failed",
+                HTTP_BAD_REQUEST,
+                request_id,
+                errors=getattr(e, "errors", None),
+            )
 
         # Check prediction cache (if enabled)
         cache_hit = False
@@ -236,14 +242,20 @@ def predict():
         return jsonify(response), HTTP_OK
 
     except ValidationError as e:
-        logger.error(f"Validation error in predict [{request_id}]: {str(e)}")
-        return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+        logger.error(f"Validation error in predict [{request_id}]: {e}")
+        return api_error(
+            "ValidationError",
+            "Input validation failed",
+            HTTP_BAD_REQUEST,
+            request_id,
+            errors=getattr(e, "errors", None),
+        )
     except ValueError as e:
-        logger.error(f"Validation error in predict [{request_id}]: {str(e)}")
-        return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+        logger.error(f"Value error in predict [{request_id}]: {e}")
+        return api_error("ValidationError", "Invalid input data provided", HTTP_BAD_REQUEST, request_id)
     except FileNotFoundError as e:
-        logger.error(f"Model not found [{request_id}]: {str(e)}")
-        return api_error("ModelNotFound", str(e), HTTP_NOT_FOUND, request_id)
+        logger.error(f"Model not found [{request_id}]: {e}")
+        return api_error("ModelNotFound", "Requested model not found", HTTP_NOT_FOUND, request_id)
     except Exception as e:
-        logger.error(f"Error in predict endpoint [{request_id}]: {str(e)}", exc_info=True)
+        logger.error(f"Error in predict endpoint [{request_id}]: {e}", exc_info=True)
         return api_error("PredictionFailed", "An error occurred during prediction", HTTP_INTERNAL_ERROR, request_id)

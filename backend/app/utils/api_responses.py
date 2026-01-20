@@ -2,6 +2,10 @@
 
 Standardized response formatting functions for consistent API responses.
 Follows RFC 7807 Problem Details format for errors.
+
+Security: Implements comprehensive sanitization to prevent information
+disclosure through error messages, stack traces, and exception details
+(CWE-209, CWE-497).
 """
 
 import html
@@ -47,6 +51,21 @@ _STACK_TRACE_PATTERNS = [
     r"Error:\s+\w+Error:",  # Chained exceptions
 ]
 
+# Fields that should never be exposed to clients
+_DANGEROUS_FIELDS = {
+    "debug",
+    "stack_trace",
+    "stacktrace",
+    "traceback",
+    "exception",
+    "exception_type",
+    "exception_message",
+    "exc_info",
+    "error_details",
+    "internal_error",
+    "system_error",
+}
+
 
 def _sanitize_error_message(message: str) -> str:
     """
@@ -54,6 +73,12 @@ def _sanitize_error_message(message: str) -> str:
 
     Detects and removes stack traces, sensitive patterns, and
     other information that could aid attackers (CWE-209, CWE-497).
+
+    Args:
+        message: Raw error message
+
+    Returns:
+        Sanitized error message safe for client consumption
     """
     if not message:
         return message
@@ -65,7 +90,10 @@ def _sanitize_error_message(message: str) -> str:
     for pattern in _STACK_TRACE_PATTERNS:
         if re.search(pattern, sanitized, re.MULTILINE):
             # Log the original for debugging, return generic message
-            logger.debug("Sanitized stack trace from error message (server-side logged)")
+            logger.debug(
+                "Sanitized stack trace from error message",
+                extra={"original_length": len(message)},
+            )
             return "An internal error occurred. Please contact support with your request ID."
 
     # Check for sensitive patterns
@@ -73,11 +101,15 @@ def _sanitize_error_message(message: str) -> str:
     for pattern in _SENSITIVE_PATTERNS:
         if re.search(pattern, message_lower, re.IGNORECASE):
             # If sensitive pattern detected, return generic message
-            logger.debug("Sanitized potentially sensitive error message")
+            logger.debug(
+                "Sanitized potentially sensitive error message",
+                extra={"pattern_matched": pattern},
+            )
             return "An error occurred. Please contact support with your request ID."
 
     # Truncate overly long messages that might contain stack traces
     if len(sanitized) > 500:
+        logger.debug("Truncated long error message", extra={"original_length": len(sanitized)})
         return sanitized[:500] + "..."
 
     return sanitized
@@ -89,20 +121,43 @@ def _sanitize_details(details: Dict[str, Any]) -> Dict[str, Any]:
 
     Removes or sanitizes values that might contain sensitive information
     such as exception messages, stack traces, or system paths.
+
+    Args:
+        details: Raw details dictionary
+
+    Returns:
+        Sanitized details dictionary safe for client consumption
     """
     if not details:
-        return details
+        return {}
 
     # Keys that are known to potentially contain exception info
-    sensitive_keys = {"error", "exception", "traceback", "stack_trace", "error_type", "import_error"}
+    sensitive_keys = {
+        "error",
+        "exception",
+        "traceback",
+        "stack_trace",
+        "error_type",
+        "import_error",
+        "exc_info",
+        "exc_type",
+        "exc_value",
+        "exc_traceback",
+    }
 
     sanitized = {}
     for key, value in details.items():
+        # Remove dangerous fields entirely
+        if key.lower() in _DANGEROUS_FIELDS or key in _DANGEROUS_FIELDS:
+            logger.debug(f"Removed dangerous field from details: {key}")
+            continue
+
         key_lower = key.lower()
 
         # Check if key suggests exception/error content
         if key_lower in sensitive_keys or "error" in key_lower or "exception" in key_lower:
             # Replace with generic message
+            logger.debug(f"Sanitized sensitive key in details: {key}")
             if isinstance(value, str):
                 sanitized[key] = "Error details logged server-side"
             elif isinstance(value, dict):
@@ -140,21 +195,35 @@ def _sanitize_errors_list(errors: list) -> list:
     - field: The field name (safe)
     - message: The error message (needs sanitization)
     - code: Error code (safe)
+
+    Args:
+        errors: Raw list of error dictionaries
+
+    Returns:
+        Sanitized list of errors safe for client consumption
     """
     if not errors:
-        return errors
+        return []
 
     sanitized = []
     for error in errors:
         if isinstance(error, dict):
             sanitized_error = {}
             for key, value in error.items():
+                # Skip dangerous fields
+                if key.lower() in _DANGEROUS_FIELDS or key in _DANGEROUS_FIELDS:
+                    logger.debug(f"Removed dangerous field from error list: {key}")
+                    continue
+
                 if key in ("message", "detail", "error") and isinstance(value, str):
                     # Sanitize message fields
                     sanitized_error[key] = _sanitize_error_message(value)
                 elif isinstance(value, str):
                     # Other string fields - basic sanitization
                     sanitized_error[key] = html.escape(value)
+                elif isinstance(value, dict):
+                    # Recursively sanitize nested dicts
+                    sanitized_error[key] = _sanitize_details(value)
                 else:
                     sanitized_error[key] = value
             sanitized.append(sanitized_error)
@@ -166,9 +235,50 @@ def _sanitize_errors_list(errors: list) -> list:
     return sanitized
 
 
+def _remove_dangerous_fields(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Remove all dangerous fields that could expose stack traces or sensitive info.
+
+    This is a final safety net to ensure no dangerous fields slip through.
+
+    Args:
+        data: Dictionary to clean
+
+    Returns:
+        Dictionary with dangerous fields removed
+    """
+    if not isinstance(data, dict):
+        return data
+
+    cleaned = {}
+    for key, value in data.items():
+        # Skip dangerous fields
+        if key.lower() in _DANGEROUS_FIELDS or key in _DANGEROUS_FIELDS:
+            logger.debug(f"Removed dangerous field: {key}")
+            continue
+
+        # Recursively clean nested dicts
+        if isinstance(value, dict):
+            cleaned[key] = _remove_dangerous_fields(value)
+        elif isinstance(value, list):
+            cleaned[key] = [_remove_dangerous_fields(item) if isinstance(item, dict) else item for item in value]
+        else:
+            cleaned[key] = value
+
+    return cleaned
+
+
 def _get_request_context() -> Dict[str, Optional[str]]:
-    """Get request and trace IDs from Flask g context."""
-    return {"request_id": getattr(g, "request_id", None), "trace_id": getattr(g, "trace_id", None)}
+    """
+    Get request and trace IDs from Flask g context.
+
+    Returns:
+        Dictionary with request_id and trace_id (may be None)
+    """
+    return {
+        "request_id": getattr(g, "request_id", None),
+        "trace_id": getattr(g, "trace_id", None),
+    }
 
 
 def api_success(
@@ -225,6 +335,9 @@ def api_error(
     """
     Create a standardized RFC 7807 error response.
 
+    All inputs are sanitized to prevent information disclosure through
+    error messages, stack traces, or exception details (CWE-209, CWE-497).
+
     Args:
         error_code: Error code identifier
         message: Human-readable error message
@@ -273,23 +386,32 @@ def api_error(
     if help_url:
         response["error"]["help_url"] = help_url
 
+    # Final safety check: remove any dangerous fields
+    response = _remove_dangerous_fields(response)
+
     logger.warning(
         f"API Error [{req_id}]: {error_code}",
-        extra={"error_code": error_code, "status_code": status_code, "request_id": req_id},
+        extra={
+            "error_code": error_code,
+            "status_code": status_code,
+            "request_id": req_id,
+        },
     )
 
     return jsonify(response), status_code
 
 
 def api_error_from_exception(
-    exception: "AppException", request_id: Optional[str] = None, include_debug: bool = False
+    exception: "AppException",
+    request_id: Optional[str] = None,
+    include_debug: bool = False,
 ) -> Tuple[Response, int]:
     """
     Create a standardized RFC 7807 error response from an AppException.
 
-    Note: Debug details are NEVER included in client responses to prevent
-    information disclosure. Stack traces and detailed error info are logged
-    server-side only.
+    SECURITY: This function implements defense-in-depth sanitization to prevent
+    stack trace exposure (CWE-209). Debug details are NEVER included in client
+    responses - they are logged server-side only.
 
     Args:
         exception: The AppException instance
@@ -303,45 +425,64 @@ def api_error_from_exception(
 
     # Log full exception details server-side for debugging
     # This keeps sensitive info in logs, not in client responses
-    if include_debug and exception.details:
+    logger.info(
+        f"Processing exception: {exception.error_code}",
+        extra={
+            "error_code": exception.error_code,
+            "status_code": exception.status_code,
+            "has_details": bool(getattr(exception, "details", None)),
+        },
+    )
+
+    if include_debug and hasattr(exception, "details") and exception.details:
         logger.debug(
             f"Exception details (server-side only): {exception.error_code}",
             extra={"exception_details": exception.details},
         )
 
-    # SECURITY: Never include debug details in client response to prevent
-    # stack trace exposure (CWE-209: Information Exposure Through Error Message)
+    # SECURITY LAYER 1: Get base response without debug info
+    # Force include_debug=False to prevent any debug details
     response = exception.to_dict(include_debug=False)
 
-    # Ensure we have the error dict structure
+    # SECURITY LAYER 2: Ensure proper structure
     if "error" not in response:
         response["error"] = {}
 
-    # Set/sanitize request and trace IDs
+    # SECURITY LAYER 3: Set request tracking IDs
     response["error"]["request_id"] = request_id or ctx.get("request_id")
     if ctx.get("trace_id"):
         response["error"]["trace_id"] = ctx["trace_id"]
 
-    # Sanitize the error message itself
+    # SECURITY LAYER 4: Sanitize the error detail message
     if "detail" in response.get("error", {}):
-        response["error"]["detail"] = _sanitize_error_message(response["error"]["detail"])
+        original_detail = response["error"]["detail"]
+        response["error"]["detail"] = _sanitize_error_message(original_detail)
+        if original_detail != response["error"]["detail"]:
+            logger.debug("Sanitized error detail message")
 
-    # Sanitize any details that might have been included
+    # SECURITY LAYER 5: Sanitize details dict if present
     if "details" in response.get("error", {}):
-        response["error"]["details"] = _sanitize_details(response["error"]["details"])
+        original_details = response["error"]["details"]
+        response["error"]["details"] = _sanitize_details(original_details)
+        logger.debug("Sanitized error details dictionary")
 
-    # Sanitize any errors list that might have been included
+    # SECURITY LAYER 6: Sanitize errors list if present
     if "errors" in response.get("error", {}):
-        response["error"]["errors"] = _sanitize_errors_list(response["error"]["errors"])
+        original_errors = response["error"]["errors"]
+        response["error"]["errors"] = _sanitize_errors_list(original_errors)
+        logger.debug("Sanitized error list")
 
-    # Remove any fields that could contain stack traces or sensitive info
-    # Even with include_debug=False, these might slip through
-    response["error"].pop("debug", None)
-    response["error"].pop("stack_trace", None)
-    response["error"].pop("traceback", None)
-    response["error"].pop("exception", None)
-    response["error"].pop("exception_type", None)
-    response["error"].pop("exception_message", None)
+    # SECURITY LAYER 7: Remove all dangerous fields
+    # This is the final safety net to catch anything that slipped through
+    response = _remove_dangerous_fields(response)
+
+    # SECURITY LAYER 8: Explicitly remove known dangerous fields
+    # Even after sanitization, defensively remove these
+    dangerous_keys = list(_DANGEROUS_FIELDS)
+    for key in dangerous_keys:
+        if key in response.get("error", {}):
+            logger.warning(f"Removed dangerous field that survived sanitization: {key}")
+            response["error"].pop(key, None)
 
     logger.warning(
         f"API Exception [{response['error'].get('request_id')}]: {exception.error_code}",
@@ -363,7 +504,15 @@ def api_error_from_exception(
 
 
 def _get_error_title(error_code: str) -> str:
-    """Get human-readable title for error code."""
+    """
+    Get human-readable title for error code.
+
+    Args:
+        error_code: Error code string
+
+    Returns:
+        Human-readable error title
+    """
     titles = {
         "VALIDATION_ERROR": "Validation Failed",
         "ValidationError": "Validation Failed",

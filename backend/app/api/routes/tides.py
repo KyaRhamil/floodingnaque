@@ -107,7 +107,10 @@ def get_current_tide():
 
     except Exception as e:
         logger.error(f"Error fetching current tide [{request_id}]: {e}")
-        return api_error("TideFetchError", str(e), HTTP_BAD_REQUEST, request_id), HTTP_BAD_REQUEST
+        return (
+            api_error("TideFetchError", "Failed to fetch current tide data", HTTP_BAD_REQUEST, request_id),
+            HTTP_BAD_REQUEST,
+        )
 
 
 @tides_bp.route("/tides/extremes", methods=["GET"])
@@ -164,7 +167,10 @@ def get_tide_extremes():
 
     except Exception as e:
         logger.error(f"Error fetching tide extremes [{request_id}]: {e}")
-        return api_error("TideFetchError", str(e), HTTP_BAD_REQUEST, request_id), HTTP_BAD_REQUEST
+        return (
+            api_error("TideFetchError", "Failed to fetch tide extremes data", HTTP_BAD_REQUEST, request_id),
+            HTTP_BAD_REQUEST,
+        )
 
 
 @tides_bp.route("/tides/prediction", methods=["GET"])
