@@ -125,7 +125,7 @@ backend/venv/
 backend/.env
 backend/.env.local
 backend/.env.production
-backend/.env.development  
+backend/.env.development
 backend/.env.staging
 backend/.env.prod
 
@@ -218,7 +218,8 @@ backend/*-service-account*.json
 backend/floodingnaque-*.json
 backend/google_oauth*.json
 backend/google_application_credentials_astral-archive-482008-g2-e31c78fffb69.json
-backend\astral-archive-482008-g2-b4f2279053c0.json
+backend/astral-archive-482008-g2-b4f2279053c0.json
+backend/astral-archive-*.json
 
 # Earth Engine credentials
 .ee-credentials
