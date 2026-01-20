@@ -4,6 +4,8 @@ Rate Limiting Information Routes.
 Provides endpoints for checking rate limiting status and configuration.
 """
 
+import html
+
 from app.utils.api_constants import HTTP_BAD_REQUEST, HTTP_OK
 from app.utils.api_responses import api_error, api_success
 from app.utils.logging import get_logger
@@ -143,6 +145,8 @@ def endpoint_rate_limit_info():
         common_endpoints = ["predict", "ingest", "data", "status", "docs"]
 
         if endpoint:
+            # Sanitize endpoint to prevent XSS
+            endpoint = html.escape(str(endpoint)[:100])
             # Get info for specific endpoint
             if endpoint not in common_endpoints:
                 return api_error(

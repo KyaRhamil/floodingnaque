@@ -5,6 +5,7 @@ Upgraded to OpenAPI 3.1 specification for better frontend codegen support
 and JSON Schema 2020-12 compatibility.
 """
 
+import html
 import json
 import logging
 from functools import wraps
@@ -885,6 +886,10 @@ def init_swagger(app):
         req_data = request.get_json()
         schema_name = req_data.get("schema_name")
         data = req_data.get("data", {})
+
+        # Sanitize schema_name to prevent XSS
+        if schema_name:
+            schema_name = html.escape(str(schema_name)[:100])
 
         schema = SWAGGER_TEMPLATE.get("components", {}).get("schemas", {}).get(schema_name)
         if not schema:

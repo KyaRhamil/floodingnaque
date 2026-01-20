@@ -407,7 +407,8 @@ class FeatureFlagService:
     def _get_hash_percentage(self, flag_name: str, user_id: str) -> int:
         """Get consistent hash percentage (0-99) for a user/flag combination."""
         combined = f"{flag_name}:{user_id}"
-        hash_bytes = hashlib.md5(combined.encode(), usedforsecurity=False).digest()
+        # Use SHA-256 instead of MD5 for consistent hashing (not for security, but to avoid weak hash warnings)
+        hash_bytes = hashlib.sha256(combined.encode()).digest()
         return int.from_bytes(hash_bytes[:2], "big") % 100
 
     def _record_evaluation(self, flag_name: str, result: bool) -> None:

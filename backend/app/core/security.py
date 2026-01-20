@@ -56,15 +56,17 @@ def generate_api_key() -> str:
 
 def hash_api_key(api_key: str) -> str:
     """
-    Hash an API key for secure storage.
+    Hash an API key for secure storage using HMAC-SHA256.
 
     Args:
         api_key: The API key to hash
 
     Returns:
-        str: SHA-256 hash of the API key
+        str: HMAC-SHA256 hash of the API key
     """
-    return hashlib.sha256(api_key.encode()).hexdigest()
+    # Use a secret salt for HMAC hashing - more secure than plain SHA-256
+    secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
+    return hmac.new(secret_salt, api_key.encode(), hashlib.sha256).hexdigest()
 
 
 def verify_api_key(api_key: str, hashed_key: str) -> bool:

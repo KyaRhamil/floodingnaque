@@ -129,6 +129,8 @@ def get_task_info(task_id):
         Task status and result
     """
     request_id = getattr(g, "request_id", "unknown")
+    # Sanitize task_id to prevent XSS
+    task_id = html.escape(str(task_id)[:100])
 
     try:
         # Get task status
@@ -273,6 +275,8 @@ def cancel_task(task_id):
         Cancellation result
     """
     request_id = getattr(g, "request_id", "unknown")
+    # Sanitize task_id to prevent XSS
+    task_id = html.escape(str(task_id)[:100])
 
     try:
         # Revoke the task

@@ -157,8 +157,10 @@ def _verify_api_key_bcrypt(api_key: str, hashed: bytes) -> bool:
 
 
 def _hash_api_key_sha256(api_key: str) -> str:
-    """Legacy: Hash an API key using SHA-256 (fallback when bcrypt unavailable)."""
-    return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+    """Legacy: Hash an API key using HMAC-SHA256 (fallback when bcrypt unavailable)."""
+    # Use HMAC-SHA256 with a secret salt for better security than plain SHA-256
+    secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
+    return hmac.new(secret_salt, api_key.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def _timing_safe_compare(a: str, b: str) -> bool:

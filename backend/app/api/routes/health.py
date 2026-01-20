@@ -74,7 +74,8 @@ def check_database_health() -> dict:
         return {"status": "healthy", "connected": True, "latency_ms": round(latency_ms, 2)}
     except Exception as e:
         logger.error(f"Database health check failed: {str(e)}")
-        return {"status": "unhealthy", "connected": False, "error": str(e)}
+        # Don't expose raw exception details in response - log only
+        return {"status": "unhealthy", "connected": False, "error": "Database connection failed"}
 
 
 def check_external_api_health() -> dict:
@@ -134,7 +135,8 @@ def check_redis_health() -> dict:
         return {"status": "unavailable", "error": "redis package not installed"}
     except Exception as e:
         logger.error(f"Redis health check failed: {str(e)}")
-        return {"status": "unhealthy", "connected": False, "error": str(e)}
+        # Don't expose raw exception details in response - log only
+        return {"status": "unhealthy", "connected": False, "error": "Redis connection failed"}
 
 
 def check_cache_health() -> dict:
@@ -151,7 +153,9 @@ def check_cache_health() -> dict:
     except ImportError:
         return {"status": "not_available", "message": "Cache module not available"}
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        logger.error(f"Cache health check failed: {str(e)}")
+        # Don't expose raw exception details in response - log only
+        return {"status": "error", "error": "Cache check failed"}
 
 
 @health_bp.route("/", methods=["GET"])

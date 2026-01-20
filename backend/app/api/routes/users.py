@@ -496,9 +496,8 @@ def request_password_reset():
                 user.password_reset_expires = expires
 
                 # In production, send email with reset link
-                # For now, log the token (remove in production!)
-                logger.info(f"Password reset requested for {email} [{request_id}]")
-                logger.debug(f"Reset token (DEV ONLY): {token}")
+                logger.info(f"Password reset requested [{request_id}]")
+                # Note: Never log reset tokens - send via secure email channel only
 
                 # TODO: Integrate email service to send reset link
                 # send_password_reset_email(email, token)
