@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+# Set minimum permissions at workflow level (least privilege principle)
+permissions:
+  contents: read
+
 env:
   PYTHON_VERSION: '3.11'
   REGISTRY: ghcr.io
@@ -18,6 +22,8 @@ jobs:
   bandit-scan:
     name: Bandit Security Analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
@@ -70,6 +76,8 @@ jobs:
   security-scan:
     name: Security Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
@@ -110,6 +118,9 @@ jobs:
     name: Container Security Scan
     runs-on: ubuntu-latest
     needs: [bandit-scan, security-scan]
+    permissions:
+      contents: read
+      security-events: write  # Required for uploading SARIF results
     
     steps:
     - uses: actions/checkout@v4
@@ -171,6 +182,8 @@ jobs:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     needs: [bandit-scan, security-scan]  # Run after security scans
+    permissions:
+      contents: read
     
     strategy:
       matrix:
@@ -214,9 +227,11 @@ jobs:
         python -m pytest tests/unit tests/integration -v --cov=app --cov-report=xml --cov-report=html
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
+      if: always()
+      continue-on-error: true
       with:
-        file: ./backend/coverage.xml
+        files: ./backend/coverage.xml
         flags: unittests
         name: codecov-umbrella
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -230,6 +245,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
@@ -277,6 +294,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
