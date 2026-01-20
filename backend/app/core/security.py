@@ -56,21 +56,24 @@ def generate_api_key() -> str:
 
 def hash_api_key(api_key: str) -> str:
     """
-    Hash an API key for secure storage using HMAC-SHA384.
+    Hash an API key for secure storage using bcrypt.
 
-    Note: HMAC-SHA384 with a secret key is cryptographically secure for
-    API key verification. For password storage, use bcrypt instead.
+    bcrypt is a password hashing function designed to be computationally
+    expensive and resistant to rainbow table attacks.
 
     Args:
         api_key: The API key to hash
 
     Returns:
-        str: HMAC-SHA384 hash of the API key
+        str: bcrypt hash of the API key (or PBKDF2 fallback)
     """
-    # HMAC-SHA384 with secret salt is secure for API key verification
-    # (different from plain SHA-256 which would be weak)
-    secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
-    return hmac.new(secret_salt, api_key.encode(), hashlib.sha384).hexdigest()  # nosec B324 - HMAC-SHA384 is secure
+    if BCRYPT_AVAILABLE:
+        # bcrypt includes salt and is resistant to rainbow table attacks
+        return bcrypt.hashpw(api_key.encode(), bcrypt.gensalt(rounds=12)).decode()
+    else:
+        # Fallback to PBKDF2-SHA256 with high iteration count
+        secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
+        return hashlib.pbkdf2_hmac("sha256", api_key.encode(), secret_salt, 100000).hex()
 
 
 def verify_api_key(api_key: str, hashed_key: str) -> bool:
@@ -84,7 +87,16 @@ def verify_api_key(api_key: str, hashed_key: str) -> bool:
     Returns:
         bool: True if the API key matches the hash
     """
-    return hmac.compare_digest(hash_api_key(api_key), hashed_key)
+    if BCRYPT_AVAILABLE:
+        try:
+            return bcrypt.checkpw(api_key.encode(), hashed_key.encode())
+        except (ValueError, TypeError):
+            return False
+    else:
+        # Fallback verification using PBKDF2
+        secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
+        computed_hash = hashlib.pbkdf2_hmac("sha256", api_key.encode(), secret_salt, 100000).hex()
+        return hmac.compare_digest(computed_hash, hashed_key)
 
 
 def is_secure_password(password: str, min_length: int = 12) -> tuple:

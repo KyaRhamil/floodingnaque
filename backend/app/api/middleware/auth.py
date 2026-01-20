@@ -156,18 +156,16 @@ def _verify_api_key_bcrypt(api_key: str, hashed: bytes) -> bool:
         return False
 
 
-def _hash_api_key_sha384(api_key: str) -> str:
+def _hash_api_key_pbkdf2(api_key: str) -> str:
     """
-    Legacy: Hash an API key using HMAC-SHA384 (fallback when bcrypt unavailable).
+    Fallback: Hash an API key using PBKDF2-SHA256 (when bcrypt unavailable).
 
-    Note: HMAC-SHA384 with a secret key is cryptographically secure for API key
-    verification. It provides keyed hashing which is resistant to rainbow tables.
+    PBKDF2 with high iteration count is a secure key derivation function
+    that is resistant to brute-force and rainbow table attacks.
     """
-    # HMAC-SHA384 with secret salt is secure for API key verification
+    # PBKDF2-SHA256 with 100,000 iterations for secure API key hashing
     secret_salt = os.getenv("API_KEY_HASH_SALT", "floodingnaque-default-salt-change-in-production").encode()
-    return hmac.new(
-        secret_salt, api_key.encode("utf-8"), hashlib.sha384
-    ).hexdigest()  # nosec B324 - HMAC-SHA384 is secure
+    return hashlib.pbkdf2_hmac("sha256", api_key.encode("utf-8"), secret_salt, 100000).hex()
 
 
 def _timing_safe_compare(a: str, b: str) -> bool:
@@ -194,17 +192,22 @@ def get_valid_api_keys() -> Set[str]:
         return set()
 
     valid_keys = set()
-    for key in keys_str.split(","):
-        key = key.strip()
-        if not key:
+    for raw_key in keys_str.split(","):
+        stripped_key = raw_key.strip()
+        if not stripped_key:
             continue
-        if len(key) < MIN_API_KEY_LENGTH:
+        if len(stripped_key) < MIN_API_KEY_LENGTH:
+            # Log without exposing the key value - only metadata
             logger.warning(
-                f"API key rejected: length below minimum {MIN_API_KEY_LENGTH} characters. "
-                f'Generate secure keys with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+                "API key rejected: length %d below minimum %d characters. "
+                'Generate secure keys with: python -c "import secrets; print(secrets.token_urlsafe(32))"',
+                len(stripped_key),
+                MIN_API_KEY_LENGTH,
             )
             continue
-        valid_keys.add(key)
+        valid_keys.add(stripped_key)
+    # Clear sensitive variable from scope
+    del stripped_key, raw_key
 
     return valid_keys
 
@@ -232,10 +235,10 @@ def get_hashed_api_keys() -> Dict[str, bytes]:
                 _hashed_api_keys[key_id] = _hash_api_key_bcrypt(key)
             logger.info(f"Initialized {len(_hashed_api_keys)} API keys with bcrypt hashing")
         else:
-            # Fallback to SHA-384 (still secure)
+            # Fallback to PBKDF2-SHA256 (secure key derivation function)
             _hashed_api_keys = {}
-            _legacy_hashed_keys = {_hash_api_key_sha384(key) for key in valid_keys}
-            logger.warning("Using SHA-384 for API keys (bcrypt not available)")
+            _legacy_hashed_keys = {_hash_api_key_pbkdf2(key) for key in valid_keys}
+            logger.warning("Using PBKDF2-SHA256 for API keys (bcrypt not available)")
 
     return _hashed_api_keys
 
@@ -260,7 +263,7 @@ def revoke_api_key(api_key: str) -> bool:
         bool: True if revoked successfully
     """
     global _revoked_api_keys
-    key_hash = _hash_api_key_sha384(api_key)[:16]  # Use truncated hash as identifier
+    key_hash = _hash_api_key_pbkdf2(api_key)[:16]  # Use truncated hash as identifier
     _revoked_api_keys[key_hash] = time.time()
     logger.info(f"API key revoked: {key_hash[:8]}...")
     return True
@@ -276,7 +279,7 @@ def is_api_key_revoked(api_key: str) -> bool:
     Returns:
         bool: True if revoked
     """
-    key_hash = _hash_api_key_sha384(api_key)[:16]
+    key_hash = _hash_api_key_pbkdf2(api_key)[:16]
     return key_hash in _revoked_api_keys
 
 
@@ -289,7 +292,7 @@ def set_api_key_expiration(api_key: str, expires_at: float) -> None:
         expires_at: Unix timestamp when key expires
     """
     global _api_key_expirations
-    key_hash = _hash_api_key_sha384(api_key)[:16]
+    key_hash = _hash_api_key_pbkdf2(api_key)[:16]
     _api_key_expirations[key_hash] = expires_at
 
 
@@ -303,7 +306,7 @@ def is_api_key_expired(api_key: str) -> bool:
     Returns:
         bool: True if expired
     """
-    key_hash = _hash_api_key_sha384(api_key)[:16]
+    key_hash = _hash_api_key_pbkdf2(api_key)[:16]
 
     if key_hash not in _api_key_expirations:
         # Check environment for default expiration
@@ -462,8 +465,8 @@ def validate_api_key(api_key: str, check_expiration: bool = True, check_revocati
             return False, "Invalid API key"
         return True, ""
     elif _legacy_hashed_keys:
-        # Fallback to SHA-384 comparison
-        hashed_input = _hash_api_key_sha384(api_key)
+        # Fallback to PBKDF2 comparison
+        hashed_input = _hash_api_key_pbkdf2(api_key)
         valid = False
         for hashed_key in _legacy_hashed_keys:
             if _timing_safe_compare(hashed_input, hashed_key):
@@ -601,7 +604,7 @@ def require_api_key(f):
 
         # Set authentication context
         g.authenticated = True
-        g.api_key_hash = _hash_api_key_sha384(api_key)[:8]  # Store truncated hash for logging
+        g.api_key_hash = _hash_api_key_pbkdf2(api_key)[:8]  # Store truncated hash for logging
 
         return f(*args, **kwargs)
 
@@ -630,7 +633,7 @@ def optional_api_key(f):
             is_valid, _ = validate_api_key(api_key)
             if is_valid:
                 g.authenticated = True
-                g.api_key_hash = _hash_api_key_sha384(api_key)[:8]
+                g.api_key_hash = _hash_api_key_pbkdf2(api_key)[:8]
 
         return f(*args, **kwargs)
 
