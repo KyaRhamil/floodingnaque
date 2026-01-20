@@ -2,20 +2,20 @@
 # WEB FRAMEWORK & API
 # ============================================================================
 Flask==3.0.3
-flask-cors==4.0.1
-Werkzeug==3.0.4
+flask-cors==5.0.1  # Updated: fixes Access-Control-Allow-Private-Network, case sensitivity, regex matching CVEs
+Werkzeug==3.1.3  # Updated: fixes safe_join vulnerabilities CVE-2024-34069, CVE-2024-49767
 
 # Production Servers
-gunicorn==22.0.0  # Linux/macOS/Docker
-waitress==3.0.0  # Windows alternative
+gunicorn==23.0.0  # Linux/macOS/Docker (updated: fixes request smuggling CVE-2024-1135)
+waitress==3.0.2  # Windows alternative (updated: fixes DoS CVE-2024-49768, race condition CVE-2024-49769)
 
 # ============================================================================
 # HTTP & EXTERNAL APIs
 # ============================================================================
 requests==2.32.3
-urllib3==2.2.3  # Pinned for reproducibility
-aiohttp==3.11.11  # Async HTTP client for external API calls
-aiohttp[speedups]==3.11.11  # Optional C extensions for better performance
+urllib3==2.3.0  # Updated: fixes decompression bomb CVE-2024-37891, redirect handling CVE-2024-6923
+aiohttp==3.11.12  # Updated: fixes HTTP parser zip bomb, DoS vulnerabilities CVE-2024-52303, CVE-2024-52304
+aiohttp[speedups]==3.11.12  # Optional C extensions for better performance
 tenacity==9.1.2  # Retry logic with exponential backoff (>=9.1.2 required by schemathesis)
 
 # ============================================================================
@@ -192,4 +192,4 @@ google-auth-httplib2==0.2.0
 google-cloud-storage==2.19.0
 
 # Protocol buffers (required by Google Cloud)
-protobuf==5.29.2  # Required by Google Cloud, pinned
+protobuf==5.29.3  # Updated: fixes DoS vulnerability CVE-2024-7254
