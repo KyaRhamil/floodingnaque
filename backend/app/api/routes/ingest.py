@@ -167,7 +167,7 @@ def ingest():
                 lat, lon = InputValidator.validate_coordinates(lat, lon)
             except ValidationError as e:
                 logger.warning(f"Coordinate validation failed [{request_id}]: {str(e)}")
-                return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+                return api_error("ValidationError", "Invalid coordinates", HTTP_BAD_REQUEST, request_id)
 
         data = ingest_data(lat=lat, lon=lon)
 
@@ -189,10 +189,10 @@ def ingest():
 
     except ValidationError as e:
         logger.error(f"Validation error in ingest [{request_id}]: {str(e)}")
-        return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+        return api_error("ValidationError", "Invalid request data", HTTP_BAD_REQUEST, request_id)
     except ValueError as e:
         logger.error(f"Validation error in ingest [{request_id}]: {str(e)}")
-        return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+        return api_error("ValidationError", "Invalid request data", HTTP_BAD_REQUEST, request_id)
     except BadRequest as e:
         logger.error(f"BadRequest error in ingest [{request_id}]: {str(e)}")
         return api_error("InvalidRequest", "The request could not be processed", HTTP_BAD_REQUEST, request_id)

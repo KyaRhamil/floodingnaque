@@ -639,7 +639,8 @@ def create_weather_data():
         )
 
     except ValueError as e:
-        return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+        logger.warning(f"Validation error creating weather data [{request_id}]: {str(e)}")
+        return api_error("ValidationError", "Invalid weather data values", HTTP_BAD_REQUEST, request_id)
     except Exception as e:
         logger.error(f"Error creating weather data [{request_id}]: {str(e)}")
         return api_error("CreateFailed", "Failed to create weather data", HTTP_INTERNAL_ERROR, request_id)
@@ -792,7 +793,8 @@ def update_weather_data(data_id):
         )
 
     except ValueError as e:
-        return api_error("ValidationError", str(e), HTTP_BAD_REQUEST, request_id)
+        logger.warning(f"Validation error updating weather data {data_id} [{request_id}]: {str(e)}")
+        return api_error("ValidationError", "Invalid weather data values", HTTP_BAD_REQUEST, request_id)
     except Exception as e:
         logger.error(f"Error updating weather data {data_id} [{request_id}]: {str(e)}")
         return api_error("UpdateFailed", "Failed to update weather data", HTTP_INTERNAL_ERROR, request_id)
