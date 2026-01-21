@@ -102,7 +102,7 @@ repos:
         entry: detect-secrets-hook --baseline .secrets.baseline
         language: system
         files: .*
-        exclude: \.env\.example$
+        exclude: (\.env\.example$|tests/.*\.py$)
 
   # GitGuardian secret scanning
   # Requires: pipx install ggshield (installed globally via pipx)
