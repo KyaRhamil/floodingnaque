@@ -43,7 +43,9 @@ class TestAlertSystem:
             mock_system.send_alert.return_value = {"success": True, "alert_id": "12345"}
             mock_get_alert.return_value = mock_system
 
-            result = send_flood_alert(risk_level=2, location="Paranaque City", message="Critical flood risk detected")
+            # Use correct function signature with risk_data dict
+            risk_data = {"risk_level": 2, "message": "Critical flood risk detected"}
+            result = send_flood_alert(risk_data=risk_data, location="Paranaque City")
 
             assert isinstance(result, dict)
 
