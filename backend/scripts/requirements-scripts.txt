@@ -1,0 +1,75 @@
+# Floodingnaque Scripts - Optional Dependencies
+# ==============================================
+#
+# These are optional dependencies required by specific scripts.
+# Install with: pip install -r scripts/requirements-scripts.txt
+#
+# Or install specific groups:
+#   pip install shap       # For SHAP explainability analysis
+#   pip install mlflow     # For MLflow experiment tracking
+#   pip install pandera    # For DataFrame validation
+#   pip install structlog  # For structured logging
+#
+# Note: Core dependencies (pandas, scikit-learn, etc.) are in requirements.txt
+
+# ==============================================
+# Explainability & Feature Importance
+# ==============================================
+# Used by: train_production.py, train_enterprise.py, train_ultimate.py
+shap>=0.44.0
+
+# ==============================================
+# Experiment Tracking & Model Registry
+# ==============================================
+# Used by: train_enterprise.py, train_ultimate.py, compare_models.py
+mlflow>=2.9.0
+
+# ==============================================
+# Data Validation & Schema Enforcement
+# ==============================================
+# Used by: ingest_training_data.py, preprocess_*.py
+pandera>=0.18.0
+
+# ==============================================
+# Structured Logging
+# ==============================================
+# Used by: train_production.py, train_enterprise.py
+structlog>=24.1.0
+
+# ==============================================
+# Advanced Visualization
+# ==============================================
+# Used by: evaluate_*.py, generate_thesis_report.py
+plotly>=5.18.0
+kaleido>=0.2.1  # For static plotly exports
+
+# ==============================================
+# Class Imbalance Handling
+# ==============================================
+# Used by: train_ultimate.py, train_enhanced.py
+imbalanced-learn>=0.11.0
+
+# ==============================================
+# Hyperparameter Optimization
+# ==============================================
+# Used by: train_ultimate.py, train_progressive.py
+optuna>=3.5.0
+
+# ==============================================
+# Database Tools
+# ==============================================
+# Used by: backup_database.py (PostgreSQL backups)
+psycopg2-binary>=2.9.9  # PostgreSQL adapter
+
+# ==============================================
+# API Rate Limiting & Retries
+# ==============================================
+# Used by: ingest_training_data.py
+tenacity>=8.2.0  # Retry with exponential backoff
+
+# ==============================================
+# Testing & Quality (Development)
+# ==============================================
+# Used by: test_*.py, security_scan.py
+hypothesis>=6.92.0  # Property-based testing
+bandit>=1.7.0       # Security linting
