@@ -48,12 +48,16 @@ ENV/
 # Sensitive files - SECURITY
 *.pem
 *.key
-*.crt
+# Keep .crt files - they're mounted at runtime for database SSL
+# *.crt
 secrets/
 secrets*
 *.secret
 credentials/
 .credentials
+# Keep certs directory structure (files are mounted at runtime)
+!certs/
+!certs/.gitkeep
 
 # Google Cloud credentials (NEVER include in Docker image!)
 google_oauth_credentials.json

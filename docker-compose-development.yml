@@ -76,7 +76,7 @@ services:
   # Redis (Optional for Dev)
   # ===================
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
     container_name: floodingnaque-redis-dev
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 64mb --maxmemory-policy allkeys-lru

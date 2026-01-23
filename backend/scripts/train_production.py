@@ -2,6 +2,18 @@
 Production-Ready Model Training Script
 ======================================
 
+.. deprecated:: 1.0.0
+    This script is deprecated. Use the unified CLI instead:
+
+    python -m scripts train --mode production        # Production training
+    python -m scripts train --mode production --shap # With SHAP
+
+    Or use the UnifiedTrainer class:
+
+    from scripts.train_unified import UnifiedTrainer, TrainingMode
+    trainer = UnifiedTrainer(mode=TrainingMode.PRODUCTION)
+    trainer.train()
+
 Comprehensive training pipeline for production deployment with:
 - Full hyperparameter optimization
 - Extensive cross-validation
@@ -17,13 +29,21 @@ Usage:
     python scripts/train_production.py --production --shap
 """
 
+import warnings
+
+warnings.warn(
+    "train_production.py is deprecated. Use 'python -m scripts train --mode production' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 import argparse
 import json
 import logging
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import joblib
 import numpy as np
@@ -165,7 +185,7 @@ class ProductionModelTrainer:
 
     def train(
         self, X: pd.DataFrame, y: pd.Series, production_mode: bool = False, cv_folds: int = 10
-    ) -> RandomForestClassifier:
+    ) -> Optional[RandomForestClassifier]:
         """Train model with optional production-grade optimization."""
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
@@ -191,7 +211,8 @@ class ProductionModelTrainer:
             )
             grid_search.fit(X_train, y_train)
 
-            self.model = grid_search.best_estimator_
+            # best_estimator_ is guaranteed to be RandomForestClassifier here
+            self.model = cast(RandomForestClassifier, grid_search.best_estimator_)
             logger.info(f"Best parameters: {grid_search.best_params_}")
             logger.info(f"Best CV score: {grid_search.best_score_:.4f}")
 
@@ -215,6 +236,7 @@ class ProductionModelTrainer:
         self, X_test: pd.DataFrame, y_test: pd.Series, X_full: pd.DataFrame, y_full: pd.Series, cv_folds: int
     ):
         """Comprehensive model evaluation."""
+        assert self.model is not None, "Model not trained. Call train() first."  # nosec B101
         y_pred = self.model.predict(X_test)
         y_pred_proba = self.model.predict_proba(X_test)[:, 1]
 
@@ -339,6 +361,7 @@ class ProductionModelTrainer:
         logger.info(f"Saved as latest: {latest_path}")
 
         # Comprehensive metadata
+        assert self.model is not None, "Model not trained"  # nosec B101
         metadata = {
             "version": version,
             "model_type": "RandomForestClassifier",
@@ -351,12 +374,12 @@ class ProductionModelTrainer:
                 "features": self.feature_names,
             },
             "model_parameters": {
-                "n_estimators": self.model.n_estimators,
-                "max_depth": self.model.max_depth,
-                "min_samples_split": self.model.min_samples_split,
-                "min_samples_leaf": self.model.min_samples_leaf,
-                "max_features": self.model.max_features,
-                "class_weight": str(self.model.class_weight),
+                "n_estimators": getattr(self.model, "n_estimators", None),
+                "max_depth": getattr(self.model, "max_depth", None),
+                "min_samples_split": getattr(self.model, "min_samples_split", None),
+                "min_samples_leaf": getattr(self.model, "min_samples_leaf", None),
+                "max_features": getattr(self.model, "max_features", None),
+                "class_weight": str(getattr(self.model, "class_weight", None)),
             },
             "metrics": self.metrics,
             "feature_importance": dict(zip(self.feature_names, [float(x) for x in self.model.feature_importances_])),
@@ -405,6 +428,7 @@ class ProductionModelTrainer:
 
             f.write("FEATURE IMPORTANCE (Top 10)\n")
             f.write("-" * 40 + "\n")
+            assert self.model is not None, "Model not trained"  # nosec B101
             importance = sorted(
                 zip(self.feature_names, self.model.feature_importances_), key=lambda x: x[1], reverse=True
             )

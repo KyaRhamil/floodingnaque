@@ -2,12 +2,49 @@
 Enterprise Training Scripts Module
 ==================================
 
-This package provides enterprise-grade ML training infrastructure:
-- Centralized configuration management
-- Experiment tracking with MLflow
-- Data validation with Pandera
-- Structured logging
-- Model registry with staging
+This package provides enterprise-grade ML training infrastructure for the
+Floodingnaque flood prediction system.
+
+.. module:: enterprise
+   :synopsis: Enterprise ML training infrastructure.
+
+.. moduleauthor:: Floodingnaque Team
+
+Submodules
+----------
+data_validation
+    Pandera-based schema validation and data quality checks.
+logging_config
+    Structured JSON logging with correlation IDs.
+mlflow_tracking
+    MLflow experiment tracking integration.
+model_registry
+    Multi-stage model lifecycle management.
+
+Features
+--------
+- **Data Validation**: Schema validation, range checks, quality metrics
+- **Experiment Tracking**: MLflow integration for reproducibility
+- **Structured Logging**: JSON logs with correlation IDs
+- **Model Registry**: Version management with staged promotion
+
+Quick Start
+-----------
+::
+
+    >>> from enterprise import (
+    ...     FloodDataValidator,
+    ...     MLflowTracker,
+    ...     TrainingLogger,
+    ...     ModelRegistry,
+    ... )
+    >>> # Validate training data
+    >>> validator = FloodDataValidator()
+    >>> validated_df, errors = validator.validate(df)
+    >>> # Track experiments
+    >>> tracker = MLflowTracker()
+    >>> with tracker.start_run(run_name="experiment_001"):
+    ...     tracker.log_metrics({'f1_score': 0.95})
 """
 
 from .data_validation import (

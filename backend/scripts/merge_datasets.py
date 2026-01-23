@@ -44,12 +44,23 @@ def merge_datasets(datasets: List[Path], output_name: str = "merged_dataset.csv"
     dfs = []
     for path in datasets:
         try:
+            if not path.exists():
+                logger.warning(f"Dataset file not found, skipping: {path}")
+                continue
             df = pd.read_csv(path)
             df["source_file"] = path.name
             dfs.append(df)
             logger.info(f"Loaded: {path.name} ({len(df)} records)")
+        except pd.errors.EmptyDataError:
+            logger.warning(f"Empty dataset file, skipping: {path}")
+        except pd.errors.ParserError as e:
+            logger.warning(f"CSV parse error in {path}: {e}")
+        except PermissionError as e:
+            logger.warning(f"Permission denied reading {path}: {e}")
+        except OSError as e:
+            logger.warning(f"OS error reading {path}: {e}")
         except Exception as e:
-            logger.warning(f"Error loading {path}: {e}")
+            logger.warning(f"Unexpected error loading {path}: {e}")
 
     if not dfs:
         raise ValueError("Could not load any datasets")
@@ -64,10 +75,19 @@ def merge_datasets(datasets: List[Path], output_name: str = "merged_dataset.csv"
         merged = merged.drop_duplicates(subset=available_keys)
         logger.info(f"Removed {original_len - len(merged)} duplicates")
 
-    # Save merged dataset
+    # Save merged dataset with error handling
     output_path = PROCESSED_DIR / output_name
-    merged.to_csv(output_path, index=False)
-    logger.info(f"Saved: {output_path} ({len(merged)} records)")
+    try:
+        # Ensure output directory exists
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        merged.to_csv(output_path, index=False)
+        logger.info(f"Saved: {output_path} ({len(merged)} records)")
+    except PermissionError as e:
+        logger.error(f"Permission denied writing to {output_path}: {e}")
+        raise IOError(f"Cannot write merged dataset - permission denied: {output_path}") from e
+    except OSError as e:
+        logger.error(f"OS error writing to {output_path}: {e}")
+        raise IOError(f"Cannot write merged dataset: {output_path}") from e
 
     return merged
 

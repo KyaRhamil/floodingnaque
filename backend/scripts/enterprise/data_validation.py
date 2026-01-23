@@ -31,7 +31,30 @@ logger = logging.getLogger(__name__)
 
 
 class DataValidationError(Exception):
-    """Raised when data validation fails."""
+    """Exception raised when data validation fails.
+
+    This exception is raised when the input DataFrame does not meet
+    the validation criteria defined in the schema or quality checks.
+
+    :param message: Human-readable error description.
+    :type message: str
+    :param errors: List of detailed error dictionaries.
+    :type errors: Optional[List[Dict]]
+
+    :ivar errors: Collection of validation errors with details.
+    :vartype errors: List[Dict]
+
+    Example
+    -------
+    ::
+
+        >>> try:
+        ...     validator.validate(df, raise_on_error=True)
+        ... except DataValidationError as e:
+        ...     print(f"Validation failed: {e}")
+        ...     for error in e.errors:
+        ...         print(f"  - {error['type']}: {error['message']}")
+    """
 
     def __init__(self, message: str, errors: Optional[List[Dict]] = None):
         super().__init__(message)
@@ -39,22 +62,52 @@ class DataValidationError(Exception):
 
 
 class FloodDataValidator:
-    """
-    Data validator for flood prediction training data.
+    """Data validator for flood prediction training data.
+
+    This class provides comprehensive validation for DataFrames used in
+    the flood prediction training pipeline. It combines schema validation
+    using Pandera with custom data quality checks.
 
     Validates:
-    - Schema correctness (columns, types)
-    - Value ranges (temperature, humidity, etc.)
-    - Data quality (missing values, duplicates)
-    - Target distribution
+        - Schema correctness (columns, types)
+        - Value ranges (temperature, humidity, etc.)
+        - Data quality (missing values, duplicates)
+        - Target distribution and class balance
+
+    :param config: Validation configuration dictionary.
+    :type config: Optional[Dict[str, Any]]
+
+    :ivar config: Validation configuration.
+    :vartype config: Dict[str, Any]
+    :ivar feature_ranges: Valid ranges for each feature.
+    :vartype feature_ranges: Dict[str, Dict[str, float]]
+
+    Example
+    -------
+    ::
+
+        >>> config = {
+        ...     'feature_ranges': {
+        ...         'temperature': {'min': 250, 'max': 330},
+        ...         'humidity': {'min': 0, 'max': 100}
+        ...     },
+        ...     'max_missing_ratio': 0.1,
+        ...     'min_samples': 100
+        ... }
+        >>> validator = FloodDataValidator(config)
+        >>> validated_df, errors = validator.validate(df, fix_errors=True)
+
+    See Also
+    --------
+    validate_training_data : Convenience function for quick validation.
+    create_feature_schema : Create custom feature schemas.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize validator with configuration.
+        """Initialize validator with configuration.
 
-        Args:
-            config: Validation configuration from YAML
+        :param config: Validation configuration from YAML or dict.
+        :type config: Optional[Dict[str, Any]]
         """
         self.config = config or {}
         self.feature_ranges = self.config.get("feature_ranges", {})

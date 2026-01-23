@@ -17,6 +17,7 @@ RUN apk add --no-cache \
     pgbouncer \
     gettext \
     ca-certificates \
+    postgresql-client \
     && rm -rf /var/cache/apk/*
 
 # Create directories
@@ -39,9 +40,9 @@ USER pgbouncer
 # Expose PgBouncer port
 EXPOSE 6432
 
-# Health check
+# Health check using pg_isready (more reliable than psql)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD echo "SELECT 1;" | psql -h localhost -p 6432 -U pgbouncer_stats pgbouncer || exit 1
+    CMD pg_isready -h localhost -p 6432 || exit 1
 
 # Run PgBouncer
 ENTRYPOINT ["/entrypoint.sh"]

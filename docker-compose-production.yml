@@ -46,6 +46,11 @@ services:
     image: floodingnaque-api:production-v2.0.0
     container_name: floodingnaque-api-prod
     restart: always
+    labels:
+      - "com.floodingnaque.service=api"
+      - "com.floodingnaque.description=Flood Prediction API"
+      - "com.floodingnaque.version=2.0.0"
+      - "com.floodingnaque.maintainer=Floodingnaque Team"
     ports:
       # Bind to localhost only - Nginx reverse proxy handles external traffic
       - "127.0.0.1:5000:5000"
@@ -124,6 +129,8 @@ services:
       - floodingnaque_uploads_prod:/app/uploads
       - floodingnaque_backups_prod:/app/backups
       - /var/run/datadog:/var/run/datadog
+      # SSL certificate for database connection (mount at runtime for security)
+      - ./backend/certs/prod-ca-2021.crt:/app/certs/prod-ca-2021.crt:ro
     depends_on:
       datadog-agent:
         condition: service_started
@@ -176,6 +183,10 @@ services:
     image: floodingnaque-api:production-v2.0.0
     container_name: floodingnaque-celery-prod
     restart: always
+    labels:
+      - "com.floodingnaque.service=celery-worker"
+      - "com.floodingnaque.description=Background Task Worker"
+      - "com.floodingnaque.version=2.0.0"
     command: >
       celery -A app.services.celery_app worker
       --loglevel=info
@@ -256,6 +267,10 @@ services:
     image: floodingnaque-api:production-v2.0.0
     container_name: floodingnaque-celery-beat-prod
     restart: always
+    labels:
+      - "com.floodingnaque.service=celery-beat"
+      - "com.floodingnaque.description=Task Scheduler"
+      - "com.floodingnaque.version=2.0.0"
     command: >
       celery -A app.services.celery_app beat
       --loglevel=info
@@ -323,6 +338,10 @@ services:
     image: floodingnaque-pgbouncer:1.21.0
     container_name: floodingnaque-pgbouncer-prod
     restart: always
+    labels:
+      - "com.floodingnaque.service=pgbouncer"
+      - "com.floodingnaque.description=PostgreSQL Connection Pooler"
+      - "com.floodingnaque.version=1.21.0"
     ports:
       - "127.0.0.1:6432:6432"
     environment:
@@ -381,6 +400,9 @@ services:
     image: gcr.io/datadoghq/agent:7
     container_name: floodingnaque-datadog-agent
     restart: always
+    labels:
+      - "com.floodingnaque.service=datadog-agent"
+      - "com.floodingnaque.description=APM and Monitoring Agent"
     environment:
       - DD_API_KEY=${DD_API_KEY}
       - DD_SITE=us5.datadoghq.com
@@ -433,6 +455,9 @@ services:
     image: prom/prometheus:v2.48.0
     container_name: floodingnaque-prometheus-prod
     restart: always
+    labels:
+      - "com.floodingnaque.service=prometheus"
+      - "com.floodingnaque.description=Metrics Collection"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -482,6 +507,9 @@ services:
     image: nginx:1.25-alpine
     container_name: floodingnaque-nginx-prod
     restart: always
+    labels:
+      - "com.floodingnaque.service=nginx"
+      - "com.floodingnaque.description=Reverse Proxy with TLS"
     ports:
       - "80:80"
       - "443:443"
@@ -498,10 +526,11 @@ services:
     profiles:
       - nginx
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ["CMD-SHELL", "curl -sf http://localhost/health || wget -q --spider http://localhost/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 15s
     deploy:
       resources:
         limits:

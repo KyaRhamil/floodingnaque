@@ -4,6 +4,34 @@ MLflow Experiment Tracking Module
 
 This module provides MLflow integration for experiment tracking, model logging,
 and artifact management in the Floodingnaque training pipeline.
+
+.. module:: enterprise.mlflow_tracking
+   :synopsis: MLflow experiment tracking and model registry integration.
+
+.. moduleauthor:: Floodingnaque Team
+
+Features
+--------
+- Automatic experiment creation and management
+- Run lifecycle with context managers
+- Metric, parameter, and artifact logging
+- Model versioning and registration
+- Run comparison and best model retrieval
+
+Dependencies
+------------
+Optional: mlflow>=2.0.0
+
+Example
+-------
+::
+
+    >>> from enterprise.mlflow_tracking import MLflowTracker
+    >>> tracker = MLflowTracker(experiment_name="flood_prediction")
+    >>> with tracker.start_run(run_name="experiment_001") as run:
+    ...     tracker.log_params({'n_estimators': 100})
+    ...     tracker.log_metrics({'f1_score': 0.95})
+    ...     tracker.log_model(model)
 """
 
 from __future__ import annotations

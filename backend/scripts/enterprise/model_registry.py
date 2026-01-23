@@ -7,6 +7,49 @@ This module provides enterprise-grade model registry functionality:
 - Version management and tracking
 - Promotion criteria validation
 - Model comparison and rollback support
+
+.. module:: enterprise.model_registry
+   :synopsis: Model registry with staged promotion and versioning.
+
+.. moduleauthor:: Floodingnaque Team
+
+Features
+--------
+- Multi-stage lifecycle management (development → staging → production)
+- Automatic version tracking and indexing
+- Promotion criteria validation with configurable thresholds
+- Model comparison between versions
+- Rollback support for production incidents
+- Model archiving for storage management
+
+Stages
+------
+DEVELOPMENT
+    Initial stage for newly trained models.
+STAGING
+    Pre-production testing environment.
+PRODUCTION
+    Live production models serving predictions.
+ARCHIVED
+    Retired models kept for reference.
+
+Example
+-------
+::
+
+    >>> from enterprise.model_registry import ModelRegistry, ModelStage
+    >>> registry = ModelRegistry(Path("models/registry"))
+    >>> # Register new model
+    >>> version = registry.register(
+    ...     model=trained_model,
+    ...     version=1,
+    ...     name="flood_rf_model",
+    ...     metrics={'f1_score': 0.92, 'roc_auc': 0.95},
+    ...     parameters={'n_estimators': 100},
+    ...     features=['temperature', 'humidity', 'precipitation']
+    ... )
+    >>> # Promote to production
+    >>> success, msg = registry.promote(1, ModelStage.PRODUCTION)
 """
 
 import hashlib

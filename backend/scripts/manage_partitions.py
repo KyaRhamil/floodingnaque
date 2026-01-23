@@ -1,5 +1,4 @@
-"""
-Partition Management Script for Floodingnaque
+"""Partition Management Script for Floodingnaque
 
 Manages time-series table partitions:
 - Creates future partitions
@@ -18,6 +17,17 @@ Usage:
 
     # Full maintenance (create + cleanup + stats)
     python manage_partitions.py --all
+
+    # Force execution even on SQLite (limited stats only)
+    python manage_partitions.py --stats --force
+
+Note:
+    Partitioning is only supported on PostgreSQL. On SQLite databases,
+    this script will report basic table statistics instead.
+
+Environment Variables:
+    FLOODINGNAQUE_LOG_LEVEL     Logging level (DEBUG, INFO, etc.)
+    DATABASE_URL                Database connection URL
 """
 
 import argparse
@@ -30,30 +40,89 @@ from datetime import datetime, timezone
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, backend_dir)
 
-from app.models.db import engine
+from scripts.cli_utils import (
+    add_common_arguments,
+    get_database_type,
+    is_postgresql,
+    is_sqlite,
+    setup_logging,
+)
 from sqlalchemy import text
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-# Tables that use time-series partitioning
+# Tables that use time-series partitioning (PostgreSQL only)
 PARTITIONED_TABLES = ["weather_data", "predictions"]
 
 
-def create_partitions(months_ahead: int = 3) -> dict:
+def get_engine():
+    """Lazy import of engine to allow database type detection first."""
+    from app.models.db import engine
+
+    return engine
+
+
+def check_database_support(force: bool = False) -> bool:
+    """
+    Check if the current database supports partitioning.
+
+    Args:
+        force: If True, allow execution even on unsupported databases
+
+    Returns:
+        True if database supports partitioning or force is True
+    """
+    db_type = get_database_type()
+
+    if db_type == "sqlite":
+        if force:
+            logger.warning("SQLite does not support table partitioning. " "Running in limited mode (basic stats only).")
+            return True
+        else:
+            logger.error(
+                "SQLite does not support table partitioning.\n"
+                "  - Use PostgreSQL for partition management\n"
+                "  - Use --force to see basic table statistics instead\n"
+                "  - Set DATABASE_URL to a PostgreSQL connection string"
+            )
+            return False
+
+    elif db_type == "postgresql":
+        return True
+
+    else:
+        logger.warning(f"Unknown database type: {db_type}. Attempting to proceed...")
+        return True
+
+
+def create_partitions(months_ahead: int = 3, dry_run: bool = False) -> dict:
     """
     Create future partitions for all partitioned tables.
 
     Args:
         months_ahead: Number of months to create partitions for
+        dry_run: If True, only show what would be done without executing
 
     Returns:
         Dictionary with creation results
     """
     results = {"created": [], "errors": []}
 
+    # Check if SQLite - partitioning not supported
+    if is_sqlite():
+        logger.warning("SQLite does not support partitioning. Skipping partition creation.")
+        results["errors"].append({"table": "all", "error": "SQLite does not support partitioning"})
+        return results
+
+    if dry_run:
+        logger.info("[DRY RUN] Would create partitions for tables:")
+        for table_name in PARTITIONED_TABLES:
+            logger.info(f"  [DRY RUN] - {table_name} ({months_ahead} months ahead)")
+            results["created"].append({"table": table_name, "months": months_ahead, "status": "dry-run"})
+        return results
+
+    engine = get_engine()
     with engine.connect() as conn:
         for table_name in PARTITIONED_TABLES:
             try:
@@ -83,18 +152,33 @@ def create_partitions(months_ahead: int = 3) -> dict:
     return results
 
 
-def cleanup_old_partitions(retention_months: int = 24) -> dict:
+def cleanup_old_partitions(retention_months: int = 24, dry_run: bool = False) -> dict:
     """
     Drop partitions older than retention period.
 
     Args:
         retention_months: Number of months to keep
+        dry_run: If True, only show what would be done without executing
 
     Returns:
         Dictionary with cleanup results
     """
     results = {"dropped": [], "errors": []}
 
+    # Check if SQLite - partitioning not supported
+    if is_sqlite():
+        logger.warning("SQLite does not support partitioning. Skipping partition cleanup.")
+        results["errors"].append({"table": "all", "error": "SQLite does not support partitioning"})
+        return results
+
+    if dry_run:
+        logger.info("[DRY RUN] Would drop old partitions for tables:")
+        for table_name in PARTITIONED_TABLES:
+            logger.info(f"  [DRY RUN] - {table_name} (keeping {retention_months} months)")
+            results["dropped"].append({"table": table_name, "partitions_dropped": "unknown", "status": "dry-run"})
+        return results
+
+    engine = get_engine()
     with engine.connect() as conn:
         for table_name in PARTITIONED_TABLES:
             try:
@@ -128,6 +212,38 @@ def cleanup_old_partitions(retention_months: int = 24) -> dict:
     return results
 
 
+def get_sqlite_table_statistics() -> dict:
+    """
+    Get basic table statistics for SQLite databases.
+
+    Returns:
+        Dictionary with basic table statistics (no partition info)
+    """
+    results = {"tables": {}, "errors": [], "note": "SQLite - partitioning not supported"}
+
+    engine = get_engine()
+    with engine.connect() as conn:
+        for table_name in PARTITIONED_TABLES:
+            try:
+                # Basic row count for SQLite
+                result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))  # nosec B608
+                row_count = result.scalar() or 0
+
+                results["tables"][table_name] = {
+                    "partition_count": 0,
+                    "total_rows": row_count,
+                    "partitions": [],
+                    "note": "SQLite - no partitioning",
+                }
+                logger.info(f"  {table_name}: {row_count:,} rows")
+
+            except Exception as e:
+                logger.warning(f"  Could not get stats for {table_name}: {e}")
+                results["errors"].append({"table": table_name, "error": str(e)})
+
+    return results
+
+
 def get_partition_statistics() -> dict:
     """
     Get statistics for all partitioned tables.
@@ -137,6 +253,12 @@ def get_partition_statistics() -> dict:
     """
     results = {"tables": {}, "errors": []}
 
+    # Handle SQLite with basic table stats
+    if is_sqlite():
+        logger.info("SQLite detected - showing basic table statistics instead of partitions")
+        return get_sqlite_table_statistics()
+
+    engine = get_engine()
     with engine.connect() as conn:
         for table_name in PARTITIONED_TABLES:
             try:
@@ -240,19 +362,25 @@ def print_statistics(stats: dict):
 def main():
     parser = argparse.ArgumentParser(description="Manage time-series table partitions for Floodingnaque")
 
+    # Partition operations
     parser.add_argument("--create", "-c", action="store_true", help="Create future partitions")
-
     parser.add_argument("--months", "-m", type=int, default=3, help="Months ahead to create partitions (default: 3)")
-
     parser.add_argument("--cleanup", "-d", action="store_true", help="Drop old partitions based on retention policy")
-
     parser.add_argument("--retention", "-r", type=int, default=24, help="Months to retain partitions (default: 24)")
-
     parser.add_argument("--stats", "-s", action="store_true", help="Show partition statistics")
-
     parser.add_argument("--all", "-a", action="store_true", help="Run all operations: create, cleanup, and stats")
 
+    # Standardized common arguments
+    add_common_arguments(parser, include=["verbose", "force", "dry-run"])
+
     args = parser.parse_args()
+
+    # Setup logging based on --verbose flag
+    setup_logging(verbose=args.verbose)
+
+    # Check database type
+    db_type = get_database_type()
+    logger.info(f"Database type detected: {db_type}")
 
     # Default to stats if no action specified
     if not any([args.create, args.cleanup, args.stats, args.all]):
@@ -260,20 +388,35 @@ def main():
 
     print("\n🗄️  Floodingnaque Partition Manager")
     print("=" * 40)
+    print(f"Database: {db_type}")
+
+    if db_type == "sqlite":
+        print("⚠️  SQLite detected - partitioning not supported")
+        print("   Will show basic table statistics instead")
+        if not args.force and (args.create or args.cleanup):
+            print("\n   Use --force to proceed anyway (stats only)")
+            return
+
+    if args.dry_run:
+        print("\n⚠️  DRY RUN MODE - No changes will be made")
+        print("=" * 40)
 
     # Run requested operations
     if args.all or args.create:
         print(f"\n📅 Creating partitions ({args.months} months ahead)...")
-        results = create_partitions(args.months)
+        results = create_partitions(args.months, dry_run=args.dry_run)
         print(f"   Created: {len(results['created'])} tables")
         if results["errors"]:
             print(f"   Errors: {len(results['errors'])}")
 
     if args.all or args.cleanup:
         print(f"\n🗑️  Cleaning up old partitions (retention: {args.retention} months)...")
-        results = cleanup_old_partitions(args.retention)
-        total_dropped = sum(r["partitions_dropped"] for r in results["dropped"])
-        print(f"   Dropped: {total_dropped} partitions total")
+        results = cleanup_old_partitions(args.retention, dry_run=args.dry_run)
+        if args.dry_run:
+            print(f"   Would drop partitions from {len(results['dropped'])} tables")
+        else:
+            total_dropped = sum(r["partitions_dropped"] for r in results["dropped"])
+            print(f"   Dropped: {total_dropped} partitions total")
         if results["errors"]:
             print(f"   Errors: {len(results['errors'])}")
 
@@ -282,7 +425,10 @@ def main():
         stats = get_partition_statistics()
         print_statistics(stats)
 
-    print("\n✅ Partition management complete!")
+    if args.dry_run:
+        print("\n✅ Dry run complete! No changes were made.")
+    else:
+        print("\n✅ Partition management complete!")
 
 
 if __name__ == "__main__":

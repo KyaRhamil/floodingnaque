@@ -64,12 +64,22 @@ class Config:
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides to config."""
         env_mappings = {
+            # MLflow settings
             "FLOODINGNAQUE_MLFLOW_URI": ("mlflow", "tracking_uri"),
+            "FLOODINGNAQUE_ENABLE_MLFLOW": ("general", "enable_mlflow"),
+            # General settings
             "FLOODINGNAQUE_LOG_LEVEL": ("logging", "level"),
             "FLOODINGNAQUE_RANDOM_STATE": ("general", "random_state"),
             "FLOODINGNAQUE_CV_FOLDS": ("cross_validation", "folds"),
-            "FLOODINGNAQUE_ENABLE_MLFLOW": ("general", "enable_mlflow"),
+            # Directory settings
             "FLOODINGNAQUE_MODELS_DIR": ("registry", "models_dir"),
+            "FLOODINGNAQUE_DATA_DIR": ("data", "raw_dir"),
+            "FLOODINGNAQUE_BACKUP_DIR": ("backup", "backup_dir"),
+            # API rate limiting
+            "FLOODINGNAQUE_MAX_RETRIES": ("api", "max_retries"),
+            "FLOODINGNAQUE_RETRY_DELAY": ("api", "retry_delay"),
+            # Backup settings
+            "FLOODINGNAQUE_MAX_BACKUPS": ("backup", "max_backups"),
         }
 
         for env_var, config_path in env_mappings.items():

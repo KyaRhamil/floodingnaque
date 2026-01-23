@@ -107,8 +107,8 @@ COPY --chown=appuser:appgroup alembic/ ./alembic/
 COPY --chown=appuser:appgroup models/*.json ./models/
 COPY --chown=appuser:appgroup models/*.joblib ./models/
 
-# Copy SSL certificates for database connection (Supabase)
-COPY --chown=appuser:appgroup prod-ca-2021.crt ./certs/
+# NOTE: SSL certificates should be mounted at runtime for security
+# Mount via docker-compose: ./certs/prod-ca-2021.crt:/app/certs/prod-ca-2021.crt:ro
 
 # Copy data files for reference
 COPY --chown=appuser:appgroup data/*.csv ./data/

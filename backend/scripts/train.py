@@ -2,6 +2,18 @@
 Basic Flood Prediction Model Training Script
 ============================================
 
+.. deprecated:: 1.0.0
+    This script is deprecated. Use the unified CLI instead:
+
+    python -m scripts train                    # Basic training
+    python -m scripts train --grid-search      # With grid search
+
+    Or use the UnifiedTrainer class:
+
+    from scripts.train_unified import UnifiedTrainer, TrainingMode
+    trainer = UnifiedTrainer(mode=TrainingMode.BASIC)
+    trainer.train()
+
 Simple training script for the Random Forest flood prediction model.
 For advanced features, use train_pagasa.py or train_production.py.
 
@@ -11,6 +23,12 @@ Usage:
     python scripts/train.py --grid-search
     python scripts/train.py --cv-folds 10
 """
+
+import warnings
+
+warnings.warn(
+    "train.py is deprecated. Use 'python -m scripts train' or UnifiedTrainer instead.", DeprecationWarning, stacklevel=2
+)
 
 import argparse
 import json
@@ -214,10 +232,10 @@ def save_model(model: RandomForestClassifier, metrics: Dict, feature_names: List
         "metrics": metrics,
         "training_data": {"features": feature_names, "feature_count": len(feature_names)},
         "model_parameters": {
-            "n_estimators": model.n_estimators,
-            "max_depth": model.max_depth,
-            "min_samples_split": model.min_samples_split,
-            "min_samples_leaf": model.min_samples_leaf,
+            "n_estimators": getattr(model, "n_estimators", None),
+            "max_depth": getattr(model, "max_depth", None),
+            "min_samples_split": getattr(model, "min_samples_split", None),
+            "min_samples_leaf": getattr(model, "min_samples_leaf", None),
         },
         "cross_validation": {"cv_folds": 5, "cv_mean": metrics.get("cv_mean"), "cv_std": metrics.get("cv_std")},
     }

@@ -1,6 +1,10 @@
 """
 Comprehensive Model Analysis and Visualization for Thesis Defense
 Generates publication-ready charts, metrics, and reports for Random Forest model.
+
+Features:
+- Static matplotlib charts for thesis documents
+- Interactive plotly visualizations for presentations (--interactive flag)
 """
 
 import json
@@ -26,6 +30,18 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import learning_curve
+
+# Check for plotly availability
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None  # type: ignore
+    go = None  # type: ignore
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -209,6 +225,248 @@ def plot_learning_curves(model, X, y, output_dir):
     logger.info(f"Saved learning curves to {output_path}")
 
 
+# =============================================================================
+# Interactive Plotly Visualizations
+# =============================================================================
+
+
+def plot_feature_importance_interactive(model, output_dir, top_n=20):
+    """Plot interactive feature importance with plotly."""
+    if not PLOTLY_AVAILABLE:
+        logger.warning("Plotly not available. Install with: pip install plotly")
+        return
+
+    logger.info("Generating interactive feature importance plot...")
+
+    if not hasattr(model, "feature_importances_"):
+        logger.warning("Model does not have feature_importances_ attribute")
+        return
+
+    feature_names = (
+        model.feature_names_in_
+        if hasattr(model, "feature_names_in_")
+        else [f"Feature {i}" for i in range(len(model.feature_importances_))]
+    )
+
+    importance_df = (
+        pd.DataFrame({"feature": feature_names, "importance": model.feature_importances_})
+        .sort_values("importance", ascending=True)
+        .tail(top_n)
+    )
+
+    fig = px.bar(
+        importance_df,
+        x="importance",
+        y="feature",
+        orientation="h",
+        title="Random Forest Feature Importance - Flood Prediction Model",
+        labels={"importance": "Feature Importance", "feature": "Feature"},
+        color="importance",
+        color_continuous_scale="Viridis",
+    )
+
+    fig.update_layout(
+        height=max(400, len(importance_df) * 25),
+        showlegend=False,
+        title_font_size=16,
+        font={"size": 12},
+    )
+
+    output_path = Path(output_dir) / "feature_importance_interactive.html"
+    fig.write_html(str(output_path))
+    logger.info(f"Saved interactive feature importance to {output_path}")
+
+
+def plot_confusion_matrix_interactive(y_true, y_pred, output_dir):
+    """Plot interactive confusion matrix with plotly."""
+    if not PLOTLY_AVAILABLE:
+        logger.warning("Plotly not available. Install with: pip install plotly")
+        return
+
+    logger.info("Generating interactive confusion matrix...")
+
+    cm = confusion_matrix(y_true, y_pred)
+    labels = ["No Flood (0)", "Flood (1)"]
+
+    fig = px.imshow(
+        cm,
+        labels={"x": "Predicted", "y": "Actual", "color": "Count"},
+        x=labels,
+        y=labels,
+        text_auto=True,
+        color_continuous_scale="Blues",
+        title="Confusion Matrix - Flood Prediction Model",
+    )
+
+    fig.update_layout(title_font_size=16, font={"size": 12})
+
+    output_path = Path(output_dir) / "confusion_matrix_interactive.html"
+    fig.write_html(str(output_path))
+    logger.info(f"Saved interactive confusion matrix to {output_path}")
+
+
+def plot_roc_curve_interactive(y_true, y_pred_proba, output_dir):
+    """Plot interactive ROC curve with plotly."""
+    if not PLOTLY_AVAILABLE:
+        logger.warning("Plotly not available. Install with: pip install plotly")
+        return
+
+    logger.info("Generating interactive ROC curve...")
+
+    if y_pred_proba.ndim > 1:
+        y_pred_proba = y_pred_proba[:, 1]
+
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
+    roc_auc = auc(fpr, tpr)
+
+    fig = go.Figure()
+
+    # ROC curve
+    fig.add_trace(
+        go.Scatter(
+            x=fpr,
+            y=tpr,
+            mode="lines",
+            name=f"ROC Curve (AUC = {roc_auc:.3f})",
+            line={"color": "darkorange", "width": 2},
+            hovertemplate="FPR: %{x:.3f}<br>TPR: %{y:.3f}<extra></extra>",
+        )
+    )
+
+    # Random classifier line
+    fig.add_trace(
+        go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            mode="lines",
+            name="Random Classifier",
+            line={"color": "navy", "width": 2, "dash": "dash"},
+        )
+    )
+
+    fig.update_layout(
+        title="ROC Curve - Flood Prediction Model",
+        xaxis_title="False Positive Rate",
+        yaxis_title="True Positive Rate",
+        title_font_size=16,
+        font={"size": 12},
+        legend={"yanchor": "bottom", "y": 0.01, "xanchor": "right", "x": 0.99},
+    )
+
+    output_path = Path(output_dir) / "roc_curve_interactive.html"
+    fig.write_html(str(output_path))
+    logger.info(f"Saved interactive ROC curve to {output_path}")
+
+
+def plot_precision_recall_interactive(y_true, y_pred_proba, output_dir):
+    """Plot interactive Precision-Recall curve with plotly."""
+    if not PLOTLY_AVAILABLE:
+        logger.warning("Plotly not available. Install with: pip install plotly")
+        return
+
+    logger.info("Generating interactive Precision-Recall curve...")
+
+    if y_pred_proba.ndim > 1:
+        y_pred_proba = y_pred_proba[:, 1]
+
+    precision, recall, thresholds = precision_recall_curve(y_true, y_pred_proba)
+    pr_auc = auc(recall, precision)
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=recall,
+            y=precision,
+            mode="lines",
+            name=f"PR Curve (AUC = {pr_auc:.3f})",
+            line={"color": "blue", "width": 2},
+            hovertemplate="Recall: %{x:.3f}<br>Precision: %{y:.3f}<extra></extra>",
+        )
+    )
+
+    fig.update_layout(
+        title="Precision-Recall Curve - Flood Prediction Model",
+        xaxis_title="Recall",
+        yaxis_title="Precision",
+        title_font_size=16,
+        font={"size": 12},
+        legend={"yanchor": "bottom", "y": 0.01, "xanchor": "left", "x": 0.01},
+    )
+
+    output_path = Path(output_dir) / "precision_recall_interactive.html"
+    fig.write_html(str(output_path))
+    logger.info(f"Saved interactive PR curve to {output_path}")
+
+
+def plot_metrics_dashboard_interactive(metadata, y_true, y_pred, output_dir):
+    """Generate interactive metrics dashboard with plotly."""
+    if not PLOTLY_AVAILABLE:
+        logger.warning("Plotly not available. Install with: pip install plotly")
+        return
+
+    logger.info("Generating interactive metrics dashboard...")
+
+    # Calculate metrics
+    metrics = {
+        "Accuracy": accuracy_score(y_true, y_pred),
+        "Precision": precision_score(y_true, y_pred, average="weighted"),
+        "Recall": recall_score(y_true, y_pred, average="weighted"),
+        "F1 Score": f1_score(y_true, y_pred, average="weighted"),
+    }
+
+    fig = make_subplots(
+        rows=1,
+        cols=2,
+        specs=[[{"type": "bar"}, {"type": "indicator"}]],
+        subplot_titles=("Performance Metrics", "Overall F1 Score"),
+    )
+
+    # Bar chart of metrics
+    fig.add_trace(
+        go.Bar(
+            x=list(metrics.keys()),
+            y=list(metrics.values()),
+            marker_color=["#2ecc71", "#3498db", "#e74c3c", "#f39c12"],
+            text=[f"{v:.3f}" for v in metrics.values()],
+            textposition="outside",
+        ),
+        row=1,
+        col=1,
+    )
+
+    # Gauge for F1 Score
+    fig.add_trace(
+        go.Indicator(
+            mode="gauge+number",
+            value=metrics["F1 Score"],
+            domain={"x": [0, 1], "y": [0, 1]},
+            gauge={
+                "axis": {"range": [0, 1]},
+                "bar": {"color": "#f39c12"},
+                "steps": [
+                    {"range": [0, 0.5], "color": "#e74c3c"},
+                    {"range": [0.5, 0.75], "color": "#f1c40f"},
+                    {"range": [0.75, 1], "color": "#2ecc71"},
+                ],
+            },
+        ),
+        row=1,
+        col=2,
+    )
+
+    fig.update_layout(
+        title="Model Performance Dashboard - Flood Prediction",
+        title_font_size=18,
+        showlegend=False,
+        height=400,
+    )
+
+    output_path = Path(output_dir) / "metrics_dashboard_interactive.html"
+    fig.write_html(str(output_path))
+    logger.info(f"Saved interactive dashboard to {output_path}")
+
+
 def plot_model_comparison(metadata, output_dir):
     """Plot metrics comparison if metadata contains multiple model info."""
     logger.info("Generating model metrics comparison plot...")
@@ -355,7 +613,10 @@ def generate_text_report(model, metadata, y_true, y_pred, y_pred_proba, output_d
 
 
 def generate_thesis_report(
-    model_path="models/flood_rf_model.joblib", data_file="data/synthetic_dataset.csv", output_dir="reports"
+    model_path="models/flood_rf_model.joblib",
+    data_file="data/synthetic_dataset.csv",
+    output_dir="reports",
+    interactive=False,
 ):
     """
     Generate comprehensive thesis report with all visualizations and metrics.
@@ -364,9 +625,12 @@ def generate_thesis_report(
         model_path: Path to the trained model
         data_file: Path to the test dataset
         output_dir: Directory to save reports and plots
+        interactive: If True, generate interactive plotly charts
     """
     logger.info("=" * 80)
     logger.info("GENERATING COMPREHENSIVE THESIS REPORT")
+    if interactive:
+        logger.info("Interactive mode: Generating plotly visualizations")
     logger.info("=" * 80)
 
     # Create output directory
@@ -399,14 +663,27 @@ def generate_thesis_report(
     y_pred = model.predict(X)
     y_pred_proba = model.predict_proba(X)
 
-    # Generate all plots
-    logger.info("\nGenerating visualizations...")
+    # Generate all static plots
+    logger.info("\nGenerating static visualizations...")
     plot_feature_importance(model, output_path)
     plot_confusion_matrix(y, y_pred, output_path)
     plot_roc_curve(y, y_pred_proba, output_path)
     plot_precision_recall_curve(y, y_pred_proba, output_path)
     plot_model_comparison(metadata if metadata else {}, output_path)
     plot_learning_curves(model, X, y, output_path)
+
+    # Generate interactive plots if requested
+    if interactive:
+        logger.info("\nGenerating interactive visualizations...")
+        if not PLOTLY_AVAILABLE:
+            logger.warning("Plotly not installed. Install with: pip install plotly")
+            logger.warning("Skipping interactive visualizations.")
+        else:
+            plot_feature_importance_interactive(model, output_path)
+            plot_confusion_matrix_interactive(y, y_pred, output_path)
+            plot_roc_curve_interactive(y, y_pred_proba, output_path)
+            plot_precision_recall_interactive(y, y_pred_proba, output_path)
+            plot_metrics_dashboard_interactive(metadata, y, y_pred, output_path)
 
     # Generate text report
     generate_text_report(model, metadata, y, y_pred, y_pred_proba, output_path)
@@ -415,13 +692,22 @@ def generate_thesis_report(
     logger.info("✓ THESIS REPORT GENERATION COMPLETE!")
     logger.info("=" * 80)
     logger.info(f"\nGenerated files in {output_path.absolute()}:")
-    logger.info("  - feature_importance.png")
-    logger.info("  - confusion_matrix.png")
-    logger.info("  - roc_curve.png")
-    logger.info("  - precision_recall_curve.png")
-    logger.info("  - metrics_comparison.png")
-    logger.info("  - learning_curves.png")
-    logger.info("  - model_report.txt")
+    logger.info("  Static (PNG):")
+    logger.info("    - feature_importance.png")
+    logger.info("    - confusion_matrix.png")
+    logger.info("    - roc_curve.png")
+    logger.info("    - precision_recall_curve.png")
+    logger.info("    - metrics_comparison.png")
+    logger.info("    - learning_curves.png")
+    if interactive and PLOTLY_AVAILABLE:
+        logger.info("  Interactive (HTML):")
+        logger.info("    - feature_importance_interactive.html")
+        logger.info("    - confusion_matrix_interactive.html")
+        logger.info("    - roc_curve_interactive.html")
+        logger.info("    - precision_recall_interactive.html")
+        logger.info("    - metrics_dashboard_interactive.html")
+    logger.info("  Report:")
+    logger.info("    - model_report.txt")
     logger.info("\nThese files are publication-ready for your thesis defense!")
 
 
@@ -432,7 +718,14 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="models/flood_rf_model.joblib", help="Path to trained model file")
     parser.add_argument("--data", type=str, default="data/synthetic_dataset.csv", help="Path to test data CSV file")
     parser.add_argument("--output", type=str, default="reports", help="Output directory for reports and plots")
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Generate interactive plotly charts (requires plotly: pip install plotly)",
+    )
 
     args = parser.parse_args()
 
-    generate_thesis_report(model_path=args.model, data_file=args.data, output_dir=args.output)
+    generate_thesis_report(
+        model_path=args.model, data_file=args.data, output_dir=args.output, interactive=args.interactive
+    )

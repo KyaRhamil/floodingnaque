@@ -7,6 +7,34 @@ This module provides enterprise-grade logging with:
 - Correlation IDs for request tracing
 - Context managers for operation tracking
 - Performance timing
+
+.. module:: enterprise.logging_config
+   :synopsis: Structured logging with correlation IDs and timing.
+
+.. moduleauthor:: Floodingnaque Team
+
+Features
+--------
+- JSON-formatted log output for log aggregation
+- Correlation IDs for distributed tracing
+- Operation timing with context managers
+- Training-specific logging events
+- Structured event logging
+
+Dependencies
+------------
+Optional: structlog>=23.0.0
+
+Example
+-------
+::
+
+    >>> from enterprise.logging_config import TrainingLogger, new_correlation_id
+    >>> new_correlation_id()  # Start new trace
+    >>> logger = TrainingLogger("training", json_format=True)
+    >>> with logger.operation("model_training", version=1):
+    ...     # Training code here
+    ...     logger.log_metrics({'accuracy': 0.95})
 """
 
 import functools

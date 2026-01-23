@@ -2,6 +2,19 @@
 Robust Model Evaluation for Thesis Defense
 ============================================
 
+.. deprecated:: 1.0.0
+    This script is deprecated. Use the unified CLI instead:
+
+    python -m scripts evaluate --robustness       # Full robustness
+    python -m scripts evaluate --temporal         # Temporal validation
+    python -m scripts evaluate --thesis           # Thesis defense mode
+
+    Or use the UnifiedEvaluator class:
+
+    from scripts.evaluate_unified import UnifiedEvaluator, EvaluationMode
+    evaluator = UnifiedEvaluator()
+    results = evaluator.evaluate(mode=EvaluationMode.ROBUSTNESS)
+
 This script provides rigorous evaluation metrics that address:
 1. Temporal Validation - Train on past years, test on future year
 2. Robustness Testing - Model performance under input noise
@@ -13,11 +26,20 @@ Usage:
     python evaluate_robustness.py --model-path models/flood_enhanced_v2.joblib
 """
 
+import warnings
+
+warnings.warn(
+    "evaluate_robustness.py is deprecated. Use 'python -m scripts evaluate --robustness' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 import json
 import logging
 import warnings
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import joblib
 import numpy as np
@@ -474,7 +496,7 @@ def main():
     logger.info(f"\nUsing {len(feature_names)} features: {feature_names[:5]}...")
 
     # Run all evaluations
-    results = {
+    results: Dict[str, Any] = {
         "generated_at": datetime.now().isoformat(),
         "model_path": str(args.model_path) if args.model_path else "auto-detected",
     }

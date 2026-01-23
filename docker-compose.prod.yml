@@ -1,7 +1,7 @@
 # =====================================================
 # Floodingnaque - Production Docker Compose
 # =====================================================
-# Usage: 
+# Usage:
 #   docker-compose -f docker-compose.prod.yml up -d --build
 #   docker-compose -f docker-compose.prod.yml logs -f
 #   docker-compose -f docker-compose.prod.yml down
@@ -81,7 +81,7 @@ services:
   # PostgreSQL Database
   # ===================
   db:
-    image: postgres:15-alpine
+    image: postgres:15.5-alpine
     container_name: floodingnaque-db
     restart: unless-stopped
     environment:
@@ -111,7 +111,7 @@ services:
   # Redis (Rate Limiting & Cache)
   # ===================
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
     container_name: floodingnaque-redis
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
@@ -136,7 +136,7 @@ services:
   # Nginx Reverse Proxy (Optional - for HTTPS)
   # ===================
   nginx:
-    image: nginx:alpine
+    image: nginx:1.25-alpine
     container_name: floodingnaque-nginx
     restart: unless-stopped
     ports:

@@ -2,6 +2,18 @@
 PAGASA-Enhanced Flood Prediction Model Training
 ================================================
 
+.. deprecated:: 1.0.0
+    This script is deprecated. Use the unified CLI instead:
+
+    python -m scripts train --mode pagasa             # PAGASA training
+    python -m scripts train --mode pagasa --all-stations
+
+    Or use the UnifiedTrainer class:
+
+    from scripts.train_unified import UnifiedTrainer, TrainingMode
+    trainer = UnifiedTrainer(mode=TrainingMode.PAGASA)
+    trainer.train()
+
 Upgraded training pipeline specifically designed for PAGASA weather station data.
 Leverages the comprehensive features from DOST-PAGASA climate data (2020-2025).
 
@@ -30,6 +42,14 @@ Usage:
 Author: Floodingnaque Team
 Last Updated: January 2026
 """
+
+import warnings
+
+warnings.warn(
+    "train_pagasa.py is deprecated. Use 'python -m scripts train --mode pagasa' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import argparse
 import json

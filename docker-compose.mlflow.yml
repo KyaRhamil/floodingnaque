@@ -1,0 +1,143 @@
+# MLflow Local Development Docker Compose
+# ========================================
+#
+# Local MLflow server deployment for experiment tracking
+# and model registry during development.
+#
+# Usage:
+#   docker-compose -f docker-compose.mlflow.yml up -d
+#
+# Access:
+#   MLflow UI: http://localhost:5000
+#   Artifact store: ./mlflow/artifacts
+#   Backend store: PostgreSQL or SQLite
+#
+# Stop:
+#   docker-compose -f docker-compose.mlflow.yml down
+#
+# With data cleanup:
+#   docker-compose -f docker-compose.mlflow.yml down -v
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # MLflow Tracking Server
+  # ==========================================================================
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.10.0
+    container_name: floodingnaque-mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://localhost:5000
+      # PostgreSQL backend (production-like)
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow:mlflow@mlflow-db:5432/mlflow
+      # Artifact store
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - mlflow-artifacts:/mlflow/artifacts
+      - ./mlflow/models:/mlflow/models
+    depends_on:
+      mlflow-db:
+        condition: service_healthy
+    command: >  # pragma: allowlist secret
+      mlflow server
+      --backend-store-uri postgresql://mlflow:mlflow@mlflow-db:5432/mlflow
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    networks:
+      - mlflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ==========================================================================
+  # PostgreSQL Database for MLflow Backend Store
+  # ==========================================================================
+  mlflow-db:
+    image: postgres:15-alpine
+    container_name: floodingnaque-mlflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mlflow
+      POSTGRES_PASSWORD: mlflow  # pragma: allowlist secret
+      POSTGRES_DB: mlflow
+    volumes:
+      - mlflow-db-data:/var/lib/postgresql/data
+    networks:
+      - mlflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow -d mlflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================================================
+  # MinIO S3-Compatible Object Storage (Optional)
+  # ==========================================================================
+  # Uncomment this section if you want to use S3-compatible storage
+  # instead of local filesystem for artifacts
+  #
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: floodingnaque-minio
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: minioadmin
+  #     MINIO_ROOT_PASSWORD: minioadmin
+  #   volumes:
+  #     - minio-data:/data
+  #   command: server /data --console-address ":9001"
+  #   networks:
+  #     - mlflow-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+volumes:
+  mlflow-db-data:
+    driver: local
+  mlflow-artifacts:
+    driver: local
+  # minio-data:
+  #   driver: local
+
+networks:
+  mlflow-network:
+    driver: bridge
+
+# ==========================================================================
+# Alternative: Lightweight SQLite Configuration
+# ==========================================================================
+# For local development without PostgreSQL, you can use this simplified setup:
+#
+# Create a separate file: docker-compose.mlflow-lite.yml
+#
+# services:
+#   mlflow:
+#     image: ghcr.io/mlflow/mlflow:v2.10.0
+#     container_name: floodingnaque-mlflow-lite
+#     restart: unless-stopped
+#     ports:
+#       - "5000:5000"
+#     volumes:
+#       - ./mlflow/mlruns:/mlflow/mlruns
+#       - ./mlflow/artifacts:/mlflow/artifacts
+#     command: >
+#       mlflow server
+#       --backend-store-uri sqlite:///mlflow/mlruns/mlflow.db
+#       --default-artifact-root /mlflow/artifacts
+#       --host 0.0.0.0
+#       --port 5000
