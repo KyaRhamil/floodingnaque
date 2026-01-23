@@ -22,13 +22,13 @@ def add_request_id():
         str: The request ID (either from header or newly generated)
     """
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
-    request.request_id = request_id
+    g.request_id = request_id
     return request_id
 
 
 def log_request():
     """Log incoming request details."""
-    request_id = getattr(request, "request_id", "unknown")
+    request_id = getattr(g, "request_id", "unknown")
     logger.info(
         f"Request {request_id}: {request.method} {request.path}",
         extra={
@@ -51,7 +51,7 @@ def log_response(response):
     Returns:
         Response object with logging completed
     """
-    request_id = getattr(request, "request_id", "unknown")
+    request_id = getattr(g, "request_id", "unknown")
     duration = getattr(g, "request_start_time", None)
 
     if duration:
@@ -107,7 +107,7 @@ def request_logger(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        request_id = getattr(request, "request_id", str(uuid.uuid4()))
+        request_id = getattr(g, "request_id", str(uuid.uuid4()))
         start_time = time.time()
 
         logger.debug(f"Entering handler for {request.path} [{request_id}]")
