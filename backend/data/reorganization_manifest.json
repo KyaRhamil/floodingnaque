@@ -1,0 +1,38 @@
+{
+  "reorganized_at": "2026-01-24T17:26:05.980868",
+  "data_directory": "backend\\data",
+  "moves": [
+    {
+      "source": "Floodingnaque_CADS-S0126006_A.ReadMe.txt",
+      "target": "raw/pagasa/Floodingnaque_CADS-S0126006_A.ReadMe.txt"
+    },
+    {
+      "source": "Floodingnaque_CADS-S0126006_NAIA Daily Data.csv",
+      "target": "raw/pagasa/Floodingnaque_CADS-S0126006_NAIA Daily Data.csv"
+    },
+    {
+      "source": "Floodingnaque_CADS-S0126006_Port Area Daily Data.csv",
+      "target": "raw/pagasa/Floodingnaque_CADS-S0126006_Port Area Daily Data.csv"
+    },
+    {
+      "source": "Floodingnaque_CADS-S0126006_Science Garden Daily Data.csv",
+      "target": "raw/pagasa/Floodingnaque_CADS-S0126006_Science Garden Daily Data.csv"
+    },
+    {
+      "source": "Floodingnaque_Paranaque_Official_Flood_Records_2022.csv",
+      "target": "raw/flood_records/Floodingnaque_Paranaque_Official_Flood_Records_2022.csv"
+    },
+    {
+      "source": "Floodingnaque_Paranaque_Official_Flood_Records_2023.csv",
+      "target": "raw/flood_records/Floodingnaque_Paranaque_Official_Flood_Records_2023.csv"
+    },
+    {
+      "source": "Floodingnaque_Paranaque_Official_Flood_Records_2024.csv",
+      "target": "raw/flood_records/Floodingnaque_Paranaque_Official_Flood_Records_2024.csv"
+    },
+    {
+      "source": "Floodingnaque_Paranaque_Official_Flood_Records_2025.csv",
+      "target": "raw/flood_records/Floodingnaque_Paranaque_Official_Flood_Records_2025.csv"
+    }
+  ]
+}

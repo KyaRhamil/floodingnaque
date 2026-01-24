@@ -1,0 +1,176 @@
+# =============================================================================
+# Floodingnaque Production Environment Configuration
+# =============================================================================
+# Production settings - Maximum quality, strict validation
+# Base config: training_config.yaml
+# =============================================================================
+
+# General Settings - Production Mode
+general:
+  log_level: "WARNING"
+  enable_mlflow: true
+  enable_data_validation: true
+
+# Data Settings - Production Paths
+data:
+  # Production paths MUST be set via environment variables
+  # Fallbacks provided for safety but should not be used
+  processed_dir: "${FLOODINGNAQUE_PROCESSED_DIR:-/data/floodingnaque/processed}"
+  raw_dir: "${FLOODINGNAQUE_RAW_DIR:-/data/floodingnaque/raw}"
+  test_size: 0.2
+  validation_size: 0.1
+  min_samples: 100
+  max_missing_ratio: 0.05  # Stricter than default
+
+# Model Settings - Full Production Training
+model:
+  type: "RandomForestClassifier"
+  
+  default_params:
+    n_estimators: 200
+    max_depth: 15
+    min_samples_split: 5
+    min_samples_leaf: 2
+    class_weight: "balanced_subsample"
+    max_features: "sqrt"
+    n_jobs: -1
+    
+  optuna:
+    enabled: true
+    n_trials: 50
+    timeout_minutes: 30
+    sampler: "TPE"
+    pruner: "MedianPruner"
+    
+  calibration:
+    enabled: true
+    method: "isotonic"
+    cv_folds: 5
+
+# Cross-Validation - Full
+cross_validation:
+  folds: 10
+  shuffle: true
+  
+  temporal:
+    enabled: true
+    n_splits: 5
+    gap: 0
+
+# Ensemble - Full Configuration
+ensemble:
+  stacking:
+    enabled: true
+    cv_folds: 5
+    stack_method: "predict_proba"
+    passthrough: false
+
+# MLflow - Production Server
+mlflow:
+  tracking_uri: "${FLOODINGNAQUE_MLFLOW_URI:-http://mlflow.floodingnaque.internal:5000}"
+  experiment_name: "floodingnaque_production"
+  auto_log: true
+  log_models: true
+  
+  tags:
+    environment: "production"
+    project: "floodingnaque"
+    team: "ml-engineering"
+    domain: "flood-prediction"
+    pipeline: "progressive"
+
+# Registry - Production Stage
+registry:
+  models_dir: "${FLOODINGNAQUE_MODELS_DIR:-/models/floodingnaque}"
+  stages:
+    - development
+    - staging
+    - production
+    
+  # Strict production promotion criteria
+  promotion_criteria:
+    staging:
+      min_f2_score: 0.85
+      min_f1_score: 0.80
+      min_roc_auc: 0.85
+      max_cv_std: 0.05
+    production:
+      min_f2_score: 0.90
+      min_f1_score: 0.85
+      min_roc_auc: 0.90
+      max_cv_std: 0.03
+      
+  retention:
+    max_versions_per_stage: 5
+    archive_old_models: true
+
+# Drift Detection - Strict Monitoring
+drift:
+  enabled: true
+  
+  psi:
+    warning_threshold: 0.1
+    alert_threshold: 0.2
+    
+  monitored_features:
+    - temperature
+    - humidity
+    - precipitation
+    - precip_3day_sum
+    
+  retrain_on:
+    - psi_alert
+    - performance_degradation
+    - scheduled
+
+# Validation - Strict Production Ranges
+validation:
+  # Strict feature validation for production data
+  feature_ranges:
+    temperature:
+      min: 15.0   # °C
+      max: 45.0   # °C
+    humidity:
+      min: 0.0
+      max: 100.0
+    precipitation:
+      min: 0.0
+      max: 500.0  # mm
+    is_monsoon_season:
+      values: [0, 1]
+    month:
+      min: 1
+      max: 12
+    precip_3day_sum:
+      min: 0.0
+      max: 1000.0
+    precip_7day_sum:
+      min: 0.0
+      max: 1500.0
+
+# Logging - Minimal but Comprehensive
+logging:
+  format: "json"
+  level: "WARNING"
+  file:
+    enabled: true
+    path: "${FLOODINGNAQUE_LOG_DIR:-/var/log/floodingnaque}/training_production.log"
+    max_bytes: 52428800  # 50MB
+    backup_count: 10
+  console:
+    enabled: true
+    colorize: false
+
+# Resource Management - Production Resources
+resources:
+  max_memory_gb: 16
+  max_workers: -1
+  use_gpu: false
+  gpu_device: 0
+
+# Monitoring - Strict Alerting
+monitoring:
+  max_training_minutes: 60
+  warn_training_minutes: 30
+  alert_on_degradation: true
+  degradation_threshold: 0.05

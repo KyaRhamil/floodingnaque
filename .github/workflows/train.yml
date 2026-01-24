@@ -18,11 +18,11 @@ on:
         required: false
         default: true
         type: boolean
-  
+
   # Weekly retraining schedule
   schedule:
     - cron: '0 2 * * 0'  # Every Sunday at 2 AM UTC
-  
+
   # Trigger on data changes
   push:
     paths:
@@ -46,21 +46,21 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       data_valid: ${{ steps.validate.outputs.valid }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
           pip install pandera
-      
+
       - name: Validate data
         id: validate
         run: |
@@ -70,24 +70,24 @@ jobs:
           sys.path.insert(0, '.')
           from scripts.enterprise.data_validation import FloodDataValidator
           import pandas as pd
-          
+
           validator = FloodDataValidator()
           df = pd.read_csv('data/processed/cumulative_up_to_2025.csv')
           _, errors = validator.validate(df, raise_on_error=False)
-          
+
           if errors:
               print('::warning::Data validation found issues:')
               for e in errors[:5]:
                   print(f'  - {e}')
               if len(errors) > 5:
                   print(f'  ... and {len(errors) - 5} more')
-          
+
           # Only fail on critical errors
           critical = [e for e in errors if e.get('type') in ['missing_columns', 'insufficient_samples']]
           if critical:
               print('::error::Critical data validation errors found')
               sys.exit(1)
-          
+
           print('valid=true', file=open('$GITHUB_OUTPUT', 'a'))
           "
 
@@ -96,43 +96,43 @@ jobs:
     needs: validate-data
     if: needs.validate-data.outputs.data_valid == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
           pip install mlflow pandera pyyaml structlog
-      
+
       - name: Configure Git
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-      
+
       - name: Train model
         id: train
         run: |
           cd backend
-          
+
           VERSION="${{ github.event.inputs.version || '6' }}"
           GRID_SEARCH="${{ github.event.inputs.grid_search || 'false' }}"
-          
+
           echo "Training model version: $VERSION"
           echo "Grid search enabled: $GRID_SEARCH"
-          
+
           if [ "$GRID_SEARCH" == "true" ]; then
             python scripts/train_enterprise.py --version $VERSION --grid-search
           else
             python scripts/train_enterprise.py --version $VERSION
           fi
-          
+
           # Extract metrics for summary
           if [ -f "reports/enterprise_training_report.json" ]; then
             echo "## Training Results" >> $GITHUB_STEP_SUMMARY
@@ -140,7 +140,7 @@ jobs:
           import json
           with open('reports/enterprise_training_report.json') as f:
               report = json.load(f)
-          
+
           metrics = report.get('metrics', {})
           print(f'| Metric | Value |')
           print(f'|--------|-------|')
@@ -152,7 +152,7 @@ jobs:
           fi
         env:
           FLOODINGNAQUE_ENABLE_MLFLOW: 'true'
-      
+
       - name: Upload model artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -162,7 +162,7 @@ jobs:
             backend/models/*.json
             backend/reports/enterprise_training_report.json
           retention-days: 30
-      
+
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -177,31 +177,31 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       validation_passed: ${{ steps.validate.outputs.passed }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
-      
+
       - name: Download model artifacts
         uses: actions/download-artifact@v4
         with:
           name: trained-model-v${{ github.event.inputs.version || '6' }}
           path: backend/
-      
+
       - name: Validate model
         id: validate
         run: |
           cd backend
           python scripts/validate_model.py
-          
+
           if [ $? -eq 0 ]; then
             echo "passed=true" >> $GITHUB_OUTPUT
           else
@@ -215,40 +215,40 @@ jobs:
       needs.validate-model.outputs.validation_passed == 'true' &&
       (github.event.inputs.promote_to_staging == 'true' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
           pip install pyyaml
-      
+
       - name: Download model artifacts
         uses: actions/download-artifact@v4
         with:
           name: trained-model-v${{ github.event.inputs.version || '6' }}
           path: backend/
-      
+
       - name: Promote to staging
         run: |
           cd backend
           VERSION="${{ github.event.inputs.version || '6' }}"
-          
+
           python -c "
           import sys
           sys.path.insert(0, '.')
           from scripts.enterprise.model_registry import create_registry, ModelStage
           from pathlib import Path
-          
+
           registry = create_registry(Path('models'))
-          
+
           # Check if version exists in registry
           if $VERSION in registry.versions:
               success, message = registry.promote($VERSION, ModelStage.STAGING)
@@ -259,7 +259,7 @@ jobs:
               print(f'Version $VERSION not found in registry')
               sys.exit(1)
           "
-      
+
       - name: Create staging deployment summary
         run: |
           echo "## Staging Deployment" >> $GITHUB_STEP_SUMMARY
@@ -272,7 +272,7 @@ jobs:
     needs: [train, validate-model, promote-staging]
     if: always()
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Send notification
         run: |

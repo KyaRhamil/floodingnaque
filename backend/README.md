@@ -99,14 +99,81 @@ HOST=0.0.0.0
 FLASK_DEBUG=False
 ```
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| DATABASE_URL | Database connection string | Yes |
-| OWM_API_KEY | OpenWeatherMap API key | Yes |
-| METEOSTAT_API_KEY | Weatherstack API key | No |
-| PORT | Server port number | Yes |
-| HOST | Server host address | Yes |
-| FLASK_DEBUG | Enable debug mode | No |
+### Core Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| DATABASE_URL | Database connection string | Yes | sqlite:///floodingnaque.db |
+| OWM_API_KEY | OpenWeatherMap API key | Yes | - |
+| WEATHERSTACK_API_KEY | Weatherstack API key | No | - |
+| PORT | Server port number | Yes | 5000 |
+| HOST | Server host address | Yes | 0.0.0.0 |
+| FLASK_DEBUG | Enable debug mode | No | False |
+| APP_ENV | Environment (development/staging/production) | No | development |
+
+### Training Pipeline Environment Variables (FLOODINGNAQUE_*)
+
+These environment variables control the ML training pipeline and override YAML configuration values:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| FLOODINGNAQUE_ENV | Environment name (development/staging/production) | development |
+| FLOODINGNAQUE_MLFLOW_URI | MLflow tracking server URI | mlruns |
+| FLOODINGNAQUE_ENABLE_MLFLOW | Enable/disable MLflow tracking (true/false) | true |
+| FLOODINGNAQUE_MODELS_DIR | Models directory path | models |
+| FLOODINGNAQUE_DATA_DIR | Raw data directory path | data |
+| FLOODINGNAQUE_PROCESSED_DIR | Processed data directory path | data/processed |
+| FLOODINGNAQUE_LOG_LEVEL | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
+| FLOODINGNAQUE_LOG_DIR | Log directory path | logs |
+| FLOODINGNAQUE_RANDOM_STATE | Random seed for reproducibility | 42 |
+| FLOODINGNAQUE_CV_FOLDS | Number of cross-validation folds | 10 |
+| FLOODINGNAQUE_BACKUP_DIR | Backup directory path | backups |
+| FLOODINGNAQUE_MAX_BACKUPS | Maximum number of backups to retain | 5 |
+| FLOODINGNAQUE_MAX_RETRIES | Maximum API retry attempts | 3 |
+| FLOODINGNAQUE_RETRY_DELAY | Delay between API retries (seconds) | 1 |
+| FLOODINGNAQUE_VALIDATE_CONFIG | Enable/disable config schema validation | true |
+| FLOODINGNAQUE_STRICT_VALIDATION | Fail on validation errors (vs warning only) | false |
+
+### Feature Flag Environment Variables
+
+Feature flags can be overridden via environment variables with the `FLOODINGNAQUE_FLAG_` prefix:
+
+```env
+# Examples
+FLOODINGNAQUE_FLAG_MLFLOW_TRACKING=true
+FLOODINGNAQUE_FLAG_DRIFT_DETECTION=false
+FLOODINGNAQUE_FLAG_API_RATE_LIMITING=true
+```
+
+See `config/feature_flags.yaml` for all available flags.
+
+### Configuration Files
+
+The configuration system supports multiple file types in `backend/config/`:
+
+| File | Description |
+|------|-------------|
+| `training_config.yaml` | Base training configuration |
+| `development.yaml` | Development environment overrides |
+| `staging.yaml` | Staging environment overrides |
+| `production.yaml` | Production environment overrides |
+| `feature_flags.yaml` | Feature flag configuration |
+| `secrets.yaml` | Secrets (copy from secrets.yaml.template) |
+
+### Configuration Hot-Reload
+
+Configuration can be reloaded without restarting the server:
+
+**Via API (requires admin access):**
+```bash
+curl -X POST http://localhost:5000/api/v1/config/reload \
+  -H "X-API-Key: your-admin-key"
+```
+
+**Via SIGHUP signal (Unix only):**
+```bash
+kill -SIGHUP <pid>
+```
 
 ## Usage
 

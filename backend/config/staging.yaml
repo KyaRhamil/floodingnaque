@@ -1,0 +1,109 @@
+# =============================================================================
+# Floodingnaque Staging Environment Configuration
+# =============================================================================
+# Pre-production environment for validation testing
+# Base config: training_config.yaml
+# =============================================================================
+
+# General Settings - Staging Mode
+general:
+  log_level: "INFO"
+  enable_mlflow: true
+  enable_data_validation: true
+
+# Data Settings - Full Dataset
+data:
+  # Use environment variables for paths in staging
+  # FLOODINGNAQUE_DATA_DIR takes precedence
+  processed_dir: "data/processed"
+  raw_dir: "data"
+  test_size: 0.2
+  min_samples: 100
+
+# Model Settings - Full Training with Reduced Trials
+model:
+  default_params:
+    n_estimators: 150
+    max_depth: 15
+    min_samples_split: 5
+    min_samples_leaf: 2
+    class_weight: "balanced_subsample"
+    max_features: "sqrt"
+    n_jobs: -1
+    
+  optuna:
+    enabled: true
+    n_trials: 30  # Reduced from production's 50
+    timeout_minutes: 20
+    
+  calibration:
+    enabled: true
+    method: "isotonic"
+    cv_folds: 3
+
+# Cross-Validation - Standard
+cross_validation:
+  folds: 5  # Balanced between speed and validation
+  
+  temporal:
+    enabled: true
+    n_splits: 3
+
+# MLflow - Staging Server
+mlflow:
+  tracking_uri: "${FLOODINGNAQUE_MLFLOW_URI:-mlruns}"
+  experiment_name: "floodingnaque_staging"
+  auto_log: true
+  log_models: true
+  
+  tags:
+    environment: "staging"
+    project: "floodingnaque"
+
+# Registry - Staging Stage
+registry:
+  models_dir: "${FLOODINGNAQUE_MODELS_DIR:-models}"
+  
+  promotion_criteria:
+    staging:
+      min_f2_score: 0.82
+      min_f1_score: 0.78
+      min_roc_auc: 0.82
+      max_cv_std: 0.07
+    production:
+      min_f2_score: 0.88
+      min_f1_score: 0.83
+      min_roc_auc: 0.88
+      max_cv_std: 0.04
+
+# Drift Detection - Enabled
+drift:
+  enabled: true
+  psi:
+    warning_threshold: 0.12
+    alert_threshold: 0.25
+
+# Logging - Standard
+logging:
+  level: "INFO"
+  format: "json"
+  file:
+    enabled: true
+    path: "${FLOODINGNAQUE_LOG_DIR:-logs}/training_staging.log"
+    max_bytes: 10485760
+    backup_count: 3
+  console:
+    enabled: true
+    colorize: false
+
+# Resource Management
+resources:
+  max_memory_gb: 8
+  max_workers: -1
+
+# Monitoring
+monitoring:
+  max_training_minutes: 45
+  warn_training_minutes: 25
+  alert_on_degradation: true
+  degradation_threshold: 0.07

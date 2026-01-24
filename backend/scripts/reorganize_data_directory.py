@@ -225,7 +225,7 @@ python scripts/merge_datasets.py
             logger.info("[DRY-RUN] Would create: raw/README.md")
         else:
             self.raw_dir.mkdir(parents=True, exist_ok=True)
-            with open(readme_path, "w") as f:
+            with open(readme_path, "w", encoding="utf-8") as f:
                 f.write(readme_content.format(date=datetime.now().strftime("%Y-%m-%d")))
             logger.info(f"Created: {readme_path.relative_to(self.data_dir)}")
 

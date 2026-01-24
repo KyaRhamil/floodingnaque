@@ -193,6 +193,11 @@ secrets/
 *.secret
 *.secret.txt
 
+# Secrets configuration (NEVER commit!)
+backend/config/secrets.yaml
+**/secrets.yaml
+!**/secrets.yaml.template
+
 # Evaluation results
 evaluation_results/
 

@@ -23,11 +23,13 @@ Contains modular route definitions:
 - predictions: /api/v1/predictions, /api/v1/predictions/stats, /api/v1/predictions/recent
 - sse: /api/v1/sse/alerts (Server-Sent Events for real-time flood alerts)
 - upload: /api/v1/upload (File upload endpoints)
+- config: /api/v1/config/* (Configuration management and hot-reload)
 """
 
 from app.api.routes.alerts import alerts_bp
 from app.api.routes.batch import batch_bp
 from app.api.routes.celery import celery_bp
+from app.api.routes.config import config_bp
 from app.api.routes.csp_report import csp_report_bp
 from app.api.routes.dashboard import dashboard_bp
 from app.api.routes.data import data_bp
@@ -58,6 +60,7 @@ __all__ = [
     "models_bp",
     # Extended routes
     "batch_bp",
+    "config_bp",
     "export_bp",
     "webhooks_bp",
     "celery_bp",

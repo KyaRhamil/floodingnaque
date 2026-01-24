@@ -1,0 +1,167 @@
+# =============================================================================
+# Floodingnaque Feature Flags Configuration
+# =============================================================================
+#
+# This file allows environment-specific feature flag overrides.
+# Copy and customize for different environments (development, staging, production).
+#
+# Flag Types:
+# - boolean: Simple on/off (use 'enabled: true/false')
+# - percentage: Gradual rollout 0-100% (use 'percentage: 50')
+#
+# Override Priority:
+# 1. Environment variables (FLOODINGNAQUE_FLAG_<NAME>=true)
+# 2. This YAML file
+# 3. Default values in code
+#
+# =============================================================================
+
+# Environment identifier
+environment: development
+
+# =============================================================================
+# Feature Flags
+# =============================================================================
+flags:
+
+  # ---------------------------------------------------------------------------
+  # ML/Training Features
+  # ---------------------------------------------------------------------------
+
+  mlflow_tracking:
+    enabled: true
+    description: "Enable MLflow experiment tracking"
+
+  optuna_optimization:
+    enabled: true
+    description: "Enable Optuna hyperparameter optimization"
+
+  model_calibration:
+    enabled: true
+    description: "Enable probability calibration"
+
+  drift_detection:
+    enabled: true
+    description: "Enable data drift detection"
+
+  temporal_validation:
+    enabled: true
+    description: "Enable temporal walk-forward CV"
+
+  ensemble_stacking:
+    enabled: true
+    description: "Enable stacking ensemble models"
+
+  # ---------------------------------------------------------------------------
+  # Data Pipeline Features
+  # ---------------------------------------------------------------------------
+
+  data_validation:
+    enabled: true
+    description: "Enable data quality validation"
+
+  meteostat_integration:
+    enabled: true
+    description: "Enable Meteostat historical weather data"
+
+  earth_engine_integration:
+    enabled: false
+    description: "Enable Google Earth Engine (requires credentials)"
+
+  worldtides_integration:
+    enabled: false
+    description: "Enable WorldTides API"
+
+  # ---------------------------------------------------------------------------
+  # API Features
+  # ---------------------------------------------------------------------------
+
+  api_rate_limiting:
+    enabled: true
+    description: "Enable API rate limiting"
+
+  api_caching:
+    enabled: true
+    description: "Enable response caching"
+
+  api_auth_bypass:
+    # WARNING: Only enable in development!
+    enabled: true
+    description: "Allow auth bypass in development"
+    metadata:
+      security_critical: true
+      allowed_environments: ["development"]
+
+  # ---------------------------------------------------------------------------
+  # Alerting Features
+  # ---------------------------------------------------------------------------
+
+  email_alerts:
+    enabled: false
+    description: "Enable email notifications"
+
+  sms_alerts:
+    enabled: false
+    description: "Enable SMS notifications"
+
+  slack_notifications:
+    enabled: false
+    description: "Enable Slack notifications"
+
+  # ---------------------------------------------------------------------------
+  # Monitoring Features
+  # ---------------------------------------------------------------------------
+
+  prometheus_metrics:
+    enabled: true
+    description: "Enable Prometheus metrics endpoint"
+
+  detailed_logging:
+    enabled: true  # More verbose in development
+    description: "Enable verbose debug logging"
+
+  performance_profiling:
+    enabled: false
+    description: "Enable request profiling"
+
+  # ---------------------------------------------------------------------------
+  # Experimental Features (Gradual Rollout)
+  # ---------------------------------------------------------------------------
+
+  new_prediction_algorithm:
+    type: percentage
+    percentage: 0
+    description: "Use new experimental prediction algorithm"
+    metadata:
+      experimental: true
+      jira: "FLOOD-123"
+
+  v2_api:
+    type: percentage
+    percentage: 0
+    description: "Enable V2 API endpoints"
+    metadata:
+      experimental: true
+
+# =============================================================================
+# Flag Groups
+# =============================================================================
+# Define custom groups for batch operations
+
+groups:
+  # Development mode - enable all debugging features
+  debug_mode:
+    - detailed_logging
+    - performance_profiling
+    - api_auth_bypass
+
+  # Production hardening - disable risky features
+  production_hardening:
+    enable:
+      - api_rate_limiting
+      - data_validation
+      - drift_detection
+    disable:
+      - api_auth_bypass
+      - detailed_logging
+      - performance_profiling

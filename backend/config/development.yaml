@@ -1,0 +1,89 @@
+# =============================================================================
+# Floodingnaque Development Environment Configuration
+# =============================================================================
+# Overrides for local development - prioritizes speed and debugging
+# Base config: training_config.yaml
+# =============================================================================
+
+# General Settings - Development Mode
+general:
+  log_level: "DEBUG"
+  enable_mlflow: false  # Disable for faster iteration
+  enable_data_validation: true
+
+# Data Settings - Use smaller subsets for faster iteration
+data:
+  # Override to use relative paths from backend directory
+  # Can be overridden via FLOODINGNAQUE_DATA_DIR environment variable
+  processed_dir: "data/processed"
+  raw_dir: "data"
+  
+  # Smaller test size for faster feedback
+  test_size: 0.3
+  min_samples: 50  # Lower threshold for dev testing
+
+# Model Settings - Faster Training
+model:
+  default_params:
+    n_estimators: 50  # Reduced for faster iteration
+    max_depth: 10
+    n_jobs: -1
+    
+  optuna:
+    enabled: false  # Disable hyperparameter optimization
+    n_trials: 10
+    timeout_minutes: 5
+    
+  calibration:
+    enabled: false  # Skip calibration in dev
+
+# Cross-Validation - Fewer Folds
+cross_validation:
+  folds: 3  # Reduced from 10
+  
+  temporal:
+    enabled: false  # Disable temporal validation in dev
+
+# MLflow - Local Tracking
+mlflow:
+  tracking_uri: "mlruns"  # Local directory
+  experiment_name: "floodingnaque_dev"
+  auto_log: false
+  log_models: false
+
+# Registry - Development Stage
+registry:
+  models_dir: "models"
+  
+  # Relaxed promotion criteria for testing
+  promotion_criteria:
+    staging:
+      min_f2_score: 0.70
+      min_f1_score: 0.65
+      max_cv_std: 0.15
+
+# Drift Detection - Disabled in Dev
+drift:
+  enabled: false
+
+# Logging - Verbose for Development
+logging:
+  level: "DEBUG"
+  format: "text"  # More readable than JSON
+  file:
+    enabled: true
+    path: "logs/training_dev.log"
+  console:
+    enabled: true
+    colorize: true
+
+# Resource Management - Limited for Development
+resources:
+  max_memory_gb: 4
+  max_workers: 2  # Don't hog all CPUs
+
+# Monitoring - Relaxed Thresholds
+monitoring:
+  max_training_minutes: 15
+  warn_training_minutes: 5
+  alert_on_degradation: false

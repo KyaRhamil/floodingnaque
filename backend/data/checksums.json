@@ -1,53 +1,11 @@
 {
   "_metadata": {
-    "generated_at": "2026-01-24T16:03:41.331419",
+    "generated_at": "2026-01-24T17:26:50.199402",
     "generator": "scripts/generate_checksums.py",
     "description": "Data integrity checksums for Floodingnaque datasets",
     "usage": "Run 'python scripts/validate_checksums.py' to verify data integrity"
   },
   "files": {
-    "Floodingnaque_CADS-S0126006_NAIA Daily Data.csv": {
-      "sha256": "6ce642ea27321775747b2c6085d0a73051adabd157ccd2172aa70ac0c8b2a54d",
-      "md5": "445c73394229db903ca01a887c2d765f",
-      "size_bytes": 59306,
-      "last_modified": "2026-01-14T01:21:25.317690"
-    },
-    "Floodingnaque_CADS-S0126006_Port Area Daily Data.csv": {
-      "sha256": "c3c46524a0de073a792f68abadf7d61ab199f6971196caa2c2349b6e41b27abf",
-      "md5": "7d94283d115c8adcbaf16d0123368d14",
-      "size_bytes": 44329,
-      "last_modified": "2026-01-14T01:21:25.319707"
-    },
-    "Floodingnaque_CADS-S0126006_Science Garden Daily Data.csv": {
-      "sha256": "ab748cf6fbffec003b9e19aa1866dff99d2bd0eb3bfaf271079c835abc836da2",
-      "md5": "078b3c57cf02c40bd675289275550f49",
-      "size_bytes": 58704,
-      "last_modified": "2026-01-14T01:21:25.320294"
-    },
-    "Floodingnaque_Paranaque_Official_Flood_Records_2022.csv": {
-      "sha256": "3d449fd3c4e00317792a76bb0c97c938ebf7464d565ffbdd0deed55d6a1c040f",
-      "md5": "1b4eef122e26474202411b2ce6fa1b2c",
-      "size_bytes": 19412,
-      "last_modified": "2026-01-14T01:21:25.320294"
-    },
-    "Floodingnaque_Paranaque_Official_Flood_Records_2023.csv": {
-      "sha256": "7cdce918a66a9226f2efe641f076ad7e47d363761a2476b0c4754dedac72b3b2",
-      "md5": "83e10412e75d32715f6d27f18f3a0e67",
-      "size_bytes": 28336,
-      "last_modified": "2026-01-17T03:13:50.665306"
-    },
-    "Floodingnaque_Paranaque_Official_Flood_Records_2024.csv": {
-      "sha256": "5a32a8f8bb483129c04f3ec4c552bd50a28b5e22e3f8af05470634ec6aa75351",
-      "md5": "c555d7474b3be24815d35f80bb882107",
-      "size_bytes": 50724,
-      "last_modified": "2025-12-12T14:03:17.936536"
-    },
-    "Floodingnaque_Paranaque_Official_Flood_Records_2025.csv": {
-      "sha256": "d6394879ac060f834716e8a5553d781d4cb81e368bbd78f470d3c0b10a7ef5f9",
-      "md5": "6b587a00f1f5ef812cea236a5a2265f4",
-      "size_bytes": 163093,
-      "last_modified": "2025-12-12T14:03:23.869562"
-    },
     "synthetic_dataset.csv": {
       "sha256": "d72f236c04f75cdf7f5ac54dcab0ec263665d008aba64b701b0cdca5c3390171",
       "md5": "3c502bba3e48260ae3deab430f96371d",
@@ -175,10 +133,10 @@
       "last_modified": "2026-01-24T16:00:28.897601"
     },
     "cleaned/Floodingnaque_Flood_Records_2024_cleaned.csv": {
-      "sha256": "34c63e28b5f854ba3c5fd234a85c41b176bd64929f1a2f0bb1ebe1b7369e3e67",
-      "md5": "220550ad7211331c5fa2727220576954",
-      "size_bytes": 13178,
-      "last_modified": "2026-01-24T16:00:28.931857"
+      "sha256": "68a9afc7ad9ec07911835aeaef6b75e50c2258e492873b016a5171b42b38d27a",
+      "md5": "7cd5daec4d572b079b5af2f98f8c8ac7",
+      "size_bytes": 12980,
+      "last_modified": "2026-01-24T17:19:39.804332"
     },
     "cleaned/Floodingnaque_Flood_Records_2025_cleaned.csv": {
       "sha256": "f41c19492953333c51096e0ff2ad04e2c38466b7c9daaf411c83eb5b52d26aab",

@@ -3,7 +3,118 @@
 # =============================================================================
 # This centralized configuration file controls all training parameters.
 # Environment-specific overrides can be applied via environment variables.
+#
+# YAML Anchors: This file uses YAML anchors (&) and aliases (*) to reduce
+# duplication. Define reusable values with &anchor_name, reference with *anchor_name
 # =============================================================================
+
+# =============================================================================
+# YAML ANCHORS - Reusable Feature Lists
+# =============================================================================
+# These anchors define shared feature groups that can be referenced in phases
+# using the *alias syntax. Modify these to update all phases at once.
+
+_anchors:
+  # Core meteorological features (always available)
+  core_features: &core_features
+    - temperature
+    - humidity
+    - precipitation
+  
+  # Basic categorical features
+  basic_categorical: &basic_categorical
+    - is_monsoon_season
+    - month
+  
+  # Extended categorical features
+  extended_categorical: &extended_categorical
+    - is_monsoon_season
+    - month
+    - weather_type
+    - season
+    - station_id
+  
+  # Interaction features (engineered)
+  interaction_features: &interaction_features
+    - temp_humidity_interaction
+    - humidity_precip_interaction
+    - temp_precip_interaction
+    - monsoon_precip_interaction
+    - saturation_risk
+  
+  # Basic interaction subset
+  basic_interactions: &basic_interactions
+    - temp_humidity_interaction
+    - humidity_precip_interaction
+    - saturation_risk
+  
+  # Rolling/temporal features
+  rolling_features: &rolling_features
+    - precip_3day_sum
+    - precip_7day_sum
+    - precip_14day_sum
+    - precip_lag1
+    - precip_lag2
+    - rain_streak
+  
+  # Core rolling features subset
+  core_rolling: &core_rolling
+    - precip_3day_sum
+    - precip_7day_sum
+    - rain_streak
+  
+  # External API features
+  external_features: &external_features
+    - tide_height
+  
+  # Base phase features (phases 1-3)
+  base_phase_features: &base_phase_features
+    - temperature
+    - humidity
+    - precipitation
+    - is_monsoon_season
+    - month
+  
+  # Full official features (phase 4)
+  full_official_features: &full_official_features
+    - temperature
+    - humidity
+    - precipitation
+    - is_monsoon_season
+    - month
+    - temp_humidity_interaction
+    - humidity_precip_interaction
+    - saturation_risk
+  
+  # PAGASA merged features (phase 5)
+  pagasa_features: &pagasa_features
+    - temperature
+    - humidity
+    - precipitation
+    - is_monsoon_season
+    - month
+    - precip_3day_sum
+    - precip_7day_sum
+    - precip_14day_sum
+    - rain_streak
+    - temp_humidity_interaction
+    - humidity_precip_interaction
+    - monsoon_precip_interaction
+  
+  # External API merged features (phase 6)
+  external_merged_features: &external_merged_features
+    - temperature
+    - humidity
+    - precipitation
+    - is_monsoon_season
+    - month
+    - precip_3day_sum
+    - precip_7day_sum
+    - rain_streak
+    - tide_height
+    - temp_humidity_interaction
+    - monsoon_precip_interaction
+    - saturation_risk
 
 # General Settings
 general:
@@ -15,6 +126,10 @@ general:
 
 # Data Settings
 data:
+  # Paths are relative to backend/ directory by default
+  # Override with environment variables for production:
+  #   FLOODINGNAQUE_DATA_DIR - Raw data directory
+  #   FLOODINGNAQUE_PROCESSED_DIR - Processed data directory
   processed_dir: "data/processed"
   raw_dir: "data"
   test_size: 0.2
@@ -25,33 +140,11 @@ data:
   min_samples: 100
   max_missing_ratio: 0.1
   
-  # Feature columns
-  core_features:
-    - temperature
-    - humidity
-    - precipitation
-    
-  interaction_features:
-    - temp_humidity_interaction
-    - humidity_precip_interaction
-    - temp_precip_interaction
-    - monsoon_precip_interaction
-    - saturation_risk
-    
-  rolling_features:
-    - precip_3day_sum
-    - precip_7day_sum
-    - precip_14day_sum
-    - precip_lag1
-    - precip_lag2
-    - rain_streak
-    
-  categorical_features:
-    - is_monsoon_season
-    - month
-    - weather_type
-    - season
-    - station_id
+  # Feature columns - using anchors for consistency
+  core_features: *core_features
+  interaction_features: *interaction_features
+  rolling_features: *rolling_features
+  categorical_features: *extended_categorical
 
 # Model Settings
 model:
@@ -202,6 +295,8 @@ mlflow:
 
 # Model Registry Settings
 registry:
+  # Models directory - relative to backend/ or absolute path
+  # Override with FLOODINGNAQUE_MODELS_DIR environment variable
   models_dir: "models"
   stages:
     - development
@@ -250,11 +345,13 @@ drift:
 
 # Data Validation Settings
 validation:
-  # Feature value ranges (updated: temperature in Celsius)
+  # Feature value ranges
+  # NOTE: All temperature values use Celsius (°C) throughout the pipeline
+  # Conversion reference: 299K = 25.85°C, 302K = 28.85°C (typical Metro Manila range)
   feature_ranges:
     temperature:
-      min: 15.0   # Celsius (tropical climate)
-      max: 45.0   # Celsius
+      min: 15.0   # °C - Minimum observed in Metro Manila during cold fronts
+      max: 45.0   # °C - Maximum during extreme heat events
     humidity:
       min: 0.0
       max: 100.0
@@ -282,88 +379,63 @@ validation:
 # PROGRESSIVE TRAINING PHASES
 # =============================================================================
 # 8-phase progressive pipeline from baseline to ultimate ensemble
+# Uses YAML anchors (*anchor_name) to reference shared feature lists
 
 phases:
+  # Base phase configuration that others can inherit from
+  _base: &base_phase
+    data_type: "official_records"
+    model_type: null  # Use default model
+    calibrate: false
+  
   phase_1:
+    <<: *base_phase
     name: "Baseline_2022"
     description: "Official Records 2022 Only"
-    data_file: "cumulative_up_to_2022.csv"
-    data_type: "official_records"
-    features: ["temperature", "humidity", "precipitation", "is_monsoon_season", "month"]
+    data_file: "cumulative_v2_up_to_2022.csv"
+    features: *base_phase_features
     
   phase_2:
+    <<: *base_phase
     name: "Extended_2023"
     description: "Official Records 2022-2023"
-    data_file: "cumulative_up_to_2023.csv"
-    data_type: "official_records"
-    features: ["temperature", "humidity", "precipitation", "is_monsoon_season", "month"]
+    data_file: "cumulative_v2_up_to_2023.csv"
+    features: *base_phase_features
     
   phase_3:
+    <<: *base_phase
     name: "Extended_2024"
     description: "Official Records 2022-2024"
-    data_file: "cumulative_up_to_2024.csv"
-    data_type: "official_records"
-    features: ["temperature", "humidity", "precipitation", "is_monsoon_season", "month"]
+    data_file: "cumulative_v2_up_to_2024.csv"
+    features: *base_phase_features
     
   phase_4:
+    <<: *base_phase
     name: "Full_Official"
     description: "Official Records 2022-2025 (Complete)"
-    data_file: "cumulative_up_to_2025.csv"
-    data_type: "official_records"
-    features:
-      - temperature
-      - humidity
-      - precipitation
-      - is_monsoon_season
-      - month
-      - temp_humidity_interaction
-      - humidity_precip_interaction
-      - saturation_risk
+    data_file: "cumulative_v2_up_to_2025.csv"
+    features: *full_official_features
     
   phase_5:
     name: "PAGASA_Merged"
     description: "Official + PAGASA Weather Data Merged"
     data_files:
-      - "cumulative_up_to_2025.csv"
+      - "cumulative_v2_up_to_2025.csv"
       - "pagasa_training_dataset.csv"
     data_type: "pagasa_merged"
-    features:
-      - temperature
-      - humidity
-      - precipitation
-      - is_monsoon_season
-      - month
-      - precip_3day_sum
-      - precip_7day_sum
-      - precip_14day_sum
-      - rain_streak
-      - temp_humidity_interaction
-      - humidity_precip_interaction
-      - monsoon_precip_interaction
+    features: *pagasa_features
     
   phase_6:
     name: "External_APIs"
     description: "All sources + External APIs (GEE, Meteostat, WorldTides)"
     data_files:
-      - "cumulative_up_to_2025.csv"
+      - "cumulative_v2_up_to_2025.csv"
       - "pagasa_training_dataset.csv"
       - "fetched_googlecloud.csv"
       - "fetched_meteostat.csv"
       - "fetched_worldtides.csv"
     data_type: "external_merged"
-    features:
-      - temperature
-      - humidity
-      - precipitation
-      - is_monsoon_season
-      - month
-      - precip_3day_sum
-      - precip_7day_sum
-      - rain_streak
-      - tide_height
-      - temp_humidity_interaction
-      - monsoon_precip_interaction
-      - saturation_risk
+    features: *external_merged_features
     
   phase_7:
     name: "Station_Specific"
@@ -396,23 +468,15 @@ logging:
     colorize: true
 
 # Resource Management
+# Set to -1 for auto-detection based on system capabilities
 resources:
   # Memory limits (GB)
-  max_memory_gb: 8
+  # -1 = auto-detect (80% of available memory, leaving 2GB free)
+  max_memory_gb: -1
   
   # CPU management
-  max_workers: -1  # -1 for auto (n_cpus - 1)
-  
-  # GPU settings (for future use)
-  use_gpu: false
-  gpu_device: 0
-
-# Monitoring & Alerts
-monitoring:
-  # Training duration thresholds
-  max_training_minutes: 60
-  warn_training_minutes: 30
-  
+  # -1 = auto-detect (n_cpus - 1, leaving one core for system)
+  max_workers: -1
   # Performance alerts
   alert_on_degradation: true
   degradation_threshold: 0.05  # 5% drop in F1
