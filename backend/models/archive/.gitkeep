@@ -1,0 +1,2 @@
+# This file ensures the models/archive directory is tracked by git
+# even when empty. Used to store archived model versions.

@@ -1,0 +1,217 @@
+{
+  "_metadata": {
+    "generated_at": "2026-01-24T16:25:00.000000",
+    "generator": "manual/data_lineage_tracking",
+    "description": "Data lineage tracking for Floodingnaque ML pipeline",
+    "version": "1.0.0",
+    "usage": "Documents which raw files produce which processed files"
+  },
+  "lineage": {
+    "cleaned": {
+      "description": "Cleaned flood records with standardized formatting",
+      "files": {
+        "Floodingnaque_Flood_Records_2022_cleaned.csv": {
+          "sources": ["Floodingnaque_Paranaque_Official_Flood_Records_2022.csv"],
+          "pipeline": "scripts/clean_flood_records.py",
+          "transformations": ["date_normalization", "column_standardization", "null_handling"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "Floodingnaque_Flood_Records_2023_cleaned.csv": {
+          "sources": ["Floodingnaque_Paranaque_Official_Flood_Records_2023.csv"],
+          "pipeline": "scripts/clean_flood_records.py",
+          "transformations": ["date_normalization", "column_standardization", "null_handling"],
+          "created_at": "2026-01-17T00:00:00"
+        },
+        "Floodingnaque_Flood_Records_2024_cleaned.csv": {
+          "sources": ["Floodingnaque_Paranaque_Official_Flood_Records_2024.csv"],
+          "pipeline": "scripts/clean_flood_records.py",
+          "transformations": ["date_normalization", "column_standardization", "null_handling"],
+          "created_at": "2025-12-12T00:00:00"
+        },
+        "Floodingnaque_Flood_Records_2025_cleaned.csv": {
+          "sources": ["Floodingnaque_Paranaque_Official_Flood_Records_2025.csv"],
+          "pipeline": "scripts/clean_flood_records.py",
+          "transformations": ["date_normalization", "column_standardization", "null_handling"],
+          "created_at": "2025-12-12T00:00:00"
+        },
+        "Floodingnaque_Flood_Records_All_cleaned.csv": {
+          "sources": [
+            "Floodingnaque_Paranaque_Official_Flood_Records_2022.csv",
+            "Floodingnaque_Paranaque_Official_Flood_Records_2023.csv",
+            "Floodingnaque_Paranaque_Official_Flood_Records_2024.csv",
+            "Floodingnaque_Paranaque_Official_Flood_Records_2025.csv"
+          ],
+          "pipeline": "scripts/clean_flood_records.py",
+          "transformations": ["date_normalization", "column_standardization", "null_handling", "concatenation"],
+          "created_at": "2025-12-12T00:00:00"
+        }
+      }
+    },
+    "processed": {
+      "description": "Processed datasets ready for training",
+      "files": {
+        "processed_flood_records_v2_2022.csv": {
+          "sources": ["cleaned/Floodingnaque_Flood_Records_2022_cleaned.csv"],
+          "pipeline": "scripts/process_flood_records.py",
+          "transformations": ["feature_engineering", "encoding", "validation"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "processed_flood_records_v2_2023.csv": {
+          "sources": ["cleaned/Floodingnaque_Flood_Records_2023_cleaned.csv"],
+          "pipeline": "scripts/process_flood_records.py",
+          "transformations": ["feature_engineering", "encoding", "validation"],
+          "created_at": "2026-01-17T00:00:00"
+        },
+        "processed_flood_records_v2_2024.csv": {
+          "sources": ["cleaned/Floodingnaque_Flood_Records_2024_cleaned.csv"],
+          "pipeline": "scripts/process_flood_records.py",
+          "transformations": ["feature_engineering", "encoding", "validation"],
+          "created_at": "2025-12-12T00:00:00"
+        },
+        "processed_flood_records_v2_2025.csv": {
+          "sources": ["cleaned/Floodingnaque_Flood_Records_2025_cleaned.csv"],
+          "pipeline": "scripts/process_flood_records.py",
+          "transformations": ["feature_engineering", "encoding", "validation"],
+          "created_at": "2025-12-12T00:00:00"
+        },
+        "pagasa_naia_processed.csv": {
+          "sources": ["Floodingnaque_CADS-S0126006_NAIA Daily Data.csv"],
+          "pipeline": "scripts/process_pagasa_data.py",
+          "transformations": ["date_parsing", "unit_conversion", "missing_value_interpolation"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "pagasa_port_area_processed.csv": {
+          "sources": ["Floodingnaque_CADS-S0126006_Port Area Daily Data.csv"],
+          "pipeline": "scripts/process_pagasa_data.py",
+          "transformations": ["date_parsing", "unit_conversion", "missing_value_interpolation"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "pagasa_science_garden_processed.csv": {
+          "sources": ["Floodingnaque_CADS-S0126006_Science Garden Daily Data.csv"],
+          "pipeline": "scripts/process_pagasa_data.py",
+          "transformations": ["date_parsing", "unit_conversion", "missing_value_interpolation"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "pagasa_all_stations_merged.csv": {
+          "sources": [
+            "processed/pagasa_naia_processed.csv",
+            "processed/pagasa_port_area_processed.csv",
+            "processed/pagasa_science_garden_processed.csv"
+          ],
+          "pipeline": "scripts/merge_pagasa_stations.py",
+          "transformations": ["station_alignment", "temporal_merge", "aggregation"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "pagasa_training_dataset.csv": {
+          "sources": [
+            "processed/pagasa_all_stations_merged.csv",
+            "cleaned/Floodingnaque_Flood_Records_All_cleaned.csv"
+          ],
+          "pipeline": "scripts/prepare_training_data.py",
+          "transformations": ["feature_join", "label_encoding", "train_test_split_prep"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "fetched_meteostat.csv": {
+          "sources": ["external:meteostat_api"],
+          "pipeline": "models/run_training_pipeline.ps1 -IngestMeteostat",
+          "transformations": ["api_fetch", "date_alignment", "unit_standardization"],
+          "notes": "Historical weather data from Meteostat free API"
+        },
+        "fetched_googlecloud.csv": {
+          "sources": ["external:google_earth_engine"],
+          "pipeline": "models/run_training_pipeline.ps1 -IngestGoogle",
+          "transformations": ["api_fetch", "satellite_data_extraction", "aggregation"],
+          "notes": "Satellite-derived environmental data from GEE"
+        },
+        "fetched_worldtides.csv": {
+          "sources": ["external:worldtides_api"],
+          "pipeline": "models/run_training_pipeline.ps1 -IngestTides",
+          "transformations": ["api_fetch", "tide_level_parsing", "temporal_alignment"],
+          "notes": "Tidal data for coastal flood correlation"
+        },
+        "cumulative_v2_up_to_2022.csv": {
+          "sources": ["processed/processed_flood_records_v2_2022.csv"],
+          "pipeline": "scripts/create_cumulative_dataset.py",
+          "transformations": ["cumulative_aggregation"],
+          "created_at": "2026-01-14T00:00:00"
+        },
+        "cumulative_v2_up_to_2023.csv": {
+          "sources": [
+            "processed/cumulative_v2_up_to_2022.csv",
+            "processed/processed_flood_records_v2_2023.csv"
+          ],
+          "pipeline": "scripts/create_cumulative_dataset.py",
+          "transformations": ["cumulative_aggregation", "append"],
+          "created_at": "2026-01-17T00:00:00"
+        },
+        "cumulative_v2_up_to_2024.csv": {
+          "sources": [
+            "processed/cumulative_v2_up_to_2023.csv",
+            "processed/processed_flood_records_v2_2024.csv"
+          ],
+          "pipeline": "scripts/create_cumulative_dataset.py",
+          "transformations": ["cumulative_aggregation", "append"],
+          "created_at": "2025-12-12T00:00:00"
+        },
+        "cumulative_v2_up_to_2025.csv": {
+          "sources": [
+            "processed/cumulative_v2_up_to_2024.csv",
+            "processed/processed_flood_records_v2_2025.csv"
+          ],
+          "pipeline": "scripts/create_cumulative_dataset.py",
+          "transformations": ["cumulative_aggregation", "append"],
+          "created_at": "2025-12-12T00:00:00"
+        },
+        "training_dataset_v2.csv": {
+          "sources": ["processed/cumulative_v2_up_to_2025.csv"],
+          "pipeline": "scripts/finalize_training_data.py",
+          "transformations": ["final_feature_selection", "normalization", "validation"],
+          "created_at": "2026-01-14T00:00:00",
+          "notes": "Primary training dataset for model v6+"
+        },
+        "training_data_merged.csv": {
+          "sources": [
+            "processed/training_dataset_v2.csv",
+            "processed/pagasa_training_dataset.csv"
+          ],
+          "pipeline": "scripts/merge_training_datasets.py",
+          "transformations": ["dataset_merge", "deduplication", "final_validation"],
+          "created_at": "2026-01-14T00:00:00",
+          "notes": "Combined dataset with PAGASA weather integration"
+        }
+      }
+    }
+  },
+  "transformation_definitions": {
+    "date_normalization": "Standardize date formats to ISO 8601 (YYYY-MM-DD)",
+    "column_standardization": "Rename columns to snake_case, remove special characters",
+    "null_handling": "Fill or flag missing values according to data policy",
+    "feature_engineering": "Create derived features (interactions, rolling windows, lags)",
+    "encoding": "Encode categorical variables (one-hot, label encoding)",
+    "validation": "Check data quality constraints, flag anomalies",
+    "concatenation": "Combine multiple files vertically",
+    "cumulative_aggregation": "Build progressive datasets by year",
+    "temporal_merge": "Join datasets on date/time columns",
+    "api_fetch": "Retrieve data from external API",
+    "unit_conversion": "Standardize units (mm for precipitation, °C for temperature)"
+  },
+  "external_sources": {
+    "meteostat_api": {
+      "url": "https://meteostat.net/",
+      "description": "Free weather data API",
+      "rate_limit": "Varies",
+      "auth_required": false
+    },
+    "google_earth_engine": {
+      "url": "https://earthengine.google.com/",
+      "description": "Satellite imagery and environmental data",
+      "auth_required": true,
+      "credentials_file": "astral-archive-482008-g2-b4f2279053c0.json"
+    },
+    "worldtides_api": {
+      "url": "https://www.worldtides.info/",
+      "description": "Global tidal data",
+      "auth_required": true
+    }
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "_metadata": {
+    "generated_at": "2026-01-24T16:03:41.331419",
+    "generator": "scripts/generate_checksums.py",
+    "description": "Data integrity checksums for Floodingnaque datasets",
+    "usage": "Run 'python scripts/validate_checksums.py' to verify data integrity"
+  },
+  "files": {
+    "Floodingnaque_CADS-S0126006_NAIA Daily Data.csv": {
+      "sha256": "6ce642ea27321775747b2c6085d0a73051adabd157ccd2172aa70ac0c8b2a54d",
+      "md5": "445c73394229db903ca01a887c2d765f",
+      "size_bytes": 59306,
+      "last_modified": "2026-01-14T01:21:25.317690"
+    },
+    "Floodingnaque_CADS-S0126006_Port Area Daily Data.csv": {
+      "sha256": "c3c46524a0de073a792f68abadf7d61ab199f6971196caa2c2349b6e41b27abf",
+      "md5": "7d94283d115c8adcbaf16d0123368d14",
+      "size_bytes": 44329,
+      "last_modified": "2026-01-14T01:21:25.319707"
+    },
+    "Floodingnaque_CADS-S0126006_Science Garden Daily Data.csv": {
+      "sha256": "ab748cf6fbffec003b9e19aa1866dff99d2bd0eb3bfaf271079c835abc836da2",
+      "md5": "078b3c57cf02c40bd675289275550f49",
+      "size_bytes": 58704,
+      "last_modified": "2026-01-14T01:21:25.320294"
+    },
+    "Floodingnaque_Paranaque_Official_Flood_Records_2022.csv": {
+      "sha256": "3d449fd3c4e00317792a76bb0c97c938ebf7464d565ffbdd0deed55d6a1c040f",
+      "md5": "1b4eef122e26474202411b2ce6fa1b2c",
+      "size_bytes": 19412,
+      "last_modified": "2026-01-14T01:21:25.320294"
+    },
+    "Floodingnaque_Paranaque_Official_Flood_Records_2023.csv": {
+      "sha256": "7cdce918a66a9226f2efe641f076ad7e47d363761a2476b0c4754dedac72b3b2",
+      "md5": "83e10412e75d32715f6d27f18f3a0e67",
+      "size_bytes": 28336,
+      "last_modified": "2026-01-17T03:13:50.665306"
+    },
+    "Floodingnaque_Paranaque_Official_Flood_Records_2024.csv": {
+      "sha256": "5a32a8f8bb483129c04f3ec4c552bd50a28b5e22e3f8af05470634ec6aa75351",
+      "md5": "c555d7474b3be24815d35f80bb882107",
+      "size_bytes": 50724,
+      "last_modified": "2025-12-12T14:03:17.936536"
+    },
+    "Floodingnaque_Paranaque_Official_Flood_Records_2025.csv": {
+      "sha256": "d6394879ac060f834716e8a5553d781d4cb81e368bbd78f470d3c0b10a7ef5f9",
+      "md5": "6b587a00f1f5ef812cea236a5a2265f4",
+      "size_bytes": 163093,
+      "last_modified": "2025-12-12T14:03:23.869562"
+    },
+    "synthetic_dataset.csv": {
+      "sha256": "d72f236c04f75cdf7f5ac54dcab0ec263665d008aba64b701b0cdca5c3390171",
+      "md5": "3c502bba3e48260ae3deab430f96371d",
+      "size_bytes": 271,
+      "last_modified": "2026-01-19T20:49:00.493877"
+    },
+    "processed/cumulative_v2_up_to_2022.csv": {
+      "sha256": "3500ceb22e0b2ba221c30c2ea63567713f7de97a8ad6d4b7077c20823ab1f5c4",
+      "md5": "80f9a621f5640595a4fb3fbac6503992",
+      "size_bytes": 84007,
+      "last_modified": "2026-01-24T14:41:31.697000"
+    },
+    "processed/cumulative_v2_up_to_2023.csv": {
+      "sha256": "7f3b5f0ec47ee80a9200716902b58f651ca9544df587bbc3d8de6d2e8ef6ea8d",
+      "md5": "11f22b2ba31a762df0711d12235bf9ef",
+      "size_bytes": 87013,
+      "last_modified": "2026-01-24T14:41:31.910119"
+    },
+    "processed/cumulative_v2_up_to_2024.csv": {
+      "sha256": "a9367d3b286cf870050ce9baa6ba2647b0b0ec19a5915cc0d5b8c60b757a74f5",
+      "md5": "2693c43ffed4a70bee81625e2bedd097",
+      "size_bytes": 223684,
+      "last_modified": "2026-01-24T14:41:32.438655"
+    },
+    "processed/cumulative_v2_up_to_2025.csv": {
+      "sha256": "eca7ddfa3a0335938219796868255007b24c2cd1de97344682262bf127dc4e8b",
+      "md5": "11a45c2c4460468df67bfcfecc461993",
+      "size_bytes": 246315,
+      "last_modified": "2026-01-24T14:41:32.794698"
+    },
+    "processed/fetched_googlecloud.csv": {
+      "sha256": "7102b4fde8c984bd19c3e2984e0eb3cf298826254befa9d988ec7c3221617db7",
+      "md5": "be7791b37d72415fda3515dcfe670079",
+      "size_bytes": 19777,
+      "last_modified": "2026-01-17T01:00:53.098079"
+    },
+    "processed/fetched_meteostat.csv": {
+      "sha256": "c5170101212ebe4b1fd6df2d8c9a25fdc768975a3af68bdaf04408579f6d9cca",
+      "md5": "d5c9a481bedc8a9bfe3dfe9c392e245e",
+      "size_bytes": 12183,
+      "last_modified": "2026-01-17T01:00:53.102069"
+    },
+    "processed/fetched_worldtides.csv": {
+      "sha256": "6097c600ef14bf8f5cf9878b81beed3e356ef76ad56d16f07d75bf56f080318e",
+      "md5": "33d6d3f9943293da73e2d6fb3a54a1a3",
+      "size_bytes": 14354,
+      "last_modified": "2026-01-19T20:49:00.493877"
+    },
+    "processed/pagasa_all_stations_merged.csv": {
+      "sha256": "e204cc26accc7d649b26376369eef2a2de507f1d2f2292d5894fde0047fb01cc",
+      "md5": "a89c549266bc19ed427eca62a69c1c82",
+      "size_bytes": 1862937,
+      "last_modified": "2026-01-17T01:26:20.532112"
+    },
+    "processed/pagasa_naia_processed.csv": {
+      "sha256": "1974709c1e906a5a7c908cbfc6757fc4db7fc2a99c01fcdb69d1bcf1e5869fc4",
+      "md5": "4cbd55225f721122495a88cbd3ac79c1",
+      "size_bytes": 633510,
+      "last_modified": "2026-01-17T01:26:19.686106"
+    },
+    "processed/pagasa_port_area_processed.csv": {
+      "sha256": "eee20cd35344d1e187f924b78685cddac009e86b7d10626d7c8da913770a35a0",
+      "md5": "5cf081c725d8e69aa335a71241d6ee26",
+      "size_bytes": 507339,
+      "last_modified": "2026-01-20T16:12:45.709660"
+    },
+    "processed/pagasa_science_garden_processed.csv": {
+      "sha256": "8f276d2903a276eb27fb14c3485871180027193acd08fe3339f3042cbd2f9357",
+      "md5": "14796bc86885d93d9377d4e721aa2c8d",
+      "size_bytes": 713366,
+      "last_modified": "2026-01-17T01:26:19.761692"
+    },
+    "processed/pagasa_training_dataset.csv": {
+      "sha256": "1710dbc2e4f4d105c1be3a92b462872006218838e4b25312dccc17bd00d724a8",
+      "md5": "53db3c459fb2f6da5ecb6e431c49cf19",
+      "size_bytes": 1092213,
+      "last_modified": "2026-01-17T01:26:20.627136"
+    },
+    "processed/processed_flood_records_v2_2022.csv": {
+      "sha256": "3500ceb22e0b2ba221c30c2ea63567713f7de97a8ad6d4b7077c20823ab1f5c4",
+      "md5": "80f9a621f5640595a4fb3fbac6503992",
+      "size_bytes": 84007,
+      "last_modified": "2026-01-24T14:41:31.659285"
+    },
+    "processed/processed_flood_records_v2_2023.csv": {
+      "sha256": "bc98f532d0c2ce1be2a7b57e92cedc124763d10f27743fb3ccd47afc0df85867",
+      "md5": "635fc8ba1b51ae292a8efd45c7a8ab02",
+      "size_bytes": 3772,
+      "last_modified": "2026-01-24T14:41:31.888643"
+    },
+    "processed/processed_flood_records_v2_2024.csv": {
+      "sha256": "9340ec662928d1ab63f3e05411d83f991de67bf43996ae37c3e8748094e17353",
+      "md5": "182e05d61008fcf21c27721a3333109a",
+      "size_bytes": 136185,
+      "last_modified": "2026-01-24T14:41:32.416743"
+    },
+    "processed/processed_flood_records_v2_2025.csv": {
+      "sha256": "6404f0ecb8cb83facd53fcbef535cf0c04bb6892b3957f4d9e29ed60277246fd",
+      "md5": "1837c71d4e5cdc5e02ef8b29f4f01f13",
+      "size_bytes": 19092,
+      "last_modified": "2026-01-24T14:41:32.768591"
+    },
+    "processed/training_data_merged.csv": {
+      "sha256": "85c4f6c512eca1a2b4c74b615c23700fb8abb7e737ccf517047c944cb1e5e08c",
+      "md5": "06b5b9a57314c7fd33df34c7fc2a2d5f",
+      "size_bytes": 20273,
+      "last_modified": "2026-01-17T01:00:53.132205"
+    },
+    "processed/training_dataset_v2.csv": {
+      "sha256": "bdab4eefc6403be37818b12bbc37ff451a149f25ebdaa8fba61978f17d95e74e",
+      "md5": "cfd8d5537566e4da5a52f37293f35f0f",
+      "size_bytes": 105181,
+      "last_modified": "2026-01-24T14:10:03.992051"
+    },
+    "cleaned/Floodingnaque_Flood_Records_2022_cleaned.csv": {
+      "sha256": "f7a96f7e83ddb0a6edb116adf5b2a384c4c3d04b9988c47c5c0af58f5d7d02ac",
+      "md5": "abac9095e079d307aed9eaf6aff9049b",
+      "size_bytes": 15136,
+      "last_modified": "2026-01-24T16:00:28.823248"
+    },
+    "cleaned/Floodingnaque_Flood_Records_2023_cleaned.csv": {
+      "sha256": "ed58d441d9a769096f4d79efd8ed8a1276d7e297ce957c203c94ec4ba36a5185",
+      "md5": "e0917b8fb553068eb4968971e7882673",
+      "size_bytes": 20753,
+      "last_modified": "2026-01-24T16:00:28.897601"
+    },
+    "cleaned/Floodingnaque_Flood_Records_2024_cleaned.csv": {
+      "sha256": "34c63e28b5f854ba3c5fd234a85c41b176bd64929f1a2f0bb1ebe1b7369e3e67",
+      "md5": "220550ad7211331c5fa2727220576954",
+      "size_bytes": 13178,
+      "last_modified": "2026-01-24T16:00:28.931857"
+    },
+    "cleaned/Floodingnaque_Flood_Records_2025_cleaned.csv": {
+      "sha256": "f41c19492953333c51096e0ff2ad04e2c38466b7c9daaf411c83eb5b52d26aab",
+      "md5": "f18dab20693a2e36257e2901981a22a5",
+      "size_bytes": 17661,
+      "last_modified": "2026-01-24T16:00:29.011249"
+    },
+    "cleaned/Floodingnaque_Flood_Records_All_cleaned.csv": {
+      "sha256": "be02cbd9f236003221d2fbd7e944d08aee7bdd3bbf12060e0a916e33714ab473",
+      "md5": "68fa256d27631c5e03ecd8e281f1a774",
+      "size_bytes": 66294,
+      "last_modified": "2026-01-24T16:00:29.037895"
+    }
+  }
+}

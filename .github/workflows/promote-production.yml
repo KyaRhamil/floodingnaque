@@ -27,21 +27,21 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       can_promote: ${{ steps.check.outputs.can_promote }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
           pip install pyyaml
-      
+
       - name: Check staging status
         id: check
         run: |
@@ -51,23 +51,23 @@ jobs:
           sys.path.insert(0, '.')
           from scripts.enterprise.model_registry import create_registry, ModelStage
           from pathlib import Path
-          
+
           registry = create_registry(Path('models'))
           version = ${{ github.event.inputs.version }}
-          
+
           if version not in registry.versions:
               print('::error::Version not found in registry')
               print('can_promote=false', file=open('$GITHUB_OUTPUT', 'a'))
               sys.exit(1)
-          
+
           model_version = registry.versions[version]
-          
+
           if model_version.stage != ModelStage.STAGING:
               print(f'::warning::Model is in {model_version.stage.value}, not staging')
               if '${{ github.event.inputs.force }}' != 'true':
                   print('can_promote=false', file=open('$GITHUB_OUTPUT', 'a'))
                   sys.exit(1)
-          
+
           print('can_promote=true', file=open('$GITHUB_OUTPUT', 'a'))
           "
 
@@ -77,21 +77,21 @@ jobs:
     if: needs.check-staging.outputs.can_promote == 'true'
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
           pip install pyyaml
-      
+
       - name: Promote to production
         run: |
           cd backend
@@ -100,24 +100,24 @@ jobs:
           sys.path.insert(0, '.')
           from scripts.enterprise.model_registry import create_registry, ModelStage
           from pathlib import Path
-          
+
           registry = create_registry(Path('models'))
           version = ${{ github.event.inputs.version }}
           force = '${{ github.event.inputs.force }}' == 'true'
-          
+
           success, message = registry.promote(version, ModelStage.PRODUCTION, force=force)
           print(message)
-          
+
           if not success:
               sys.exit(1)
           "
-      
+
       - name: Update production model symlink
         run: |
           cd backend/models
           # Create/update production symlink
           ln -sf model_v${{ github.event.inputs.version }}.joblib flood_rf_model_production.joblib
-          
+
       - name: Create production deployment summary
         run: |
           echo "## 🚀 Production Deployment" >> $GITHUB_STEP_SUMMARY
@@ -133,7 +133,7 @@ jobs:
     name: Notify Team
     needs: promote-production
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Create issue for tracking
         uses: actions/github-script@v7
@@ -144,18 +144,18 @@ jobs:
               repo: context.repo.repo,
               title: `Model v${{ github.event.inputs.version }} deployed to production`,
               body: `## Production Deployment Notice
-              
+
               Model version **v${{ github.event.inputs.version }}** has been deployed to production.
-              
+
               **Deployed by:** @${{ github.actor }}
               **Time:** ${new Date().toISOString()}
-              
+
               ### Post-Deployment Checklist
               - [ ] Verify API predictions are working
               - [ ] Check monitoring dashboards
               - [ ] Review initial prediction metrics
               - [ ] Document any issues observed
-              
+
               /cc @KyaRhamil`,
               labels: ['deployment', 'production']
             })

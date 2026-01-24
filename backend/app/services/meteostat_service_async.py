@@ -30,6 +30,40 @@ from tenacity import before_sleep_log, retry, retry_if_exception_type, stop_afte
 logger = logging.getLogger(__name__)
 
 
+def _estimate_humidity_for_date(date: datetime) -> float:
+    """
+    Estimate humidity for a given date based on Philippine seasonal patterns.
+
+    Philippine climate has two main seasons:
+    - Wet season (June-November): Higher humidity, typically 80-90%
+    - Dry season (December-May): Lower humidity, typically 70-80%
+
+    Args:
+        date: The date to estimate humidity for
+
+    Returns:
+        Estimated humidity percentage
+    """
+    if hasattr(date, "month"):
+        month = date.month
+    else:
+        # Handle date objects
+        month = pd.to_datetime(date).month
+
+    # Wet season: June (6) to November (11)
+    if 6 <= month <= 11:
+        # Peak monsoon months (July-September) have highest humidity
+        if 7 <= month <= 9:
+            return 85.0
+        return 82.0
+    # Dry season: December to May
+    else:
+        # Hottest months (March-May) have moderate humidity
+        if 3 <= month <= 5:
+            return 72.0
+        return 75.0
+
+
 @dataclass
 class WeatherObservation:
     """Weather observation data structure."""
@@ -376,7 +410,8 @@ class AsyncMeteostatService:
         Get historical weather data formatted for ML training asynchronously.
 
         Returns a DataFrame with columns matching the flood prediction model's
-        expected input format.
+        expected input format. Uses Hourly data to get actual humidity values
+        (Daily API doesn't include humidity).
 
         Args:
             lat: Latitude
@@ -398,31 +433,71 @@ class AsyncMeteostatService:
 
             def _fetch_training_data():
                 location = Point(lat, lon)
+
+                # First try to get hourly data which includes humidity (rhum)
+                hourly_data = Hourly(location, start, end)
+                hourly_df = hourly_data.fetch()
+
+                if not hourly_df.empty and "rhum" in hourly_df.columns:
+                    # Aggregate hourly data to daily with actual humidity
+                    hourly_df = hourly_df.reset_index()
+                    hourly_df["date"] = hourly_df["time"].dt.date
+
+                    daily_agg = (
+                        hourly_df.groupby("date")
+                        .agg(
+                            {
+                                "temp": "mean",  # Average temperature
+                                "rhum": "mean",  # Average humidity from actual data
+                                "prcp": "sum",  # Total precipitation
+                            }
+                        )
+                        .reset_index()
+                    )
+
+                    result = pd.DataFrame()
+                    result["temperature"] = daily_agg["temp"].apply(
+                        lambda x: x + 273.15 if pd.notna(x) else None
+                    )  # Convert to Kelvin
+                    result["humidity"] = daily_agg["rhum"]
+                    result["precipitation"] = daily_agg["prcp"].fillna(0)
+                    result["date"] = pd.to_datetime(daily_agg["date"])
+
+                    # Only fill missing humidity with seasonal estimates if needed
+                    result["humidity"] = result.apply(
+                        lambda row: (
+                            row["humidity"] if pd.notna(row["humidity"]) else _estimate_humidity_for_date(row["date"])
+                        ),
+                        axis=1,
+                    )
+
+                    result = result.dropna(subset=["temperature"])
+                    logger.info(f"Fetched {len(result)} days of historical data with actual humidity")
+                    return result
+
+                # Fallback to Daily data if Hourly is not available
                 data = Daily(location, start, end)
                 df = data.fetch()
 
                 if df.empty:
                     return pd.DataFrame()
 
-                # Rename columns to match model expectations
-                result = pd.DataFrame(
-                    {
-                        "temperature": df["tavg"].apply(
-                            lambda x: x + 273.15 if pd.notna(x) else None
-                        ),  # Convert to Kelvin
-                        "humidity": df.get("rhum", pd.Series([None] * len(df))),  # Humidity if available
-                        "precipitation": df["prcp"].fillna(0),
-                        "date": df.index,
-                    }
-                )
+                df = df.reset_index()
 
-                # Fill missing humidity with a reasonable default
-                if "humidity" not in df.columns or result["humidity"].isna().all():
-                    result["humidity"] = 70  # Default humidity for tropical regions
+                # Rename columns to match model expectations
+                result = pd.DataFrame()
+                result["temperature"] = df["tavg"].apply(
+                    lambda x: x + 273.15 if pd.notna(x) else None
+                )  # Convert to Kelvin
+                result["precipitation"] = df["prcp"].fillna(0)
+                result["date"] = df["time"] if "time" in df.columns else df.index
+
+                # Estimate humidity based on date/season since Daily API doesn't provide it
+                result["humidity"] = result["date"].apply(_estimate_humidity_for_date)
 
                 result = result.dropna(subset=["temperature"])
 
-                logger.info(f"Fetched {len(result)} days of historical data for training")
+                logger.info(f"Fetched {len(result)} days of historical data (estimated humidity)")
                 return result
 
             # Run in executor
