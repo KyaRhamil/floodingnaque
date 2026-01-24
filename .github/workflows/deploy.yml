@@ -13,6 +13,11 @@ on:
         options:
           - staging
           - production
+      skip_staging:
+        description: 'Skip staging and deploy directly to selected environment'
+        required: false
+        default: false
+        type: boolean
 
 # Set minimum permissions at workflow level (least privilege principle)
 permissions:
@@ -21,6 +26,8 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  STAGING_URL: https://staging-api.floodingnaque.com
+  PRODUCTION_URL: https://api.floodingnaque.com
 
 jobs:
   # ==========================================================================
@@ -35,9 +42,14 @@ jobs:
     outputs:
       image_tag: ${{ steps.meta.outputs.tags }}
       image_digest: ${{ steps.build.outputs.digest }}
+      short_sha: ${{ steps.vars.outputs.short_sha }}
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Set variables
+      id: vars
+      run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -97,7 +109,7 @@ jobs:
 
     steps:
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.28.0
       with:
         image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
         format: 'sarif'
@@ -110,18 +122,109 @@ jobs:
       with:
         sarif_file: 'trivy-deploy-results.sarif'
 
+    - name: Check for critical vulnerabilities
+      run: |
+        # Parse SARIF and fail if CRITICAL vulnerabilities found
+        if grep -q '"level": "error"' trivy-deploy-results.sarif 2>/dev/null; then
+          echo "::error::Critical vulnerabilities found in container image!"
+          exit 1
+        fi
+
   # ==========================================================================
-  # Deploy to Environment
+  # Deploy to Staging (Auto on main push)
   # ==========================================================================
-  deploy:
-    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+  deploy-staging:
+    name: Deploy to Staging
     needs: [build-and-push, scan-image]
     runs-on: ubuntu-latest
+    # Skip staging if manual dispatch with skip_staging=true or direct production deploy
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_staging != 'true')
     permissions:
       contents: read
     environment:
-      name: ${{ github.event.inputs.environment || 'production' }}
-      url: ${{ steps.deploy.outputs.url }}
+      name: staging
+      url: ${{ env.STAGING_URL }}
+    outputs:
+      deployed: ${{ steps.deploy.outputs.deployed }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to staging
+      id: deploy
+      run: |
+        echo "🚀 Deploying to staging server..."
+        echo "Image: ${{ needs.build-and-push.outputs.image_tag }}"
+        echo "Digest: ${{ needs.build-and-push.outputs.image_digest }}"
+        echo "SHA: ${{ needs.build-and-push.outputs.short_sha }}"
+        # Add your staging deployment steps here:
+        # - SSH deployment
+        # - Docker Compose pull & up
+        # - Cloud provider CLI deployment
+        echo "deployed=true" >> $GITHUB_OUTPUT
+
+    - name: Notify staging deployment
+      if: success()
+      run: |
+        echo "::notice::✅ Successfully deployed to staging"
+
+  # ==========================================================================
+  # Smoke Tests on Staging
+  # ==========================================================================
+  smoke-test:
+    name: Smoke Test Staging
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    if: needs.deploy-staging.outputs.deployed == 'true'
+    env:
+      STAGING_URL: https://staging-api.floodingnaque.com
+
+    steps:
+    - name: Wait for deployment to stabilize
+      run: sleep 30
+
+    - name: Health check
+      run: |
+        echo "🔍 Running smoke tests on staging..."
+        # Health endpoint check
+        curl -f --retry 3 --retry-delay 10 $STAGING_URL/health || exit 1
+        echo "✅ Health check passed"
+
+    - name: Readiness check
+      run: |
+        # Readiness endpoint check
+        curl -f --retry 3 --retry-delay 10 $STAGING_URL/health/ready || exit 1
+        echo "✅ Readiness check passed"
+
+    - name: API smoke test
+      run: |
+        # Basic API endpoint test
+        response=$(curl -s -o /dev/null -w "%{http_code}" $STAGING_URL/api/v1/health)
+        if [ "$response" != "200" ] && [ "$response" != "401" ]; then
+          echo "::error::API smoke test failed with status $response"
+          exit 1
+        fi
+        echo "✅ API smoke test passed (status: $response)"
+
+  # ==========================================================================
+  # Deploy to Production (Requires Manual Approval)
+  # ==========================================================================
+  deploy-production:
+    name: Deploy to Production
+    needs: [build-and-push, smoke-test]
+    runs-on: ubuntu-latest
+    # Only run on push to main (after staging succeeds) or manual dispatch to production
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    permissions:
+      contents: read
+    environment:
+      name: Production  # Requires approval from KyaRhamil
+      url: ${{ env.PRODUCTION_URL }}
 
     steps:
     - uses: actions/checkout@v4
@@ -129,16 +232,25 @@ jobs:
     - name: Deploy to production
       id: deploy
       run: |
-        echo "Deploying to ${{ github.event.inputs.environment || 'production' }} server..."
+        echo "🚀 Deploying to PRODUCTION server..."
         echo "Image: ${{ needs.build-and-push.outputs.image_tag }}"
         echo "Digest: ${{ needs.build-and-push.outputs.image_digest }}"
-        # Add your deployment steps here:
+        echo "SHA: ${{ needs.build-and-push.outputs.short_sha }}"
+        # Add your production deployment steps here:
         # - SSH deployment
-        # - Kubernetes deployment
+        # - Docker Compose pull & up
         # - Cloud provider CLI deployment
-        echo "url=https://api.floodingnaque.com" >> $GITHUB_OUTPUT
+        echo "url=${{ env.PRODUCTION_URL }}" >> $GITHUB_OUTPUT
 
-    - name: Notify deployment
+    - name: Post-deploy health check
+      run: |
+        echo "🔍 Verifying production deployment..."
+        sleep 30
+        curl -f --retry 5 --retry-delay 15 ${{ env.PRODUCTION_URL }}/health || exit 1
+        echo "✅ Production health check passed"
+
+    - name: Notify production deployment
       if: success()
       run: |
-        echo "::notice::Successfully deployed to ${{ github.event.inputs.environment || 'production' }}"
+        echo "::notice::🎉 Successfully deployed to PRODUCTION"
+        echo "::notice::Image SHA: ${{ needs.build-and-push.outputs.short_sha }}"

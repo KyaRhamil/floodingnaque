@@ -242,6 +242,14 @@ yarn-error.log*
 .semaphore/
 .cache_ggshield
 
+# ggshield / GitGuardian
+.ggshield.yaml
+.ggshield/
+ggshield-report.*
+
+# detect-secrets (removed from pre-commit, keeping ignore in case re-added)
+.secrets.baseline
+
 # Static files (generated)
 backend/static/
 

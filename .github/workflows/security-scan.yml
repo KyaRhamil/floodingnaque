@@ -35,6 +35,27 @@ env:
 
 jobs:
   # ===========================================================================
+  # GitGuardian Secret Scanning
+  # ===========================================================================
+  ggshield-scan:
+    name: GitGuardian Secret Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for scanning commit history
+      
+      - name: Run ggshield secret scan
+        uses: GitGuardian/ggshield-action@v1
+        with:
+          args: secret scan ci
+        env:
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+  # ===========================================================================
   # Comprehensive Security Scan using security_scan.py
   # ===========================================================================
   security-scan:
