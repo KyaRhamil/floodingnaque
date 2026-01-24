@@ -1,0 +1,183 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: 'Docker image tag to rollback to (e.g., main-abc1234 or v1.2.3)'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+# Set minimum permissions at workflow level
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  STAGING_URL: https://staging-api.floodingnaque.com
+  PRODUCTION_URL: https://api.floodingnaque.com
+
+jobs:
+  # ==========================================================================
+  # Validate Rollback Target
+  # ==========================================================================
+  validate:
+    name: Validate Rollback
+    runs-on: ubuntu-latest
+    outputs:
+      image_exists: ${{ steps.check.outputs.exists }}
+
+    steps:
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check if image tag exists
+      id: check
+      run: |
+        IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}"
+        echo "Checking for image: $IMAGE"
+        if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+          echo "✅ Image tag exists"
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "::error::Image tag '${{ github.event.inputs.image_tag }}' not found in registry"
+          echo "exists=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+  # ==========================================================================
+  # Rollback Staging
+  # ==========================================================================
+  rollback-staging:
+    name: Rollback Staging
+    needs: validate
+    if: github.event.inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ env.STAGING_URL }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Rollback staging deployment
+      run: |
+        echo "🔄 Rolling back STAGING to: ${{ github.event.inputs.image_tag }}"
+        echo "📝 Reason: ${{ github.event.inputs.reason }}"
+        echo "👤 Triggered by: ${{ github.actor }}"
+        # Add your staging rollback steps here:
+        # - SSH and docker-compose pull with specific tag
+        # - Cloud provider CLI rollback
+        # Example:
+        # docker-compose -f docker-compose-staging.yml pull
+        # docker-compose -f docker-compose-staging.yml up -d
+
+    - name: Verify rollback health
+      run: |
+        echo "🔍 Verifying rollback..."
+        sleep 30
+        curl -f --retry 5 --retry-delay 10 ${{ env.STAGING_URL }}/health || exit 1
+        echo "✅ Staging rollback health check passed"
+
+    - name: Notify rollback complete
+      run: |
+        echo "::notice::🔄 Staging rolled back to ${{ github.event.inputs.image_tag }}"
+        echo "::notice::Reason: ${{ github.event.inputs.reason }}"
+
+  # ==========================================================================
+  # Rollback Production (Requires Approval)
+  # ==========================================================================
+  rollback-production:
+    name: Rollback Production
+    needs: validate
+    if: github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment:
+      name: Production  # Requires approval from KyaRhamil
+      url: ${{ env.PRODUCTION_URL }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Rollback production deployment
+      run: |
+        echo "🔄 Rolling back PRODUCTION to: ${{ github.event.inputs.image_tag }}"
+        echo "📝 Reason: ${{ github.event.inputs.reason }}"
+        echo "👤 Triggered by: ${{ github.actor }}"
+        echo "⚠️  This is a PRODUCTION rollback"
+        # Add your production rollback steps here:
+        # - SSH and docker-compose pull with specific tag
+        # - Cloud provider CLI rollback
+        # Example:
+        # docker-compose -f docker-compose-production.yml pull
+        # docker-compose -f docker-compose-production.yml up -d
+
+    - name: Verify rollback health
+      run: |
+        echo "🔍 Verifying production rollback..."
+        sleep 30
+        curl -f --retry 5 --retry-delay 15 ${{ env.PRODUCTION_URL }}/health || exit 1
+        echo "✅ Production rollback health check passed"
+
+    - name: Notify rollback complete
+      run: |
+        echo "::warning::🔄 PRODUCTION rolled back to ${{ github.event.inputs.image_tag }}"
+        echo "::warning::Reason: ${{ github.event.inputs.reason }}"
+        echo "::warning::Triggered by: ${{ github.actor }}"
+
+  # ==========================================================================
+  # Create Rollback Record
+  # ==========================================================================
+  record-rollback:
+    name: Record Rollback
+    needs: [rollback-staging, rollback-production]
+    if: always() && (needs.rollback-staging.result == 'success' || needs.rollback-production.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create rollback issue for tracking
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `🔄 Rollback: ${context.payload.inputs.environment} → ${context.payload.inputs.image_tag}`;
+          const body = `## Rollback Record
+
+          **Environment:** ${context.payload.inputs.environment}
+          **Rolled back to:** ${context.payload.inputs.image_tag}
+          **Reason:** ${context.payload.inputs.reason}
+          **Triggered by:** @${context.actor}
+          **Timestamp:** ${new Date().toISOString()}
+          **Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+
+          ---
+          This issue was automatically created to track the rollback event.
+          `;
+
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['rollback', 'ops', context.payload.inputs.environment]
+          });

@@ -1,0 +1,30 @@
+# Floodingnaque Code Owners
+# These owners will be requested for review when someone opens a pull request.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @KyaRhamil
+
+# Backend code requires review
+/backend/ @KyaRhamil
+
+# API routes and core logic
+/backend/app/api/ @KyaRhamil
+/backend/app/core/ @KyaRhamil
+/backend/app/services/ @KyaRhamil
+
+# Database migrations require careful review
+/backend/alembic/ @KyaRhamil
+
+# CI/CD and DevOps configuration
+/.github/workflows/ @KyaRhamil
+/docker-compose*.yml @KyaRhamil
+/nginx/ @KyaRhamil
+/monitoring/ @KyaRhamil
+
+# Security-sensitive configuration
+/backend/config/ @KyaRhamil
+/.pre-commit-config.yaml @KyaRhamil
+
+# Documentation
+/docs/ @KyaRhamil

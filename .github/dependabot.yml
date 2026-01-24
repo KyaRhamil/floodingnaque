@@ -14,8 +14,8 @@ updates:
       time: "09:00"
       timezone: "Asia/Manila"
     open-pull-requests-limit: 10
-    reviewers:
-      - "floodingnaque/backend-team"
+    assignees:
+      - "KyaRhamil"
     labels:
       - "dependencies"
       - "python"
@@ -37,9 +37,6 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "alembic"
         update-types: ["version-update:semver-major"]
-    # Security updates get priority
-    security-updates:
-      enabled: true
 
   # ==========================================================================
   # GitHub Actions
