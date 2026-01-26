@@ -213,23 +213,73 @@ google_oauth_credentials.json
 client_secret*.json
 *-oauth-*.json
 
-# Service account keys
+# Service account keys - Generic patterns
 *-service-account.json
 *-sa-key.json
+*-credentials.json
+*service-account*.json
+*serviceaccount*.json
+*-sa.json
+gcloud-*.json
+google-cloud-*.json
+gcp-*.json
+
+# Service account keys - Project-specific
 floodingnaque-googe-cloud-*.json
 floodingnaque-google-cloud-*.json
 *.iam.gserviceaccount.com.json
 backend/*-service-account*.json
 backend/floodingnaque-*.json
 backend/google_oauth*.json
-backend/google_application_credentials_astral-archive-482008-g2-e31c78fffb69.json
-backend/astral-archive-482008-g2-b4f2279053c0.json
+backend/google_application_credentials*.json
 backend/astral-archive-*.json
 
 # Earth Engine credentials
 .ee-credentials
 ee-credentials.json
 earthengine-*.json
+
+# ===================
+# AWS Credentials (NEVER commit these!)
+# ===================
+.aws/
+aws-credentials*
+*aws_access_key*
+*aws_secret*
+
+# ===================
+# Azure Credentials (NEVER commit these!)
+# ===================
+.azure/
+azure-credentials*
+*azure_client_secret*
+*azure_tenant*
+
+# ===================
+# Private Keys & Certificates (NEVER commit these!)
+# ===================
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+*.ppk
+
+# ===================
+# Generic Secrets (NEVER commit these!)
+# ===================
+*password*.txt
+*credential*.json
+*secret*.json
+!**/secrets.yaml.template
+*token*.json
+*auth*.json
+.netrc
+.npmrc
+.pypirc
 
 # Node.js
 node_modules/
