@@ -138,7 +138,7 @@ flask-sse==1.0.0
 # ============================================================================
 graphene==3.4.3
 # graphql-server removed - unused (graphql-core provides graphql_sync directly)
-graphql-core==3.2.5
+graphql-core==3.2.12
 
 # ============================================================================
 # GOOGLE CLOUD / EARTH ENGINE (lazy-loaded in google_weather_service)
