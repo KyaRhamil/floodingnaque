@@ -188,7 +188,7 @@ flask-sse==1.0.0  # Flask SSE extension for real-time updates
 graphene==3.4.3  # GraphQL schema definition framework
 # graphql-server removed - unused (graphql-core provides graphql_sync directly)
 #flask-graphql==2.0.1  # GraphQL endpoint integration (superseded by graphql-core)
-graphql-core==3.2.5  # GraphQL core library for schema and execution
+graphql-core==3.2.12  # GraphQL core library for schema and execution
 
 # ============================================================================
 # GOOGLE CLOUD / EARTH ENGINE
